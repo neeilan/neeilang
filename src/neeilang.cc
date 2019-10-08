@@ -7,6 +7,8 @@
 
 #include "neeilang.h"
 #include "scanner.h"
+#include "parser.h"
+#include "ast_printer.h"
 #include "token.h"
 
 bool Neeilang::had_error = false;
@@ -29,9 +31,17 @@ void Neeilang::run(const std::string &source)
     Scanner scanner(source);
     const std::vector<Token> tokens = scanner.scan_tokens();
 
-    std::cout << "Tokens:" << std::endl;
-    for (auto token : tokens)
-      std::cout << token.str() << std::endl;
+    for (Token t : tokens) {
+      std::cout << t.str() << std::endl;
+    }
+
+    Parser parser(tokens);
+    std::vector<Stmt *> stmts = parser.parse();
+
+    AstPrinter printer;
+    for (const Stmt * stmt : stmts) {
+      std::cout << printer.print(*stmt) << std::endl;
+    }
 }
 
 void Neeilang::error(int line, const std::string &message)

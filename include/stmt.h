@@ -132,13 +132,22 @@ class ReturnStmt : public StmtCRTP<ReturnStmt>
 class ClassStmt : public StmtCRTP<ClassStmt>
 {
   public:
-    explicit ClassStmt(Token name, Variable * superclass, std::vector<Stmt *> methods)
+    explicit ClassStmt(
+      Token name,
+      Variable * superclass,
+      std::vector<Token> fields,
+      std::vector<Token> field_types,
+      std::vector<Stmt *> methods)
         : name(name),
           superclass(superclass),
+          fields(fields),
+          field_types(field_types),
           methods(methods) {}
 
     const Token name;
     Variable * superclass = nullptr;
+    const std::vector<Token> fields;
+    const std::vector<Token> field_types;
     const std::vector<Stmt *> methods;
 };
 
