@@ -12,7 +12,7 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"else", ELSE},
     {"false", FALSE},
     {"for", FOR},
-    {"fun", FUN},
+    {"fn", FN},
     {"lambda", LAMBDA},
     {"if", IF},
     {"nil", NIL},

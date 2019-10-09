@@ -39,7 +39,7 @@ enum TokenType
     CLASS,
     ELSE,
     FALSE,
-    FUN,
+    FN,
     LAMBDA,
     FOR,
     IF,

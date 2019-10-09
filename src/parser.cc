@@ -27,7 +27,7 @@ std::vector<Stmt *> Parser::parse()
 
 Stmt *Parser::declaration()
 {
-    if (match({FUN}))
+    if (match({FN}))
         return func_statement("function");
     if (match({CLASS}))
         return class_declaration();
@@ -557,7 +557,7 @@ void Parser::synchronize()
         switch (peek().type)
         {
         case CLASS:
-        case FUN:
+        case FN:
         case IF:
         case FOR:
         case WHILE:
