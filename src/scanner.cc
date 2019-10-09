@@ -3,6 +3,7 @@
 #include "neeilang.h"
 
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -144,7 +145,9 @@ void Scanner::scan_token()
     }
     else
     {
-      Neeilang::error(line, "Unexpected character.");
+      std::ostringstream msg;
+      msg << "Unexpected character '" << c << "'";
+      Neeilang::error(line, msg.str());
     }
     break;
   }

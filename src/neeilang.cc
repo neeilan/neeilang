@@ -44,12 +44,12 @@ void Neeilang::run(const std::string &source)
     }
 }
 
-void Neeilang::error(int line, const std::string &message)
+void Neeilang::error(int line, const std::string & message)
 {
     report(line, "", message);
 }
 
-void Neeilang::error(Token token, const std::string &message)
+void Neeilang::error(Token token, const std::string & message)
 {
     if (token.type == END_OF_FILE)
     {
@@ -67,9 +67,11 @@ void Neeilang::report(int line,
                  const std::string & occurrence,
                  const std::string & message)
 {
-    std::cout << "[line " << line << "] Error: "
-              << occurrence << " : " << message
-              << std::endl;
+    std::cout << "[line " << line << "] Error: ";
+    if (occurrence.size() > 0) {
+      std::cout << occurrence << " : ";
+    }
+    std::cout << message << std::endl;
 
     had_error = true;
 }
