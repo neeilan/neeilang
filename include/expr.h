@@ -2,13 +2,13 @@
 #define _NL_EXPR_H_
 
 #include "token.h"
+#include "type.h"
 #include "visitor.h"
 
 #include <memory>
 #include <string>
 #include <vector>
 
-using std::shared_ptr;
 using std::string;
 
 class Expr
@@ -17,11 +17,12 @@ class Expr
     virtual void accept(ExprVisitor<void> * visitor) const = 0;
     virtual string accept(ExprVisitor<string> * visitor) const = 0;
 
-
     virtual bool lvalue() const { return false; }
     virtual bool is_object_field() const { return false; }
     virtual bool callable() const { return false; }
     virtual ~Expr(){};
+
+    std::shared_ptr<Type> type;
 };
 
 
