@@ -29,6 +29,11 @@ namespace Primitives
     static shared_ptr<Type> type = std::make_shared<Type>("Bool");
     return type;
   }
+
+  shared_ptr<Type> Void() {
+    static shared_ptr<Type> type = std::make_shared<Type>("Void");
+    return type;
+  }
 }
 
 #endif  // _NL_PRIMITIVES_H_
