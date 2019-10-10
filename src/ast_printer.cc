@@ -35,9 +35,11 @@ std::string AstPrinter::visit(const VarStmt * stmt) {
 
 std::string AstPrinter::visit(const ClassStmt * stmt) {
   ostringstream out;
-  out <<  "(CLASS " << stmt->name.str() << std::endl
-      <<  "  superclass: " << print(*stmt->superclass) << std::endl
-      <<  "  fields: ";
+  out <<  "(CLASS " << stmt->name.str() << std::endl;
+  if (stmt->superclass) {
+      out <<  "  superclass: " << print(*stmt->superclass) << std::endl;
+  }
+  out <<  "  fields: ";
 
   for (int i = 0; i < stmt->fields.size(); i++) {
     out << stmt->fields[i].lexeme << " type : " << stmt->field_types[i].lexeme;

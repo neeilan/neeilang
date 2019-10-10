@@ -8,6 +8,7 @@
 #include "neeilang.h"
 #include "scanner.h"
 #include "parser.h"
+#include "resolver.h"
 #include "ast_printer.h"
 #include "token.h"
 
@@ -31,9 +32,9 @@ void Neeilang::run(const std::string &source)
     Scanner scanner(source);
     const std::vector<Token> tokens = scanner.scan_tokens();
 
-    for (Token t : tokens) {
-      std::cout << t.str() << std::endl;
-    }
+    // for (Token t : tokens) {
+    //   std::cout << t.str() << std::endl;
+    // }
 
     Parser parser(tokens);
     std::vector<Stmt *> stmts = parser.parse();
@@ -42,6 +43,9 @@ void Neeilang::run(const std::string &source)
     for (const Stmt * stmt : stmts) {
       std::cout << printer.print(*stmt) << std::endl;
     }
+
+    Resolver resolver;
+    resolver.resolve(stmts);
 }
 
 void Neeilang::error(int line, const std::string & message)
