@@ -3,6 +3,9 @@
 
 #include <memory>
 #include <string>
+#include <vector>
+
+#include "field.h"
 
 class Type
 {
@@ -20,11 +23,13 @@ class Type
     bool subclass_of(const Type & other) const {
       return other.superclass_of(*this);
     }
+  
+    bool defined = false; // Not just declared, but fully defined.
 
   private:
     std::string name;
     std::shared_ptr<Type> supertype;
-
+    std::vector<Field> fields;
 };
 
 #endif  // _NL_TYPE_H_

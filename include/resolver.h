@@ -1,5 +1,5 @@
-#ifndef _NL__RESOLVER_H_
-#define _NL__RESOLVER_H_
+#ifndef _NL_RESOLVER_H_
+#define _NL_RESOLVER_H_
 
 #include <string>
 #include <map>
@@ -79,4 +79,4 @@ class Resolver : public ExprVisitor<void>, public StmtVisitor<void>
     void define(const Token);
 };
 
-#endif //_NL__RESOLVER_H_
+#endif //_NL_RESOLVER_H_
