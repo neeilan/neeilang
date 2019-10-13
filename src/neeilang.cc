@@ -10,6 +10,7 @@
 #include "parser.h"
 #include "resolver.h"
 #include "ast_printer.h"
+#include "global_hoister.h"
 #include "token.h"
 
 bool Neeilang::had_error = false;
@@ -46,6 +47,9 @@ void Neeilang::run(const std::string &source)
 
     Resolver resolver;
     resolver.resolve(stmts);
+
+    GlobalHoister hoister;
+    hoister.hoist(stmts);
 }
 
 void Neeilang::error(int line, const std::string & message)

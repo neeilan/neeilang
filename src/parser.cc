@@ -62,12 +62,12 @@ Stmt *Parser::class_declaration()
 {
     Token name = consume(IDENTIFIER, "Expect class name.");
 
-    Variable *superclass = nullptr;
+    Token * superclass = nullptr;
 
     if (match({LESS}))
     {
         consume(IDENTIFIER, "Expect superclass name.");
-        superclass = new Variable(previous());
+        superclass = new Token(previous());
     }
 
     consume(LEFT_BRACE, "Expect '{' before class body.");

@@ -26,8 +26,7 @@ class Type
   
     bool defined = false; // Not just declared, but fully defined.
 
-  private:
-    std::string name;
+    std::string name; // TODO : look into using Token here to preserve source info.
     std::shared_ptr<Type> supertype;
     std::vector<Field> fields;
 };

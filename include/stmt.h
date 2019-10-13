@@ -134,7 +134,7 @@ class ClassStmt : public StmtCRTP<ClassStmt>
   public:
     explicit ClassStmt(
       Token name,
-      Variable * superclass,
+      Token * superclass,
       std::vector<Token> fields,
       std::vector<Token> field_types,
       std::vector<Stmt *> methods)
@@ -145,7 +145,7 @@ class ClassStmt : public StmtCRTP<ClassStmt>
           methods(methods) {}
 
     const Token name;
-    Variable * superclass = nullptr;
+    const Token * superclass = nullptr;
     const std::vector<Token> fields;
     const std::vector<Token> field_types;
     const std::vector<Stmt *> methods;

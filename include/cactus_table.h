@@ -4,6 +4,7 @@
 #include <memory>
 #include <map>
 
+
 /*
  * CactusTable implements a multi-map with scoping semantics.
  * It is a cactus tree (wikipedia.org/wiki/Parent_pointer_tree)
@@ -23,20 +24,20 @@ class CactusTable
 
     bool contains(K k) const {
       if (!parent) {
-        return mappings.contains(k);
+        return mappings.count(k) > 0;
       }
-      return mappings.contains(k) || parent->contains(k);
+      return mappings.count(k) > 0 || parent->contains(k);
     }
 
-    V get(K k) const {
-      if (mappings.contains(k) || !parent) {
-        return mappings[k];;
+    V get(K k) {
+      if (mappings.count(k) > 0 || !parent) {
+        return mappings[k];
       }
       return parent->get(k);
     }
 
   private:
-    std::map<std::string, V>  mappings;
+    std::map<K, V>  mappings;
     std::shared_ptr<CactusTable<K, V>> parent;
 };
 

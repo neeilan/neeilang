@@ -37,7 +37,7 @@ std::string AstPrinter::visit(const ClassStmt * stmt) {
   ostringstream out;
   out <<  "(CLASS " << stmt->name.str() << std::endl;
   if (stmt->superclass) {
-      out <<  "  superclass: " << print(*stmt->superclass) << std::endl;
+      out <<  "  superclass: " << stmt->superclass->lexeme << std::endl;
   }
   out <<  "  fields: ";
 

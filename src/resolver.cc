@@ -84,11 +84,6 @@ void Resolver::visit(const ClassStmt * stmt)
     declare(stmt->name);
     define(stmt->name);
 
-    if (stmt->superclass)
-    {
-        resolve(stmt->superclass);
-    }
-
     begin_scope();
 
     /*
