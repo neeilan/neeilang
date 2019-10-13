@@ -37,6 +37,7 @@ class Resolver : public ExprVisitor<void>, public StmtVisitor<void>
     Resolver() {
       scopes.push_back(&globals);
     }
+
     void resolve(const std::vector<Stmt *> statements);
 
 //  private:

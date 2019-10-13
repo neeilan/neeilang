@@ -6,12 +6,13 @@
 #include <vector>
 
 #include "neeilang.h"
+#include "token.h"
 #include "scanner.h"
 #include "parser.h"
 #include "resolver.h"
 #include "ast_printer.h"
 #include "global_hoister.h"
-#include "token.h"
+#include "type_checker.h"
 
 bool Neeilang::had_error = false;
 
@@ -50,6 +51,8 @@ void Neeilang::run(const std::string &source)
 
     GlobalHoister hoister;
     hoister.hoist(stmts);
+
+    TypeChecker type_checker;
 }
 
 void Neeilang::error(int line, const std::string & message)

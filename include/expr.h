@@ -21,8 +21,6 @@ class Expr
     virtual bool is_object_field() const { return false; }
     virtual bool callable() const { return false; }
     virtual ~Expr(){};
-
-    std::shared_ptr<Type> type;
 };
 
 
@@ -48,9 +46,9 @@ class Binary : public ExprCRTP<Binary>
     Binary(Expr &left, Token op, Expr &right)
         : left(left), op(op), right(right) {}
 
-    const Expr &left;
+    const Expr & left;
     const Token op;
-    const Expr &right;
+    const Expr & right;
 };
 
 class Grouping : public ExprCRTP<Grouping>
@@ -150,13 +148,13 @@ class Logical : public ExprCRTP<Logical>
 class Call : public ExprCRTP<Call>
 {
   public:
-    Call(Expr &callee, Token paren, std::vector<Expr *> args)
+    Call(Expr & callee, Token paren, std::vector<Expr *> args)
         : callee(callee),
           paren(paren),
           args(args) {}
 
 
-    const Expr &callee;
+    const Expr & callee;
     const Token paren;
     const std::vector<Expr *> args;
 };

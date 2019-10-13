@@ -94,6 +94,8 @@ Stmt *Parser::class_declaration()
 
 Stmt *Parser::statement()
 {
+    // We store Tokens for certain statements to enable
+    // better error messages.
     if (match({IF}))
         return if_statement();
     if (match({PRINT}))
@@ -101,9 +103,9 @@ Stmt *Parser::statement()
     if (match({RETURN}))
         return return_statement();
     if (match({WHILE}))
-        return while_statement();
+        return while_statement(previous());
     if (match({FOR}))
-        return for_statement();
+        return for_statement(previous());
     if (match({LEFT_BRACE}))
         return block_statement();
 
@@ -157,21 +159,21 @@ Stmt *Parser::if_statement()
     return new IfStmt(condition, then_branch, else_branch);
 }
 
-Stmt *Parser::while_statement()
+Stmt *Parser::while_statement(Token while_tok)
 {
     consume(LEFT_PAREN, "Expect '(' after 'while'.");
     Expr *condition = expression();
     consume(RIGHT_PAREN, "Expect ')' after condition.");
 
     Stmt *body = statement();
-    return new WhileStmt(condition, body);
+    return new WhileStmt(while_tok, condition, body);
 }
 
 /*
  * Desugar for-loop into equivalent while-loop.
  * for-loop syntax: for (init_stmt? ; condition_expr? ; incr_stmt?) stmt;
  */
-Stmt *Parser::for_statement()
+Stmt *Parser::for_statement(Token for_tok)
 {
     consume(LEFT_PAREN, "Expect '(' after 'for'.");
 
@@ -215,7 +217,7 @@ Stmt *Parser::for_statement()
         condition = new BoolLiteral(true);
     }
 
-    body = new WhileStmt(condition, body);
+    body = new WhileStmt(for_tok, condition, body);
 
     if (initializer)
     {

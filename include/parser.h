@@ -57,8 +57,8 @@ class Parser
     Stmt *block_statement();
     Stmt *expression_statement();
     Stmt *if_statement();
-    Stmt *while_statement();
-    Stmt *for_statement();
+    Stmt *while_statement(Token while_tok);
+    Stmt *for_statement(Token for_tok);
     Stmt *return_statement();
     Stmt *func_statement(std::string kind);
 

@@ -12,11 +12,6 @@ struct Symbol {
   std::shared_ptr<Type> type;
 }
 
-size_t next_scope_idx() {
-  static size_t id = 0; 
-  return id++;
-}
-
 using SymbolTable = CactusTable<const std::string, Symbol>;
 
 #endif  // _NL_SYMTAB_H_

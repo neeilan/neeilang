@@ -88,10 +88,12 @@ class IfStmt : public StmtCRTP<IfStmt>
 class WhileStmt : public StmtCRTP<WhileStmt>
 {
   public:
-    explicit WhileStmt(Expr * condition, Stmt * body)
-        : condition(condition),
+    explicit WhileStmt(Token while_tok, Expr * condition, Stmt * body)
+        : while_tok(while_tok),
+          condition(condition),
           body(body) {}
 
+    const Token while_tok;
     const Expr * condition;
     const Stmt * body;
 };

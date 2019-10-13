@@ -30,4 +30,10 @@ namespace Primitives {
     static shared_ptr<Type> type = std::make_shared<Type>("Void");
     return type;
   }
+
+  shared_ptr<Type> TypeError() {
+    //  Use '$' here as real type names can't contain that character.
+    static shared_ptr<Type> type = std::make_shared<Type>("$TypeError");
+    return type;
+  }
 }
