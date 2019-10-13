@@ -2,7 +2,7 @@ class Cat < Animal {
   fav_animal : Animal;
 }
 
-class Animal {
+class Animal < Cat {
   num_legs : Int;
   name : String;
 }
@@ -13,3 +13,5 @@ class Garfield < Cat {
 }
 
 class Dog < Animal { }
+
+class CircularType < CircularType { }

@@ -52,6 +52,16 @@ void GlobalHoister::visit(const ClassStmt * cls) {
       Neeilang::error(*cls->superclass, "Unknown superclass");
       return;
     }
+
+    std::shared_ptr<Type> supercls = typetab.get(supercls_name);
+
+    // Circular inheritance is an error.
+    if (supercls->subclass_of(cls_type.get())) {
+      Neeilang::error(*cls->superclass, "Cycle in class hierarchy");
+      return;
+    }
+
+    cls_type->supertype = supercls;
   }
 
   // Fields
