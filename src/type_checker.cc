@@ -100,46 +100,13 @@ void TypeChecker::visit(const FuncStmt * stmt)
 { 
   // GlobalHoister does a majority of the work.
   // TODO : Perhaps move some of that logic here?
+  check(stmt->body);
 }
 
 void TypeChecker::visit(const ClassStmt * stmt)
 {
-  /*
-    ClassType enclosing_class = current_class;
-    current_class = ClassType::IN_CLASS;
-
-    declare(stmt->name);
-    define(stmt->name);
-
-    if (stmt->superclass)
-    {
-        resolve(stmt->superclass);
-    }
-
-    begin_scope();
-
-     * Whenever 'this' is encountered in a method, it will resolve to a
-     * "local variable” in an implicit scope just outside the method body.
-    scopes.back()->insert(std::pair<std::string, bool>("this", true));
-
-    for (const Stmt * method : stmt->methods)
-    {
-        FunctionType declaration = METHOD;
-
-        const FuncStmt * method_fn = static_cast<const FuncStmt *>(method);
-
-        if (method_fn->name.lexeme == "init")
-        {
-            declaration = INITIALIZER;
-        }
-
-        resolve_fn(declaration, method_fn);
-    }
-
-    end_scope();
-
-    current_class = enclosing_class;
-  */
+  // Hoister should already have checked field types.
+  check(stmt->methods);
 }
 
 // Statements
