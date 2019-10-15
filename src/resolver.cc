@@ -12,6 +12,8 @@ void Resolver::resolve(const std::vector<Stmt *> statements)
     {
         resolve(stmt);
     }
+
+    // TODO : free remaining scopes here.
 }
 
 void Resolver::resolve(const Stmt * stmt)
@@ -43,7 +45,7 @@ void Resolver::visit(const VarStmt * stmt)
 
 void Resolver::visit(const Variable * expr)
 {
-    if (!scopes.empty() && scopes.back()->count(expr->name.lexeme) > 0 && scopes.back()->at(expr->name.lexeme) == false)
+    if (!scopes.empty() && scopes.back()->map.count(expr->name.lexeme) > 0 && scopes.back()->map.at(expr->name.lexeme) == false)
     {
         Neeilang::error(expr->name,
                    "Cannot read local variable in its own initializer.");
@@ -90,7 +92,7 @@ void Resolver::visit(const ClassStmt * stmt)
      * Whenever 'this' is encountered in a method, it will resolve to a
      * "local variable” in an implicit scope just outside the method body.
      */
-    scopes.back()->insert(std::pair<std::string, bool>("this", true));
+    scopes.back()->map.insert(std::pair<std::string, bool>("this", true));
 
     for (const Stmt * method : stmt->methods)
     {
@@ -115,14 +117,11 @@ void Resolver::resolve_local(const Expr * expr, const Token name)
 {
     for (int i = scopes.size() - 1; i >= 0; i--)
     {
-        if (scopes[i]->count(name.lexeme) > 0)
+        if (scopes[i]->map.count(name.lexeme) > 0)
         {
-            /*
-             * Tell interpreter the # of scopes between current scope and the scope
-             * where the variable should resolve. If the variable was found in the
-             * current scope, pass in 0. In the immediately enclosing scope, 1
-             */
-            // interpreter->resolve(expr, scopes.size() - 1 - i);
+            // Tell the rest of the compiler the ordinality of the scope
+            // in which this variable should be resolved.
+            scope_mappings[expr] = scopes[i]->id;
             return;
         }
     }
@@ -153,7 +152,9 @@ void Resolver::resolve_fn(FunctionType declaration, const FuncStmt * fn)
 
 void Resolver::begin_scope()
 {
-    scopes.push_back(new std::map<std::string, bool>());
+    auto scope_map = new ScopeMap;
+    scope_map->id = scope_tracker.advance();
+    scopes.push_back(scope_map);
 }
 
 void Resolver::end_scope()
@@ -168,14 +169,14 @@ void Resolver::define(const Token name)
         return;
 
     // mark as initialized & available for use
-    std::map<std::string, bool> *scope = scopes.back();
+    std::map<std::string, bool> & scope = scopes.back()->map;
 
-    if (scope->count(name.lexeme) > 0)
+    if (scope.count(name.lexeme) > 0)
     {
-        scope->erase(name.lexeme);
+        scope.erase(name.lexeme);
     }
 
-    scope->insert(std::pair<std::string, bool>(name.lexeme, true));
+    scope.insert(std::pair<std::string, bool>(name.lexeme, true));
 }
 
 void Resolver::declare(const Token name)
@@ -183,14 +184,14 @@ void Resolver::declare(const Token name)
     if (scopes.empty())
         return;
 
-    if (scopes.back()->count(name.lexeme) > 0)
+    if (scopes.back()->map.count(name.lexeme) > 0)
     {
         Neeilang::error(name, "Variable with this name already declared in this scope.");
     }
 
     // mark as declared but uninitialized for use
-    std::map<std::string, bool> *scope = scopes.back();
-    scope->insert(std::pair<std::string, bool>(name.lexeme, false));
+    std::map<std::string, bool> & scope = scopes.back()->map;;
+    scope.insert(std::pair<std::string, bool>(name.lexeme, false));
 }
 
 // Other syntax tree nodes

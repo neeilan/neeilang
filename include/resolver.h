@@ -8,6 +8,7 @@
 #include "token.h"
 #include "visitable.h"
 #include "visitor.h"
+#include "scope_tracker.h"
 
 // Describes what kind of function (if any) we're resolving
 // names in.
@@ -29,7 +30,10 @@ enum ClassType
 };
 
 // true in map == 'is finished being initialized in this scope'
-using scope_map = std::map<std::string, bool>;
+struct ScopeMap {
+  std::map<std::string, bool> map;
+  size_t id = 0;
+};
 
 class Resolver : public ExprVisitor<void>, public StmtVisitor<void>
 {
@@ -41,8 +45,11 @@ class Resolver : public ExprVisitor<void>, public StmtVisitor<void>
     void resolve(const std::vector<Stmt *> statements);
 
 //  private:
-    scope_map globals;
-    std::vector<scope_map *> scopes;
+    ScopeMap globals;
+    std::vector<ScopeMap *> scopes;
+    ScopeTracker scope_tracker;
+    std::map<const Expr *, size_t> scope_mappings;
+
     ClassType current_class = NOT_IN_CLASS;
     FunctionType current_function = NOT_IN_FN;
 
@@ -78,6 +85,7 @@ class Resolver : public ExprVisitor<void>, public StmtVisitor<void>
     void resolve_fn(FunctionType declaration, const FuncStmt *fn);
     void declare(const Token);
     void define(const Token);
+
 };
 
 #endif //_NL_RESOLVER_H_
