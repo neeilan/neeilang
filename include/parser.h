@@ -53,7 +53,7 @@ class Parser
     Stmt *var_declaration();
     Stmt *class_declaration();
     Stmt *statement();
-    Stmt *print_statement();
+    Stmt *print_statement(Token keyword);
     Stmt *block_statement();
     Stmt *expression_statement();
     Stmt *if_statement(Token keyword);

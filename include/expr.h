@@ -55,7 +55,7 @@ class Grouping : public ExprCRTP<Grouping>
 {
   public:
     explicit Grouping(Expr &expression) : expression(expression) {}
-    const Expr &expression;
+    const Expr & expression;
 };
 
 class StrLiteral : public ExprCRTP<StrLiteral>

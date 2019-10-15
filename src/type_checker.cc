@@ -151,7 +151,7 @@ void TypeChecker::visit(const ExprStmt * stmt)
 void TypeChecker::visit(const IfStmt * stmt)
 { 
     auto cond_type = check(stmt->condition);
-    if (!match(cond_type, { Primitives::Bool() })) {
+    if (cond_type != Primitives::Bool()) {
         Neeilang::error(stmt->keyword, "Condition must be of type Bool. Got: " + cond_type->name);
     }
 
@@ -161,7 +161,10 @@ void TypeChecker::visit(const IfStmt * stmt)
 
 void TypeChecker::visit(const PrintStmt * stmt)
 {
-   // resolve(stmt->expression);
+    auto expr_type = check(stmt->expression);
+    if (!match(expr_type, { Primitives::String() })) {
+        Neeilang::error(stmt->keyword, "Expression to be printed must be a String. Got: " + expr_type->name);
+    }
 }
 
 void TypeChecker::visit(const ReturnStmt * stmt)
@@ -345,7 +348,7 @@ void TypeChecker::visit(const Set * expr)
 
 void TypeChecker::visit(const Grouping * expr)
 {
-   expr_types[expr] = check(expr);
+   expr_types[expr] = check(&expr->expression);
 }
 
 void TypeChecker::visit(const Logical * expr)

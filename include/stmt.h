@@ -44,10 +44,12 @@ class ExprStmt : public StmtCRTP<ExprStmt>
 class PrintStmt : public StmtCRTP<PrintStmt>
 {
   public:
-    explicit PrintStmt(const Expr * expression)
-        : expression(expression) {}
+    explicit PrintStmt(const Token keyword, const Expr * expression)
+        : keyword(keyword),
+          expression(expression) {}
 
-    const Expr *expression = nullptr;
+    const Token keyword;
+    const Expr * expression = nullptr;
 };
 
 class VarStmt : public StmtCRTP<VarStmt>

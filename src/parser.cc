@@ -101,7 +101,7 @@ Stmt *Parser::statement()
     if (match({IF}))
         return if_statement(previous());
     if (match({PRINT}))
-        return print_statement();
+        return print_statement(previous());
     if (match({RETURN}))
         return return_statement();
     if (match({WHILE}))
@@ -114,11 +114,11 @@ Stmt *Parser::statement()
     return expression_statement();
 }
 
-Stmt *Parser::print_statement()
+Stmt *Parser::print_statement(const Token keyword)
 {
-    Expr *value = expression();
+    const Expr * value = expression();
     consume(SEMICOLON, "Expect ';' after value.");
-    return new PrintStmt(value);
+    return new PrintStmt(keyword, value);
 }
 
 Stmt *Parser::return_statement()
