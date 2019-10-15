@@ -51,6 +51,10 @@ public:
     bool has_type_error(const std::vector<std::shared_ptr<Type>> & types);
 
     TypeTable & types;
+
+private:
+    std::shared_ptr<Type> enclosing_class;
+    std::shared_ptr<Type> enclosing_func;
 };
 
 #endif //_NL_TYPE_CHECKER_H_

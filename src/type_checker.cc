@@ -85,15 +85,8 @@ void TypeChecker::visit(const Assignment * expr)
 }
 
 void TypeChecker::visit(const This * expr)
-{ /*
-    if (current_class != ClassType::IN_CLASS)
-    {
-        Neeilang::error(expr->keyword, "Cannot use 'this' outside of a class.");
-        return;
-    }
-
-    resolve_local(expr, expr->keyword);
-  */
+{ 
+  expr_types[expr] = enclosing_class;
 }
 
 void TypeChecker::visit(const FuncStmt * stmt)
@@ -106,7 +99,10 @@ void TypeChecker::visit(const FuncStmt * stmt)
 void TypeChecker::visit(const ClassStmt * stmt)
 {
   // Hoister should already have checked field types.
+  auto prev_enclosing_class = enclosing_class;
+  enclosing_class = types.get(stmt->name.lexeme);
   check(stmt->methods);
+  enclosing_class = prev_enclosing_class;
 }
 
 // Statements
