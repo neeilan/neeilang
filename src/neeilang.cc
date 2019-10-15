@@ -41,6 +41,10 @@ void Neeilang::run(const std::string &source)
     Parser parser(tokens);
     std::vector<Stmt *> stmts = parser.parse();
 
+    if (had_error) {
+      return;
+    }
+
     AstPrinter printer;
     // for (const Stmt * stmt : stmts) {
     //   std::cout << printer.print(*stmt) << std::endl;
