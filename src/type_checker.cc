@@ -49,8 +49,8 @@ void TypeChecker::visit(const VarStmt * stmt)
       auto expr_type = check(stmt->expression);
       if (!expr_type->subclass_of(var_type.get())) {
         std::ostringstream msg;
-        msg << "Illegal initialization of variable of type " << expr_type->name
-            << " with expression of type " << var_type->name;
+        msg << "Illegal initialization of variable of type " << var_type->name
+            << " with expression of type " << expr_type->name;
         Neeilang::error(stmt->type, msg.str());
       }
    }
