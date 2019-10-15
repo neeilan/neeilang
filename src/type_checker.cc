@@ -93,7 +93,14 @@ void TypeChecker::visit(const FuncStmt * stmt)
 { 
   // GlobalHoister does a majority of the work.
   // TODO : Perhaps move some of that logic here?
-  check(stmt->body);
+
+  auto fn_key = TypeTableUtil::fn_key(stmt->name.lexeme);
+  if (types.contains(fn_key)) {
+    auto prev_enclosing_fn = enclosing_fn;
+    enclosing_fn = types.get(fn_key);
+    check(stmt->body);
+    enclosing_fn = prev_enclosing_fn;
+  }
 }
 
 void TypeChecker::visit(const ClassStmt * stmt)
@@ -132,22 +139,17 @@ void TypeChecker::visit(const PrintStmt * stmt)
 
 void TypeChecker::visit(const ReturnStmt * stmt)
 {
-    /*
-    if (current_function == NOT_IN_FN)
-    {
-        Neeilang::error(stmt->keyword, "Cannot return from top-level code.");
-    }
-
-    if (current_function == INITIALIZER && stmt->value)
-    {
-        Neeilang::error(stmt->keyword, "Cannot return a value from initializer.");
-    }
+    auto declared_rettype = enclosing_fn->functype->return_type;
 
     if (stmt->value)
     {
-        resolve(stmt->value);
-    }
-   */
+        auto actual_rettype = check(stmt->value);
+        if (!actual_rettype->subclass_of( declared_rettype.get() )) {
+          Neeilang::error(stmt->keyword, "Expected return type: " + declared_rettype->name + " but found " + actual_rettype->name);;
+        }
+    } else if (declared_rettype != Primitives::Void()) {
+        Neeilang::error(stmt->keyword, "Found Void return. Expected " + declared_rettype->name);
+      }
 }
 
 void TypeChecker::visit(const WhileStmt * stmt)
@@ -181,10 +183,7 @@ void TypeChecker::visit(const Binary * expr)
       case GREATER:
       case GREATER_EQUAL:
       case LESS:
-      case LESS_EQUAL:
-      case MINUS:
-      case SLASH:
-      case STAR: {
+      case LESS_EQUAL: {
         if (match(left, { Primitives::Int(), Primitives::Float() })
             && match(right, { Primitives::Int(), Primitives::Float() })) {
           expr_types[expr] = Primitives::Bool();
@@ -195,6 +194,21 @@ void TypeChecker::visit(const Binary * expr)
           return;
         }
       }
+      case MINUS:
+      case STAR:
+      case SLASH: {
+          if (left == Primitives::Int() && right == Primitives::Int()) {
+            expr_types[expr] = Primitives::Int();
+            return;
+          } else if (left == Primitives::Float() && right == Primitives::Float()) {
+            expr_types[expr] = Primitives::Float();
+            return;
+          }  else if ((left == Primitives::Float() || right == Primitives::Float()) &&
+                      (left == Primitives::Int() || right == Primitives::Int()) ) {
+            expr_types[expr] = Primitives::Float();
+            return;
+          }
+        }
       case PLUS: {
         if (left == Primitives::Int() && right == Primitives::Int()) {
           expr_types[expr] = Primitives::Int();

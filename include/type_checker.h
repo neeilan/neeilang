@@ -54,7 +54,7 @@ public:
 
 private:
     std::shared_ptr<Type> enclosing_class;
-    std::shared_ptr<Type> enclosing_func;
+    std::shared_ptr<Type> enclosing_fn;
 };
 
 #endif //_NL_TYPE_CHECKER_H_
