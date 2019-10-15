@@ -15,6 +15,9 @@ class TypeChecker :
   public ExprVisitor<void>,
   public StmtVisitor<void>
 {
+public:
+    TypeChecker(TypeTable & types) : types(types) {}
+
     void check(const std::vector<Stmt *> stmts);
     void check(const Stmt * stmt);
     std::shared_ptr<Type> check(const Expr * expr);
@@ -47,6 +50,7 @@ class TypeChecker :
     bool match(const Expr * expr, const std::vector<std::shared_ptr<Type>> & types);
     bool has_type_error(const std::vector<std::shared_ptr<Type>> & types);
 
+    TypeTable & types;
 };
 
 #endif //_NL_TYPE_CHECKER_H_

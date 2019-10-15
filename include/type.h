@@ -41,8 +41,6 @@ class Type
       return Field { "NO_SUCH_FIELD", nullptr }; // Unreachable
     }
   
-    bool defined = false; // Not just declared, but fully defined.
-
     std::string name; // TODO : look into using Token here to preserve source info.
     std::shared_ptr<Type> supertype;
     std::vector<Field> fields;

@@ -38,10 +38,11 @@ class GlobalHoister : public StmtVisitor<void>
     void visit(const WhileStmt *);
     void visit(const FuncStmt *);
     void visit(const ReturnStmt *);
-    TypeTable get_type_table();
+
+    TypeTable & get_type_table();
+
   private:
     void declare(const std::string & type_name);
-
     TypeTable typetab;
     bool decl_only_pass;
 };

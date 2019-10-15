@@ -42,9 +42,9 @@ void Neeilang::run(const std::string &source)
     std::vector<Stmt *> stmts = parser.parse();
 
     AstPrinter printer;
-    for (const Stmt * stmt : stmts) {
-      std::cout << printer.print(*stmt) << std::endl;
-    }
+    // for (const Stmt * stmt : stmts) {
+    //   std::cout << printer.print(*stmt) << std::endl;
+    // }
 
     Resolver resolver;
     resolver.resolve(stmts);
@@ -52,7 +52,8 @@ void Neeilang::run(const std::string &source)
     GlobalHoister hoister;
     hoister.hoist(stmts);
 
-    TypeChecker type_checker;
+    TypeChecker type_checker(hoister.get_type_table());
+    type_checker.check(stmts);
 }
 
 void Neeilang::error(int line, const std::string & message)

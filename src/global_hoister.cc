@@ -5,6 +5,7 @@
 #include "neeilang.h"
 #include "global_hoister.h"
 #include "type.h"
+#include "functype.h"
 #include "stmt.h"
 
 void GlobalHoister::declare(const std::string & type_name) {
@@ -79,7 +80,43 @@ void GlobalHoister::visit(const ClassStmt * cls) {
 }
 
 
-void GlobalHoister::visit(const FuncStmt * stmt) {}
+void GlobalHoister::visit(const FuncStmt * stmt) {
+  // Need types to be declared in first pass, since they
+  // may be used in the function. 
+  if (decl_only_pass) {
+    return;
+  }
+
+  const std::string fn_name = stmt->name.lexeme;
+  const std::string return_type_name = stmt->return_type.lexeme;
+
+  std::shared_ptr<FuncType> functype = std::make_shared<FuncType>();
+  bool had_error = false;
+
+  if (!typetab.contains(stmt->return_type.lexeme)) {
+    Neeilang::error(stmt->return_type, "Unknown return type");
+    had_error = true;
+  } else {
+    functype->return_type = typetab.get(stmt->return_type.lexeme);
+  }
+
+  for (Token param_type : stmt->parameter_types) {
+    if (!typetab.contains(param_type.lexeme)) {
+      Neeilang::error(param_type, "Unknown parameter type");
+      had_error = true;
+    } else {
+      functype->arg_types.push_back(typetab.get(param_type.lexeme));
+    }
+  }
+
+  if (!had_error) {
+    const std::string fn_key = TypeTableUtil::fn_key(stmt);
+    declare(fn_key);
+
+    typetab.get(fn_key)->functype = functype;
+  } 
+}
+
 void GlobalHoister::visit(const BlockStmt * stmt) {}
 void GlobalHoister::visit(const ExprStmt * stmt) {}
 void GlobalHoister::visit(const PrintStmt * stmt) {}
@@ -87,4 +124,8 @@ void GlobalHoister::visit(const VarStmt * stmt) {}
 void GlobalHoister::visit(const IfStmt * stmt) {}
 void GlobalHoister::visit(const WhileStmt * stmt) {}
 void GlobalHoister::visit(const ReturnStmt * stmt) {}
+
+TypeTable & GlobalHoister::get_type_table() {
+  return typetab;
+}
 

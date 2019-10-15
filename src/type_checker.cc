@@ -5,6 +5,9 @@
 #include "neeilang.h"
 #include "primitives.h"
 #include "type_checker.h"
+#include "type_table.h"
+
+#include <iostream>
 
 static std::map<const Expr *, std::shared_ptr<Type>> expr_types;
 
@@ -36,8 +39,12 @@ void TypeChecker::visit(const BlockStmt * stmt)
 
 void TypeChecker::visit(const VarStmt * stmt)
 {
-  /*
-    auto var_type = get_type(stmt->type.lexeme);
+    /*
+    auto var_type = types[stmt->type.lexeme];
+    if (!var_type) {
+      Neeilang::error(stmt->type, "Unknown type");
+    }
+
     if (var_type == Primitives::UnknownType()) {
       expr_types[expr] = Primitives::TypeError();
       return;
@@ -50,11 +57,15 @@ void TypeChecker::visit(const VarStmt * stmt)
         Neeilng::error(stmt->type, "Illegal assignment");
       }
     }
-  */
+    */
 }
 
 void TypeChecker::visit(const Variable * expr)
 { 
+  auto fn_key = TypeTableUtil::fn_key(expr->name.lexeme);
+  if (types.contains(fn_key)) {
+    expr_types[expr] = types.get(fn_key);
+  }
 }
 
 void TypeChecker::visit(const Assignment * expr)
@@ -90,11 +101,9 @@ void TypeChecker::visit(const This * expr)
 }
 
 void TypeChecker::visit(const FuncStmt * stmt)
-{ /*
-    declare(stmt->name);
-    define(stmt->name);
-    resolve_fn(FunctionType::FUNCTION, stmt);
-  */
+{ 
+  // GlobalHoister does a majority of the work.
+  // TODO : Perhaps move some of that logic here?
 }
 
 void TypeChecker::visit(const ClassStmt * stmt)
@@ -193,7 +202,7 @@ void TypeChecker::visit(const WhileStmt * stmt)
 void TypeChecker::visit(const Binary * expr)
 {
     std::shared_ptr<Type> left = check(&expr->left);
-    std::shared_ptr<Type> right = check(&expr->left);
+    std::shared_ptr<Type> right = check(&expr->right);
 
     if (has_type_error( { left, right } )) {
       expr_types[expr] = Primitives::TypeError();
