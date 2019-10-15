@@ -99,7 +99,7 @@ Stmt *Parser::statement()
     // We store Tokens for certain statements to enable
     // better error messages.
     if (match({IF}))
-        return if_statement();
+        return if_statement(previous());
     if (match({PRINT}))
         return print_statement();
     if (match({RETURN}))
@@ -149,7 +149,7 @@ Stmt *Parser::block_statement()
     return new BlockStmt(stmts);
 }
 
-Stmt *Parser::if_statement()
+Stmt *Parser::if_statement(Token keyword)
 {
     consume(LEFT_PAREN, "Expect '(' after 'if'.");
     Expr *condition = expression();
@@ -158,7 +158,7 @@ Stmt *Parser::if_statement()
     Stmt *then_branch = statement();
     Stmt *else_branch = match({ELSE}) ? statement() : nullptr;
 
-    return new IfStmt(condition, then_branch, else_branch);
+    return new IfStmt(keyword, condition, then_branch, else_branch);
 }
 
 Stmt *Parser::while_statement(Token while_tok)

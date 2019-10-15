@@ -75,11 +75,13 @@ class BlockStmt : public StmtCRTP<BlockStmt>
 class IfStmt : public StmtCRTP<IfStmt>
 {
   public:
-    explicit IfStmt(Expr *condition, Stmt *then_branch, Stmt *else_branch)
-        : condition(condition),
+    explicit IfStmt(const Token keyword, Expr *condition, Stmt *then_branch, Stmt *else_branch)
+        : keyword(keyword),
+          condition(condition),
           then_branch(then_branch),
           else_branch(else_branch) {}
 
+    const Token keyword;
     const Expr * condition;
     const Stmt * then_branch;
     const Stmt * else_branch;

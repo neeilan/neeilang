@@ -149,14 +149,14 @@ void TypeChecker::visit(const ExprStmt * stmt)
 }
 
 void TypeChecker::visit(const IfStmt * stmt)
-{ /*
-    resolve(stmt->condition);
+{ 
+    auto cond_type = check(stmt->condition);
+    if (!match(cond_type, { Primitives::Bool() })) {
+        Neeilang::error(stmt->keyword, "Condition must be of type Bool. Got: " + cond_type->name);
+    }
 
-    resolve(stmt->then_branch);
-
-    if (stmt->else_branch)
-        resolve(stmt->else_branch);
-  */
+    if (stmt->then_branch) check(stmt->then_branch);
+    if (stmt->else_branch) check(stmt->else_branch);
 }
 
 void TypeChecker::visit(const PrintStmt * stmt)

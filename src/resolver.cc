@@ -206,10 +206,8 @@ void Resolver::visit(const IfStmt * stmt)
 {
     resolve(stmt->condition);
 
-    resolve(stmt->then_branch);
-
-    if (stmt->else_branch)
-        resolve(stmt->else_branch);
+    if (stmt->then_branch) resolve(stmt->then_branch);
+    if (stmt->else_branch) resolve(stmt->else_branch);
 }
 
 void Resolver::visit(const PrintStmt * stmt)
