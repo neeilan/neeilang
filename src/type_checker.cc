@@ -39,25 +39,21 @@ void TypeChecker::visit(const BlockStmt * stmt)
 
 void TypeChecker::visit(const VarStmt * stmt)
 {
-    /*
-    auto var_type = types[stmt->type.lexeme];
+    auto var_type = types.get(stmt->type.lexeme);
     if (!var_type) {
       Neeilang::error(stmt->type, "Unknown type");
     }
 
-    if (var_type == Primitives::UnknownType()) {
-      expr_types[expr] = Primitives::TypeError();
-      return;
-    }
-
-    if (stmt->expression)
+    if (stmt->expression != nullptr)
     {
-      auto expr_type = check(&stmt->expression);
-      if (!expr_type->subclass_of(var_type.get()) {
-        Neeilng::error(stmt->type, "Illegal assignment");
+      auto expr_type = check(stmt->expression);
+      if (!expr_type->subclass_of(var_type.get())) {
+        std::ostringstream msg;
+        msg << "Illegal initialization of variable of type " << expr_type->name
+            << " with expression of type " << var_type->name;
+        Neeilang::error(stmt->type, msg.str());
       }
-    }
-    */
+   }
 }
 
 void TypeChecker::visit(const Variable * expr)

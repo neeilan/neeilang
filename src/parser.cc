@@ -48,7 +48,9 @@ Stmt *Parser::var_declaration()
     Token type = consume(IDENTIFIER, "Expect variable type.");
 
     // By default, initialize to nil
-    Expr *initializer = new StrLiteral("nil", true);
+    // TODO : Handle nil initialization.
+    // Expr * initializer = new StrLiteral("nil", true);
+    Expr * initializer = nullptr;
 
     if (match({EQUAL}))
     {

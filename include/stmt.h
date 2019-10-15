@@ -60,7 +60,7 @@ class VarStmt : public StmtCRTP<VarStmt>
 
     const Token name;
     const Token type;
-    const Expr *expression = nullptr;
+    const Expr * expression = nullptr;
 };
 
 class BlockStmt : public StmtCRTP<BlockStmt>
