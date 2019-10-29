@@ -1,0 +1,19 @@
+%snippet "Unknown return type"
+fn funcName(intArg : Int, strArg : String) : UndefinedTypeX {
+  return intArg + strArg;
+}
+
+fn doStuff() : Void {
+  return;
+}
+
+%snippet "already declared"
+fn doStuff() : Void {
+  return;
+}
+
+fn main() : Int {
+  doStuff();
+  return 10;
+}
+
