@@ -42,6 +42,7 @@ void TypeChecker::visit(const VarStmt * stmt)
     auto var_type = types()->get(stmt->type.lexeme);
     if (!var_type) {
       Neeilang::error(stmt->type, "Unknown type");
+      return;
     }
 
     if (stmt->expression != nullptr)
@@ -52,12 +53,22 @@ void TypeChecker::visit(const VarStmt * stmt)
         msg << "Illegal initialization of variable of type " << var_type->name
             << " with expression of type " << expr_type->name;
         Neeilang::error(stmt->type, msg.str());
+        return;
       }
    }
+
+  Symbol symbol { stmt->name.lexeme, var_type };
+  symbols()->insert(stmt->name.lexeme, symbol);
 }
 
 void TypeChecker::visit(const Variable * expr)
 { 
+  auto name = expr->name.lexeme;
+  if (symbols()->contains(name)) {
+    expr_types[expr] = symbols()->get(name).type;
+    return;
+  }
+
   auto fn_key = TypeTableUtil::fn_key(expr->name.lexeme);
   if (types()->contains(fn_key)) {
     expr_types[expr] = types()->get(fn_key);
@@ -66,22 +77,26 @@ void TypeChecker::visit(const Variable * expr)
 
 void TypeChecker::visit(const Assignment * expr)
 { 
-  /*
   auto right = check(&expr->value);
-  auto left = check(expr->name); // the var being assigned to.
-
-  if (has_type_error( { left, right } )) {
+  if (has_type_error( {  right } )) {
     expr_types[expr] = Primitives::TypeError();
     return;
   }
 
-  if (!right->subclass_of(left.get()) {
+  // The variable being assigned to.
+  Symbol var = symbols()->get(expr->name.lexeme);
+  auto left = var.type;
+
+  if (!right->subclass_of(left.get())) {
+    std::ostringstream msg;
+    msg << "Cannot assign value of type " << right->name
+        << " to variable '" << var.name << "' of type "  << left->name;
+    Neeilang::error(expr->name, msg.str());
     expr_types[expr] = Primitives::TypeError();
     return;
   }
 
   expr_types[expr] = left;
- */
 }
 
 void TypeChecker::visit(const This * expr)

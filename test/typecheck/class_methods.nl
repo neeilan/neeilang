@@ -8,3 +8,15 @@ class Animal {
     print 12;
   }
 }
+
+class Cat < Animal {}
+
+class Tree {}
+
+var mewer : Cat;
+var animal : Animal;
+animal = mewer;
+
+var tall_tree : Tree;
+animal = tall_tree;
+mewer = tall_tree;

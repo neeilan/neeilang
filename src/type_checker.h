@@ -8,6 +8,7 @@
 
 #include "expr.h"
 #include "stmt.h"
+#include "symtab.h"
 #include "type_table.h"
 #include "visitor.h"
 #include "scope_manager.h"
@@ -55,6 +56,11 @@ public:
     std::shared_ptr<TypeTable> types() {
       return sm.current().typetab;
     }
+
+    std::shared_ptr<SymbolTable> symbols() {
+      return sm.current().symtab;
+    }
+
 
 private:
     std::shared_ptr<Type> enclosing_class;
