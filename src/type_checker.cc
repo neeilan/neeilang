@@ -41,6 +41,12 @@ void TypeChecker::visit(const BlockStmt * stmt)
 
 void TypeChecker::visit(const VarStmt * stmt)
 {
+    auto var_name = stmt->name.lexeme;
+    if (types()->contains(var_name)) {
+        Neeilang::error(stmt->name, "Variable cannot have the name of a type");
+        return;
+    }
+
     auto var_type = types()->get(stmt->type.lexeme);
     if (!var_type) {
       Neeilang::error(stmt->type, "Unknown type");
@@ -59,8 +65,8 @@ void TypeChecker::visit(const VarStmt * stmt)
       }
    }
 
-  Symbol symbol { stmt->name.lexeme, var_type };
-  symbols()->insert(stmt->name.lexeme, symbol);
+  Symbol symbol { var_name, var_type };
+  symbols()->insert(var_name, symbol);
 }
 
 void TypeChecker::visit(const Variable * expr)
