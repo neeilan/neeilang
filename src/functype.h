@@ -7,11 +7,10 @@
 
 class Type;
 
-struct FuncType
-{
-    std::shared_ptr<Type> return_type;
-    std::vector<std::shared_ptr<Type>> arg_types;
-    bool accepts_args(std::vector<std::shared_ptr<Type>> & supplied_types);
+struct FuncType {
+  std::shared_ptr<Type> return_type;
+  std::vector<std::shared_ptr<Type>> arg_types;
+  bool accepts_args(std::vector<std::shared_ptr<Type>> &supplied_types);
 };
 
-#endif  // _NL_FUNCTYPE_H_
+#endif // _NL_FUNCTYPE_H_

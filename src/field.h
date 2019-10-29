@@ -8,10 +8,9 @@
 
 class Type;
 
-struct Field
-{
+struct Field {
   std::string name;
   std::shared_ptr<Type> type;
 };
 
-#endif  // _NL_FIELD_H_
+#endif // _NL_FIELD_H_

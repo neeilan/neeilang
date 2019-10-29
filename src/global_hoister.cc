@@ -8,35 +8,31 @@
 #include "functype.h"
 #include "stmt.h"
 
-void GlobalHoister::declare(const std::string & type_name) {
+void GlobalHoister::declare(const std::string &type_name) {
   typetab()->insert(type_name, std::make_shared<Type>(type_name));
 }
 
 void GlobalHoister::hoist(const std::vector<Stmt *> statements) {
   decl_only_pass = true;
-  for (const Stmt * stmt : statements) {
+  for (const Stmt *stmt : statements) {
     hoist(stmt);
   }
 
   decl_only_pass = false;
-  for (const Stmt * stmt : statements) {
+  for (const Stmt *stmt : statements) {
     hoist(stmt);
   }
 }
 
-void GlobalHoister::hoist(const Stmt * stmt) {
-  stmt->accept(this);
-  
-}
+void GlobalHoister::hoist(const Stmt *stmt) { stmt->accept(this); }
 
-void GlobalHoister::visit(const ClassStmt * cls) {
+void GlobalHoister::visit(const ClassStmt *cls) {
   const std::string cls_name = cls->name.lexeme;
 
   if (decl_only_pass) {
     declare(cls_name); // store a pointer to this type to hoist later
     return;
   }
-
 
   std::shared_ptr<Type> cls_type;
   if (typetab()->contains(cls_name)) {
@@ -75,14 +71,14 @@ void GlobalHoister::visit(const ClassStmt * cls) {
       return;
     }
 
-    cls_type->fields.push_back( Field { field_name, typetab()->get(field_type_name) });
+    cls_type->fields.push_back(
+        Field{field_name, typetab()->get(field_type_name)});
   }
 }
 
-
-void GlobalHoister::visit(const FuncStmt * stmt) {
+void GlobalHoister::visit(const FuncStmt *stmt) {
   // Need types to be declared in first pass, since they
-  // may be used in the function. 
+  // may be used in the function.
   if (decl_only_pass) {
     return;
   }
@@ -113,14 +109,13 @@ void GlobalHoister::visit(const FuncStmt * stmt) {
     const std::string fn_key = TypeTableUtil::fn_key(stmt);
     declare(fn_key);
     typetab()->get(fn_key)->functype = functype;
-  } 
+  }
 }
 
-void GlobalHoister::visit(const BlockStmt * stmt) {}
-void GlobalHoister::visit(const ExprStmt * stmt) {}
-void GlobalHoister::visit(const PrintStmt * stmt) {}
-void GlobalHoister::visit(const VarStmt * stmt) {}
-void GlobalHoister::visit(const IfStmt * stmt) {}
-void GlobalHoister::visit(const WhileStmt * stmt) {}
-void GlobalHoister::visit(const ReturnStmt * stmt) {}
-
+void GlobalHoister::visit(const BlockStmt *stmt) {}
+void GlobalHoister::visit(const ExprStmt *stmt) {}
+void GlobalHoister::visit(const PrintStmt *stmt) {}
+void GlobalHoister::visit(const VarStmt *stmt) {}
+void GlobalHoister::visit(const IfStmt *stmt) {}
+void GlobalHoister::visit(const WhileStmt *stmt) {}
+void GlobalHoister::visit(const ReturnStmt *stmt) {}

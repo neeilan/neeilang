@@ -17,80 +17,71 @@
 
 bool Neeilang::had_error = false;
 
-void Neeilang::run_file(const char *path)
-{
-    const std::ifstream file(path);
-    std::stringstream src_buffer;
+void Neeilang::run_file(const char *path) {
+  const std::ifstream file(path);
+  std::stringstream src_buffer;
 
-    src_buffer << file.rdbuf();
+  src_buffer << file.rdbuf();
 
-    run(src_buffer.str());
+  run(src_buffer.str());
 
-    if (had_error)
-        exit(65); // data format error
+  if (had_error)
+    exit(65); // data format error
 }
 
-void Neeilang::run(const std::string &source)
-{
-    Scanner scanner(source);
-    const std::vector<Token> tokens = scanner.scan_tokens();
+void Neeilang::run(const std::string &source) {
+  Scanner scanner(source);
+  const std::vector<Token> tokens = scanner.scan_tokens();
 
-    // for (Token t : tokens) {
-    //   std::cout << t.str() << std::endl;
-    // }
+  // for (Token t : tokens) {
+  //   std::cout << t.str() << std::endl;
+  // }
 
-    Parser parser(tokens);
-    std::vector<Stmt *> stmts = parser.parse();
+  Parser parser(tokens);
+  std::vector<Stmt *> stmts = parser.parse();
 
-    if (had_error) {
-      return;
-    }
+  if (had_error) {
+    return;
+  }
 
-    AstPrinter printer;
-    // for (const Stmt * stmt : stmts) {
-    //   std::cout << printer.print(*stmt) << std::endl;
-    // }
+  AstPrinter printer;
+  // for (const Stmt * stmt : stmts) {
+  //   std::cout << printer.print(*stmt) << std::endl;
+  // }
 
-    Resolver resolver;
-    resolver.resolve(stmts);
+  Resolver resolver;
+  resolver.resolve(stmts);
 
-    ScopeManager scope_manager;
+  ScopeManager scope_manager;
 
-    GlobalHoister hoister(scope_manager);
-    hoister.hoist(stmts);
+  GlobalHoister hoister(scope_manager);
+  hoister.hoist(stmts);
 
-    TypeChecker type_checker(scope_manager);
-    type_checker.check(stmts);
+  TypeChecker type_checker(scope_manager);
+  type_checker.check(stmts);
 }
 
-void Neeilang::error(int line, const std::string & message)
-{
-    report(line, "", message);
+void Neeilang::error(int line, const std::string &message) {
+  report(line, "", message);
 }
 
-void Neeilang::error(Token token, const std::string & message)
-{
-    if (token.type == END_OF_FILE)
-    {
-        report(token.line, " at end", message);
-    }
-    else
-    {
-        report(token.line, " at '" + token.lexeme + "'", message);
-    }
+void Neeilang::error(Token token, const std::string &message) {
+  if (token.type == END_OF_FILE) {
+    report(token.line, " at end", message);
+  } else {
+    report(token.line, " at '" + token.lexeme + "'", message);
+  }
 }
 
 // Private
 
-void Neeilang::report(int line,
-                 const std::string & occurrence,
-                 const std::string & message)
-{
-    std::cout << "[line " << line << "] Error: ";
-    if (occurrence.size() > 0) {
-      std::cout << occurrence << " : ";
-    }
-    std::cout << message << std::endl;
+void Neeilang::report(int line, const std::string &occurrence,
+                      const std::string &message) {
+  std::cout << "[line " << line << "] Error: ";
+  if (occurrence.size() > 0) {
+    std::cout << occurrence << " : ";
+  }
+  std::cout << message << std::endl;
 
-    had_error = true;
+  had_error = true;
 }

@@ -15,14 +15,9 @@ struct ScopeManager {
     scopes.push_back(Scope(next_id++));
   }
 
-  Scope current() {
-    return scopes[curr_scope];
-  }
+  Scope current() { return scopes[curr_scope]; }
 
-
-  Scope globals() {
-    return scopes[0];
-  } 
+  Scope globals() { return scopes[0]; }
 
   void enter() {
     Scope new_scope = current().create_child(next_id++);
@@ -30,13 +25,7 @@ struct ScopeManager {
     curr_scope = new_scope.id;
   }
 
-  void exit() {
-    if (curr_scope == 0) {
-      throw "Attempting to exit from global scope";
-    }
-
-    curr_scope = current().parent;
-  }
+  void exit() { curr_scope = current().parent; }
 };
 
-#endif  // _NL_SCOPE_MANAGER_H_
+#endif // _NL_SCOPE_MANAGER_H_

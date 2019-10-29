@@ -14,6 +14,4 @@ struct Symbol {
 
 using SymbolTable = CactusTable<const std::string, Symbol>;
 
-#endif  // _NL_SYMTAB_H_
-
-
+#endif // _NL_SYMTAB_H_

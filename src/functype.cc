@@ -4,7 +4,8 @@
 #include "functype.h"
 #include "type.h"
 
-bool FuncType::accepts_args(std::vector<std::shared_ptr<Type>> & supplied_types) {
+bool FuncType::accepts_args(
+    std::vector<std::shared_ptr<Type>> &supplied_types) {
   if (arg_types.size() != supplied_types.size()) {
     return false;
   }

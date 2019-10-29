@@ -31,5 +31,4 @@ private:
   Scope() {}
 };
 
-
-#endif  // _NL_SCOPE_H_
+#endif // _NL_SCOPE_H_

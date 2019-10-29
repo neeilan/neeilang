@@ -7,14 +7,13 @@
 
 using std::shared_ptr;
 
-namespace Primitives
-{
-  shared_ptr<Type> String();
-  shared_ptr<Type> Int();
-  shared_ptr<Type> Float();
-  shared_ptr<Type> Bool();
-  shared_ptr<Type> Void();
-  shared_ptr<Type> TypeError();
+namespace Primitives {
+shared_ptr<Type> String();
+shared_ptr<Type> Int();
+shared_ptr<Type> Float();
+shared_ptr<Type> Bool();
+shared_ptr<Type> Void();
+shared_ptr<Type> TypeError();
 }
 
-#endif  // _NL_PRIMITIVES_H_
+#endif // _NL_PRIMITIVES_H_
