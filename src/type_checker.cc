@@ -34,7 +34,9 @@ std::shared_ptr<Type> TypeChecker::check(const Expr * expr)
 
 void TypeChecker::visit(const BlockStmt * stmt)
 { 
+    sm.enter();
     check(stmt->block_contents);
+    sm.exit();
 }
 
 void TypeChecker::visit(const VarStmt * stmt)

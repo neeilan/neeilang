@@ -9,7 +9,7 @@
 
 struct Scope {
   std::size_t id;
-  Scope * parent = nullptr;
+  std::size_t parent = -1;
   std::shared_ptr<SymbolTable> symtab;
   std::shared_ptr<TypeTable> typetab;
 
@@ -18,10 +18,10 @@ struct Scope {
     typetab = std::make_shared<TypeTable>();
   }
 
-  Scope create_child(std::size_t id) {
+  Scope create_child(std::size_t child_id) {
     Scope child;
-    child.id = id;
-    child.parent = this;
+    child.id = child_id;
+    child.parent = id;
     child.symtab = std::make_shared<SymbolTable>(symtab);
     child.typetab = std::make_shared<TypeTable>(typetab);
     return child;
