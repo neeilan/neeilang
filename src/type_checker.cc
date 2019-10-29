@@ -39,7 +39,7 @@ void TypeChecker::visit(const BlockStmt * stmt)
 
 void TypeChecker::visit(const VarStmt * stmt)
 {
-    auto var_type = types.get(stmt->type.lexeme);
+    auto var_type = types()->get(stmt->type.lexeme);
     if (!var_type) {
       Neeilang::error(stmt->type, "Unknown type");
     }
@@ -59,8 +59,8 @@ void TypeChecker::visit(const VarStmt * stmt)
 void TypeChecker::visit(const Variable * expr)
 { 
   auto fn_key = TypeTableUtil::fn_key(expr->name.lexeme);
-  if (types.contains(fn_key)) {
-    expr_types[expr] = types.get(fn_key);
+  if (types()->contains(fn_key)) {
+    expr_types[expr] = types()->get(fn_key);
   }
 }
 
@@ -93,11 +93,10 @@ void TypeChecker::visit(const FuncStmt * stmt)
 { 
   // GlobalHoister does a majority of the work.
   // TODO : Perhaps move some of that logic here?
-
   auto fn_key = TypeTableUtil::fn_key(stmt->name.lexeme);
-  if (types.contains(fn_key)) {
+  if (types()->contains(fn_key)) {
     auto prev_enclosing_fn = enclosing_fn;
-    enclosing_fn = types.get(fn_key);
+    enclosing_fn = types()->get(fn_key);
     check(stmt->body);
     enclosing_fn = prev_enclosing_fn;
   }
@@ -107,7 +106,7 @@ void TypeChecker::visit(const ClassStmt * stmt)
 {
   // Hoister should already have checked field types.
   auto prev_enclosing_class = enclosing_class;
-  enclosing_class = types.get(stmt->name.lexeme);
+  enclosing_class = types()->get(stmt->name.lexeme);
   check(stmt->methods);
   enclosing_class = prev_enclosing_class;
 }
@@ -240,7 +239,8 @@ void TypeChecker::visit(const Binary * expr)
 void TypeChecker::visit(const Call * expr)
 {
     auto callee_type = check(&expr->callee);
-    if (!callee_type->functype) {
+
+    if (!callee_type || !callee_type->functype) {
         Neeilang::error(expr->paren, "Expression is not callable");
         expr_types[expr] = Primitives::TypeError();
         return;

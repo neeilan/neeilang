@@ -8,7 +8,7 @@
 #include "token.h"
 #include "visitable.h"
 #include "visitor.h"
-#include "scope_tracker.h"
+#include "scope_manager.h"
 
 // Describes what kind of function (if any) we're resolving
 // names in.
@@ -47,7 +47,6 @@ class Resolver : public ExprVisitor<void>, public StmtVisitor<void>
 //  private:
     ScopeMap globals;
     std::vector<ScopeMap *> scopes;
-    ScopeTracker scope_tracker;
     std::map<const Expr *, size_t> scope_mappings;
 
     ClassType current_class = NOT_IN_CLASS;

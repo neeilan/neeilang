@@ -10,13 +10,14 @@
 #include "stmt.h"
 #include "type_table.h"
 #include "visitor.h"
+#include "scope_manager.h"
 
 class TypeChecker :
   public ExprVisitor<void>,
   public StmtVisitor<void>
 {
 public:
-    TypeChecker(TypeTable & types) : types(types) {}
+    TypeChecker(ScopeManager & sm) : sm(sm) {}
 
     void check(const std::vector<Stmt *> stmts);
     void check(const Stmt * stmt);
@@ -50,7 +51,10 @@ public:
     bool match(const Expr * expr, const std::vector<std::shared_ptr<Type>> & types);
     bool has_type_error(const std::vector<std::shared_ptr<Type>> & types);
 
-    TypeTable & types;
+    ScopeManager & sm;
+    std::shared_ptr<TypeTable> types() {
+      return sm.current().typetab;
+    }
 
 private:
     std::shared_ptr<Type> enclosing_class;

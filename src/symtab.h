@@ -8,9 +8,9 @@
 #include "type.h"
 
 struct Symbol {
-  std:string name;
+  std::string name;
   std::shared_ptr<Type> type;
-}
+};
 
 using SymbolTable = CactusTable<const std::string, Symbol>;
 

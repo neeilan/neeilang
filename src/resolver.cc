@@ -153,7 +153,6 @@ void Resolver::resolve_fn(FunctionType declaration, const FuncStmt * fn)
 void Resolver::begin_scope()
 {
     auto scope_map = new ScopeMap;
-    scope_map->id = scope_tracker.advance();
     scopes.push_back(scope_map);
 }
 

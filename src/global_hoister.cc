@@ -9,7 +9,7 @@
 #include "stmt.h"
 
 void GlobalHoister::declare(const std::string & type_name) {
-  typetab.insert(type_name, std::make_shared<Type>(type_name));
+  typetab()->insert(type_name, std::make_shared<Type>(type_name));
 }
 
 void GlobalHoister::hoist(const std::vector<Stmt *> statements) {
@@ -39,22 +39,22 @@ void GlobalHoister::visit(const ClassStmt * cls) {
 
 
   std::shared_ptr<Type> cls_type;
-  if (typetab.contains(cls_name)) {
-    cls_type = typetab.get(cls_name);
+  if (typetab()->contains(cls_name)) {
+    cls_type = typetab()->get(cls_name);
   } else {
     cls_type = std::make_shared<Type>(cls_name);
-    typetab.insert(cls_name, cls_type);
+    typetab()->insert(cls_name, cls_type);
   }
 
   // Supertype
   if (cls->superclass) {
     std::string supercls_name = cls->superclass->lexeme;
-    if (!typetab.contains(supercls_name)) {
+    if (!typetab()->contains(supercls_name)) {
       Neeilang::error(*cls->superclass, "Unknown superclass");
       return;
     }
 
-    std::shared_ptr<Type> supercls = typetab.get(supercls_name);
+    std::shared_ptr<Type> supercls = typetab()->get(supercls_name);
 
     // Circular inheritance is an error.
     if (supercls->subclass_of(cls_type.get())) {
@@ -70,12 +70,12 @@ void GlobalHoister::visit(const ClassStmt * cls) {
     std::string field_name = cls->fields[i].lexeme;
     std::string field_type_name = cls->field_types[i].lexeme;
 
-    if (!typetab.contains(field_type_name)) {
+    if (!typetab()->contains(field_type_name)) {
       Neeilang::error(cls->field_types[i], "Unknown field type");
       return;
     }
 
-    cls_type->fields.push_back( Field { field_name, typetab.get(field_type_name) });
+    cls_type->fields.push_back( Field { field_name, typetab()->get(field_type_name) });
   }
 }
 
@@ -93,27 +93,26 @@ void GlobalHoister::visit(const FuncStmt * stmt) {
   std::shared_ptr<FuncType> functype = std::make_shared<FuncType>();
   bool had_error = false;
 
-  if (!typetab.contains(stmt->return_type.lexeme)) {
+  if (!typetab()->contains(stmt->return_type.lexeme)) {
     Neeilang::error(stmt->return_type, "Unknown return type");
     had_error = true;
   } else {
-    functype->return_type = typetab.get(stmt->return_type.lexeme);
+    functype->return_type = typetab()->get(stmt->return_type.lexeme);
   }
 
   for (Token param_type : stmt->parameter_types) {
-    if (!typetab.contains(param_type.lexeme)) {
+    if (!typetab()->contains(param_type.lexeme)) {
       Neeilang::error(param_type, "Unknown parameter type");
       had_error = true;
     } else {
-      functype->arg_types.push_back(typetab.get(param_type.lexeme));
+      functype->arg_types.push_back(typetab()->get(param_type.lexeme));
     }
   }
 
   if (!had_error) {
     const std::string fn_key = TypeTableUtil::fn_key(stmt);
     declare(fn_key);
-
-    typetab.get(fn_key)->functype = functype;
+    typetab()->get(fn_key)->functype = functype;
   } 
 }
 
@@ -124,8 +123,4 @@ void GlobalHoister::visit(const VarStmt * stmt) {}
 void GlobalHoister::visit(const IfStmt * stmt) {}
 void GlobalHoister::visit(const WhileStmt * stmt) {}
 void GlobalHoister::visit(const ReturnStmt * stmt) {}
-
-TypeTable & GlobalHoister::get_type_table() {
-  return typetab;
-}
 

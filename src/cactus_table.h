@@ -15,7 +15,7 @@ class CactusTable
 {
   public:
     CactusTable() {}
-    CactusTable(std::shared_ptr<CactusTable<K, V>> parent)
+    explicit CactusTable(std::shared_ptr<CactusTable<K, V>> parent)
       : parent(parent) {}
 
     void insert(K k, V v) {

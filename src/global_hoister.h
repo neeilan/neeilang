@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "visitor.h"
-#include "type_table.h"
+#include "scope_manager.h"
 #include "primitives.h"
 
 /*
@@ -19,12 +19,12 @@
 class GlobalHoister : public StmtVisitor<void>
 {
   public:
-    GlobalHoister() {
-      typetab.insert("String", Primitives::String());
-      typetab.insert("Int", Primitives::Int());
-      typetab.insert("Float", Primitives::Float());
-      typetab.insert("Bool", Primitives::Bool());
-      typetab.insert("Void", Primitives::Void());
+    GlobalHoister(ScopeManager & sm) : sm(sm) {
+      typetab()->insert("String", Primitives::String());
+      typetab()->insert("Int", Primitives::Int());
+      typetab()->insert("Float", Primitives::Float());
+      typetab()->insert("Bool", Primitives::Bool());
+      typetab()->insert("Void", Primitives::Void());
     }
 
     void hoist(const std::vector<Stmt *> statements);
@@ -39,12 +39,15 @@ class GlobalHoister : public StmtVisitor<void>
     void visit(const FuncStmt *);
     void visit(const ReturnStmt *);
 
-    TypeTable & get_type_table();
-
   private:
-    void declare(const std::string & type_name);
-    TypeTable typetab;
+    ScopeManager sm;
     bool decl_only_pass;
+
+    void declare(const std::string & type_name);
+
+    std::shared_ptr<TypeTable> typetab() {
+      return sm.current().typetab;
+    }
 };
 
 #endif //_NL_GLOBAL_HOISTER_H_

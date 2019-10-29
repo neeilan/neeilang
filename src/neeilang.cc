@@ -13,6 +13,7 @@
 #include "ast_printer.h"
 #include "global_hoister.h"
 #include "type_checker.h"
+#include "scope_manager.h"
 
 bool Neeilang::had_error = false;
 
@@ -53,10 +54,12 @@ void Neeilang::run(const std::string &source)
     Resolver resolver;
     resolver.resolve(stmts);
 
-    GlobalHoister hoister;
+    ScopeManager scope_manager;
+
+    GlobalHoister hoister(scope_manager);
     hoister.hoist(stmts);
 
-    TypeChecker type_checker(hoister.get_type_table());
+    TypeChecker type_checker(scope_manager);
     type_checker.check(stmts);
 }
 
