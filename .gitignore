@@ -1,3 +1,11 @@
+# CMake artifacts
+cmake_install.cmake
+CMakeFiles
+Testing
+CMakeCache.txt
+*.cmake
+Makefile
+
 # Prerequisites
 *.d
 
