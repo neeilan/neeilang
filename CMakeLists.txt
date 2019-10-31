@@ -16,11 +16,17 @@ file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cc)
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/cli.cc)
 
 ###############################
-# LLVM Backend
+# LLVM Backend impl.
 ###############################
-file(GLOB LLVM_BACKEND_FILES ${PROJECT_SOURCE_DIR}/src/backend/llvm*.cc)
+file(GLOB LLVM_BACKEND_FILES ${PROJECT_SOURCE_DIR}/src/backends/llvm/*.cc)
 list(APPEND SRC_FILES ${LLVM_BACKEND_FILES})
 
+set(LLVM_BACKEND_INCLUDES ${PROJECT_SOURCE_DIR}/src/backends/llvm)
+include_directories(${LLVM_INCLUDE_DIRS})
+
+###############################
+# LLVM libraries
+###############################
 set(CMAKE_MODULE_PATH
         ${CMAKE_MODULE_PATH}
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
@@ -32,12 +38,10 @@ link_directories(${LLVM_LIBRARY_DIRS})
 link_libraries(${LLVM_LIBS})
 set(CMAKE_EXE_LINKER_FLAGS ${LLVM_LD_FLAGS_STRING})
 
-
-set(CMAKE_CXX_STANDARD 11)
-
 ################################
 # Normal Libraries & Executables
 ################################
+set(CMAKE_CXX_STANDARD 11)
 add_library(neeilang_lib ${SRC_FILES})
 add_executable(neeilang ${PROJECT_SOURCE_DIR}/src/cli.cc)
 

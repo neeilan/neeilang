@@ -56,6 +56,7 @@ public:
   std::shared_ptr<SymbolTable> symbols() { return sm.current().symtab; }
 
 private:
+  std::map<const Expr *, std::shared_ptr<Type>> expr_types;
   std::shared_ptr<Type> enclosing_class;
   std::shared_ptr<Type> enclosing_fn;
 };

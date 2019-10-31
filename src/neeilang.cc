@@ -14,6 +14,7 @@
 #include "global_hoister.h"
 #include "type_checker.h"
 #include "scope_manager.h"
+#include "backends/llvm/codegen.h"
 
 bool Neeilang::had_error = false;
 
@@ -59,6 +60,8 @@ void Neeilang::run(const std::string &source) {
 
   TypeChecker type_checker(scope_manager);
   type_checker.check(stmts);
+
+  CodeGen codegen;
 }
 
 void Neeilang::error(int line, const std::string &message) {

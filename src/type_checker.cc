@@ -9,8 +9,6 @@
 
 #include <iostream>
 
-static std::map<const Expr *, std::shared_ptr<Type>> expr_types;
-
 void TypeChecker::check(const std::vector<Stmt *> statements) {
   for (const Stmt *stmt : statements) {
     check(stmt);
