@@ -5,6 +5,7 @@
 #include "llvm/IR/Value.h"
 
 using llvm::ConstantFP;
+using llvm::ConstantInt;
 using llvm::Value;
 
 Value* CodeGen::emit(const Expr *expr) {
@@ -72,6 +73,7 @@ void CodeGen::visit(const Binary *expr) {
       return;
     }
     default: {
+      // Error
       return;
     }
   }
@@ -85,8 +87,14 @@ void CodeGen::visit(const Grouping *expr) {
   expr_values[expr] = emit(&expr->expression);
 }
 
-void CodeGen::visit(const StrLiteral *expr) {}
-void CodeGen::visit(const BoolLiteral *expr) {}
+void CodeGen::visit(const StrLiteral *expr) {
+  expr_values[expr] = builder->CreateGlobalStringPtr(expr->value);
+}
+
+void CodeGen::visit(const BoolLiteral *expr) {
+  expr_values[expr] = expr->value ? ConstantInt::getTrue(ctx) : ConstantInt::getFalse(ctx);
+}
+
 void CodeGen::visit(const Variable *expr) {}
 void CodeGen::visit(const Assignment *expr) {}
 void CodeGen::visit(const Logical *expr) {}
