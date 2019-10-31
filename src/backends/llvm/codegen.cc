@@ -95,9 +95,30 @@ void CodeGen::visit(const BoolLiteral *expr) {
   expr_values[expr] = expr->value ? ConstantInt::getTrue(ctx) : ConstantInt::getFalse(ctx);
 }
 
+void CodeGen::visit(const Logical *expr) {
+  // TODO: Implement short-circuit semantics here.
+  Value *l = emit(&expr->left);
+  Value *r = emit(&expr->right);
+
+  if (!l || !r) return;
+
+  switch (expr->op.type) {
+    case AND : {
+      expr_values[expr] = builder->CreateAnd(l, r, "and_tmp");
+      return;
+    }
+    case OR : {
+      expr_values[expr] = builder->CreateOr(l, r, "or_tmp");
+      return;
+    }
+    default : {
+      return;
+    }
+  }
+}
+
 void CodeGen::visit(const Variable *expr) {}
 void CodeGen::visit(const Assignment *expr) {}
-void CodeGen::visit(const Logical *expr) {}
 void CodeGen::visit(const Call *expr) {}
 void CodeGen::visit(const Get *expr) {}
 void CodeGen::visit(const Set *expr) {}
