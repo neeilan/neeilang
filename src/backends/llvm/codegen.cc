@@ -1,8 +1,10 @@
 #include "expr.h"
 #include "backends/llvm/codegen.h"
 
+#include "llvm/ADT/APFloat.h"
 #include "llvm/IR/Value.h"
 
+using llvm::ConstantFP;
 using llvm::Value;
 
 Value* CodeGen::emit(const Expr *expr) {
@@ -37,15 +39,53 @@ void CodeGen::visit(const Binary *expr) {
       expr_values[expr] = builder->CreateFDiv(l, r, "divtmp");
       return;
     }
+    case LESS : {
+      // Here (and in the following comparisons), 'U' in 'ULT'
+      // refers to 'unordered'. The actual instruction is
+      // 'unordered or less than' - which corresponds to the 'uge'
+      // condition code being the first arg to the fcmp instruction
+      // in the generated IR. (llvm.org/docs/LangRef.html#id305)
+      expr_values[expr] = builder->CreateFCmpULT(l, r, "cmp_lt_tmp");
+      return;
+    }
+    case LESS_EQUAL : {
+      expr_values[expr] = builder->CreateFCmpULE(l, r, "cmp_le_tmp");
+      return;
+    }
+    case GREATER : {
+      expr_values[expr] = builder->CreateFCmpUGT(l, r, "cmp_gt_tmp");
+      return;
+    }
+    case GREATER_EQUAL : {
+      expr_values[expr] = builder->CreateFCmpUGE(l, r, "cmp_ge_tmp");
+      return;
+    }
+    case EQUAL_EQUAL : {
+      // Use 'ordered and equal' here - 'ordered' means that
+      // neither operand is QNAN (quiet NaN).
+      expr_values[expr] = builder->CreateFCmpOEQ(l,r, "cmp_eq_tmp");
+      return;
+    }
+    case BANG_EQUAL : {
+      // Emit fcmp with 'unordered or not equal' condition code.
+      expr_values[expr] = builder->CreateFCmpUNE(l,r, "cmp_ne_tmp");
+      return;
+    }
     default: {
       return;
     }
   }
 }
 
-void CodeGen::visit(const Grouping *expr) {}
+void CodeGen::visit(const NumLiteral *expr) {
+  expr_values[expr] = ConstantFP::get(ctx, llvm::APFloat(expr->value));
+}
+
+void CodeGen::visit(const Grouping *expr) {
+  expr_values[expr] = emit(&expr->expression);
+}
+
 void CodeGen::visit(const StrLiteral *expr) {}
-void CodeGen::visit(const NumLiteral *expr) {}
 void CodeGen::visit(const BoolLiteral *expr) {}
 void CodeGen::visit(const Variable *expr) {}
 void CodeGen::visit(const Assignment *expr) {}
