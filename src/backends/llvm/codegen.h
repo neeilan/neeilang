@@ -23,10 +23,7 @@ public:
     builder = llvm::make_unique<llvm::IRBuilder<>>(ctx);
   }
 
-  Value *emit(const Expr &expr) {
-    expr.accept(this);
-    return nullptr;
-  }
+  Value *emit(const Expr *expr);
 
   void visit(const Unary *);
   void visit(const Binary *);
@@ -48,6 +45,7 @@ private:
   std::unique_ptr<llvm::IRBuilder<>> builder = nullptr;
   std::unique_ptr<llvm::Module> module; // Owns memory for generated IR.
   NamedValueTable named_vals;
+  Value* codegen(Expr *expr);
 };
 
 #endif // _NL_BACKENDS_LLVM_CODEGEN_H_
