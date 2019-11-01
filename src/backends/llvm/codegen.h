@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "cactus_table.h"
 #include "expr.h"
@@ -17,12 +18,14 @@
 using llvm::Value;
 using NamedValueTable = CactusTable<std::string, Value*>;
 
-class CodeGen : public ExprVisitor<void> {
+class CodeGen : public ExprVisitor<>, public StmtVisitor<> {
 public:
   CodeGen() {
     builder = llvm::make_unique<llvm::IRBuilder<>>(ctx);
   }
 
+  void emit(const std::vector<Stmt *> program);
+  void emit(const Stmt *stmt);
   Value *emit(const Expr *expr);
 
   void visit(const Unary *);
@@ -38,6 +41,16 @@ public:
   void visit(const Get *);
   void visit(const Set *);
   void visit(const This *);
+
+  void visit(const BlockStmt *);
+  void visit(const ExprStmt *);
+  void visit(const PrintStmt *);
+  void visit(const VarStmt *);
+  void visit(const ClassStmt *);
+  void visit(const IfStmt *);
+  void visit(const WhileStmt *);
+  void visit(const FuncStmt *);
+  void visit(const ReturnStmt *);
 
 private:
   std::map<const Expr *, Value *> expr_values;

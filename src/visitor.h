@@ -5,7 +5,7 @@
 
 #include "visitable.h"
 
-template <class T> class StmtVisitor {
+template <class T=void> class StmtVisitor {
 public:
   virtual ~StmtVisitor() = default;
   virtual T visit(const BlockStmt *) = 0;
@@ -19,7 +19,7 @@ public:
   virtual T visit(const ReturnStmt *) = 0;
 };
 
-template <class T> class ExprVisitor {
+template <class T=void> class ExprVisitor {
 public:
   virtual ~ExprVisitor() = default;
   virtual T visit(const Unary *) = 0;

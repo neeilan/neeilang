@@ -1,5 +1,8 @@
+#include <vector>
+
 #include "expr.h"
-#include "backends/llvm/codegen.h"
+#include "stmt.h"
+#include "codegen.h"
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/IR/Value.h"
@@ -7,6 +10,14 @@
 using llvm::ConstantFP;
 using llvm::ConstantInt;
 using llvm::Value;
+
+void CodeGen::emit(std::vector<Stmt*> program) {
+
+}
+
+void CodeGen::emit(const Stmt *stmt) {
+
+}
 
 Value* CodeGen::emit(const Expr *expr) {
   expr->accept(this);
@@ -123,4 +134,14 @@ void CodeGen::visit(const Call *expr) {}
 void CodeGen::visit(const Get *expr) {}
 void CodeGen::visit(const Set *expr) {}
 void CodeGen::visit(const This *expr) {}
+
+void CodeGen::visit(const BlockStmt *stmt) {}
+void CodeGen::visit(const ExprStmt *stmt) {}
+void CodeGen::visit(const PrintStmt *stmt) {}
+void CodeGen::visit(const VarStmt *stmt) {}
+void CodeGen::visit(const ClassStmt *stmt) {}
+void CodeGen::visit(const IfStmt *stmt) {}
+void CodeGen::visit(const WhileStmt *stmt) {}
+void CodeGen::visit(const FuncStmt *stmt) {}
+void CodeGen::visit(const ReturnStmt *stmt) {}
 
