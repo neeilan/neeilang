@@ -1,0 +1,9 @@
+fn something() : Int {
+  5 + 3 + (3 - 5) > 3;
+  5 <= 11;
+  return 4;
+}
+
+fn _else() : String {
+  return "hii";
+}

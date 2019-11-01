@@ -20,13 +20,15 @@ using NamedValueTable = CactusTable<std::string, Value*>;
 
 class CodeGen : public ExprVisitor<>, public StmtVisitor<> {
 public:
-  CodeGen() {
+  explicit CodeGen() {
+    module = llvm::make_unique<llvm::Module>("neeilang.main_module", ctx);
     builder = llvm::make_unique<llvm::IRBuilder<>>(ctx);
   }
 
-  void emit(const std::vector<Stmt *> program);
+  void emit(const std::vector<Stmt *> &stmts);
   void emit(const Stmt *stmt);
   Value *emit(const Expr *expr);
+  void print() { module->print(llvm::errs(), nullptr); }
 
   void visit(const Unary *);
   void visit(const Binary *);
@@ -56,7 +58,7 @@ private:
   std::map<const Expr *, Value *> expr_values;
   llvm::LLVMContext ctx;
   std::unique_ptr<llvm::IRBuilder<>> builder = nullptr;
-  std::unique_ptr<llvm::Module> module; // Owns memory for generated IR.
+  std::unique_ptr<llvm::Module> module = nullptr; // Owns memory for generated IR.
   NamedValueTable named_vals;
   Value* codegen(Expr *expr);
 };

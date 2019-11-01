@@ -1,23 +1,31 @@
 #include <vector>
+#include <iostream>
 
 #include "expr.h"
 #include "stmt.h"
 #include "codegen.h"
 
-#include "llvm/ADT/APFloat.h"
-#include "llvm/IR/Value.h"
 
+#include "llvm/ADT/APFloat.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Value.h"
+#include "llvm/IR/Verifier.h"
+
+using llvm::BasicBlock;
 using llvm::ConstantFP;
 using llvm::ConstantInt;
+using llvm::Function;
+using llvm::FunctionType;
 using llvm::Value;
 
-void CodeGen::emit(std::vector<Stmt*> program) {
-
+void CodeGen::emit(const std::vector<Stmt*> &stmts) {
+  for (const Stmt *stmt : stmts) {
+    emit(stmt);
+  }
 }
 
-void CodeGen::emit(const Stmt *stmt) {
-
-}
+void CodeGen::emit(const Stmt *stmt) { stmt->accept(this); }
 
 Value* CodeGen::emit(const Expr *expr) {
   expr->accept(this);
@@ -33,6 +41,9 @@ void CodeGen::visit(const Binary *expr) {
   Value *r = emit(&expr->right);
 
   if (!l || !r) return;
+
+  std::cout << "BINARY" << std::endl;
+
 
   switch (expr->op.type) {
     case PLUS : {
@@ -85,6 +96,7 @@ void CodeGen::visit(const Binary *expr) {
     }
     default: {
       // Error
+      expr_values[expr] = nullptr;
       return;
     }
   }
@@ -135,13 +147,39 @@ void CodeGen::visit(const Get *expr) {}
 void CodeGen::visit(const Set *expr) {}
 void CodeGen::visit(const This *expr) {}
 
-void CodeGen::visit(const BlockStmt *stmt) {}
-void CodeGen::visit(const ExprStmt *stmt) {}
+void CodeGen::visit(const ExprStmt *stmt) {
+  emit(stmt->expression);
+}
+
+void CodeGen::visit(const BlockStmt *stmt) {
+  emit(stmt->block_contents);
+}
+
 void CodeGen::visit(const PrintStmt *stmt) {}
 void CodeGen::visit(const VarStmt *stmt) {}
 void CodeGen::visit(const ClassStmt *stmt) {}
 void CodeGen::visit(const IfStmt *stmt) {}
 void CodeGen::visit(const WhileStmt *stmt) {}
-void CodeGen::visit(const FuncStmt *stmt) {}
-void CodeGen::visit(const ReturnStmt *stmt) {}
+
+void CodeGen::visit(const FuncStmt *stmt) {
+  // Only have () -> Double func now - want to generate SOME IR first!
+  std::vector<llvm::Type*> doubles(0, llvm::Type::getDoubleTy(ctx));
+  FunctionType *ft = FunctionType::get(llvm::Type::getDoubleTy(ctx), doubles, false);
+  Function *func = Function::Create(ft, Function::ExternalLinkage, stmt->name.lexeme, module.get());
+
+  BasicBlock *BB = BasicBlock::Create(ctx, "entry", func);
+  builder->SetInsertPoint(BB);
+
+  emit(stmt->body);
+  verifyFunction(*func);
+}
+
+void CodeGen::visit(const ReturnStmt *stmt) {
+  if (stmt->value) {
+    Value *val = emit(stmt->value);
+    builder->CreateRet(val);
+  } else {
+    builder->CreateRetVoid();
+  }
+}
 

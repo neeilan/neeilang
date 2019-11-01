@@ -39,29 +39,36 @@ void Neeilang::run(const std::string &source) {
   // }
 
   Parser parser(tokens);
-  std::vector<Stmt *> stmts = parser.parse();
+  std::vector<Stmt *> program = parser.parse();
 
   if (had_error) {
     return;
   }
 
   AstPrinter printer;
-  // for (const Stmt * stmt : stmts) {
+  // for (const Stmt * stmt : program) {
   //   std::cout << printer.print(*stmt) << std::endl;
   // }
 
   Resolver resolver;
-  resolver.resolve(stmts);
+  resolver.resolve(program);
 
   ScopeManager scope_manager;
 
   GlobalHoister hoister(scope_manager);
-  hoister.hoist(stmts);
+  hoister.hoist(program);
 
   TypeChecker type_checker(scope_manager);
-  type_checker.check(stmts);
+  type_checker.check(program);
+
+  if (had_error) {
+    return; // Compilation halted due to type errors.
+  }
 
   CodeGen codegen;
+  codegen.emit(program);
+  codegen.print();
+
 }
 
 void Neeilang::error(int line, const std::string &message) {
