@@ -373,7 +373,7 @@ void TypeChecker::visit(const BoolLiteral *expr) {
 }
 
 void TypeChecker::visit(const NumLiteral *expr) {
-  expr_types[expr] = Primitives::Float();
+  expr_types[expr] = expr->has_decimal_point() ? Primitives::Float() : Primitives::Int();
 }
 
 void TypeChecker::visit(const StrLiteral *expr) {

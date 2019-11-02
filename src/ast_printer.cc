@@ -111,7 +111,7 @@ std::string AstPrinter::visit(const NumLiteral *expr) {
   if (expr->nil) {
     return "nil";
   } else {
-    return std::to_string(expr->value);
+    return expr->value;
   }
 }
 

@@ -439,8 +439,9 @@ Expr *Parser::primary() {
     return new BoolLiteral(true);
   if (match({NIL}))
     return new StrLiteral("nil", true);
-  if (match({NUMBER}))
-    return new NumLiteral(stod(previous().literal));
+  if (match({NUMBER})) {
+    return new NumLiteral(previous().literal);
+  }
   if (match({STRING}))
     return new StrLiteral(previous().literal);
   if (match({IDENTIFIER}))

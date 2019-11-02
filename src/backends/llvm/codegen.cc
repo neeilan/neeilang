@@ -1,5 +1,4 @@
 #include <vector>
-#include <iostream>
 
 #include "codegen.h"
 
@@ -9,7 +8,7 @@
 
 
 #include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Value.h"
@@ -55,9 +54,6 @@ void CodeGen::visit(const Binary *expr) {
   Value *r = emit(&expr->right);
 
   if (!l || !r) return;
-
-  std::cout << "BINARY" << std::endl;
-
 
   switch (expr->op.type) {
     case PLUS : {
@@ -117,7 +113,12 @@ void CodeGen::visit(const Binary *expr) {
 }
 
 void CodeGen::visit(const NumLiteral *expr) {
-  expr_values[expr] = ConstantFP::get(ctx, llvm::APFloat(expr->value));
+  if (expr_types[expr] == Primitives::Float()) {
+    expr_values[expr] = ConstantFP::get(ctx, llvm::APFloat(expr->as_double()));
+  } else if (expr_types[expr] == Primitives::Int()) {
+    llvm::IntegerType* int_type = llvm::IntegerType::get(ctx, 32);
+    expr_values[expr] = ConstantInt::get(int_type, llvm::StringRef(expr->value), 10);
+  }
 }
 
 void CodeGen::visit(const Grouping *expr) {
@@ -178,9 +179,14 @@ void CodeGen::visit(const IfStmt *stmt) {}
 void CodeGen::visit(const WhileStmt *stmt) {}
 
 void CodeGen::visit(const FuncStmt *stmt) {
+  auto key = TypeTableUtil::fn_key(stmt->name.lexeme);
+  auto nl_type = sm.current().typetab->get(key);
+  auto nl_rettype = nl_type->functype->return_type;
+  auto ret_type = nl_rettype == Primitives::Int() ? llvm::Type::getInt32Ty(ctx) : llvm::Type::getDoubleTy(ctx);
+
   // Only have () -> Double func now - want to generate SOME IR first!
   std::vector<llvm::Type*> doubles(0, llvm::Type::getDoubleTy(ctx));
-  FunctionType *ft = FunctionType::get(llvm::Type::getDoubleTy(ctx), doubles, false);
+  FunctionType *ft = FunctionType::get(ret_type, doubles, false);
   Function *func = Function::Create(ft, Function::ExternalLinkage, stmt->name.lexeme, module.get());
 
   BasicBlock *BB = BasicBlock::Create(ctx, "entry", func);

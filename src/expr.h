@@ -64,11 +64,17 @@ public:
 
 class NumLiteral : public ExprCRTP<NumLiteral> {
 public:
-  explicit NumLiteral(double value, bool nil = false)
+  explicit NumLiteral(std::string value, bool nil = false)
       : value(value), nil(nil) {}
 
-  double value;
+  std::string value;
   bool nil;
+  bool has_decimal_point() const {
+    return value.find(".") != std::string::npos;  
+  }
+  double as_double() const {
+    return stod(value);
+  }
 };
 
 class BoolLiteral : public ExprCRTP<BoolLiteral> {
