@@ -8,7 +8,9 @@
 
 #include "cactus_table.h"
 #include "expr.h"
+#include "expr_types.h"
 #include "visitor.h"
+#include "scope_manager.h"
 
 #include "llvm/IR/Value.h"
 #include "llvm/IR/IRBuilder.h"
@@ -20,7 +22,9 @@ using NamedValueTable = CactusTable<std::string, Value*>;
 
 class CodeGen : public ExprVisitor<>, public StmtVisitor<> {
 public:
-  explicit CodeGen() {
+  explicit CodeGen(ScopeManager & sm, ExprTypes expr_types)
+    : sm(sm), expr_types(expr_types) {
+    sm.reset(); // Go to initial (global) scope.
     module = llvm::make_unique<llvm::Module>("neeilang.main_module", ctx);
     builder = llvm::make_unique<llvm::IRBuilder<>>(ctx);
   }
@@ -55,6 +59,8 @@ public:
   void visit(const ReturnStmt *);
 
 private:
+  ScopeManager & sm;
+  ExprTypes expr_types;
   std::map<const Expr *, Value *> expr_values;
   llvm::LLVMContext ctx;
   std::unique_ptr<llvm::IRBuilder<>> builder = nullptr;

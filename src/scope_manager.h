@@ -19,7 +19,13 @@ struct ScopeManager {
 
   Scope globals() { return scopes[0]; }
 
+  void reset() { curr_scope = 0; }
+
   void enter() {
+    if (scopes.size() > next_id) {
+      curr_scope = next_id++;
+      return;
+    }
     Scope new_scope = current().create_child(next_id++);
     scopes.push_back(new_scope);
     curr_scope = new_scope.id;

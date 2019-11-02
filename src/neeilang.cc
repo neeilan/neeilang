@@ -65,7 +65,7 @@ void Neeilang::run(const std::string &source) {
     return; // Compilation halted due to type errors.
   }
 
-  CodeGen codegen;
+  CodeGen codegen(scope_manager, type_checker.get_expr_types());
   codegen.emit(program);
   codegen.print();
 

@@ -1,0 +1,3 @@
+fn negativeTwo() : Float {
+  return -(4-2);
+}

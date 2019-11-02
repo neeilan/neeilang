@@ -7,8 +7,6 @@
 #include "type_checker.h"
 #include "type_table.h"
 
-#include <iostream>
-
 void TypeChecker::check(const std::vector<Stmt *> statements) {
   for (const Stmt *stmt : statements) {
     check(stmt);
@@ -19,9 +17,7 @@ void TypeChecker::check(const Stmt *stmt) { stmt->accept(this); }
 
 std::shared_ptr<Type> TypeChecker::check(const Expr *expr) {
   expr->accept(this);
-  std::shared_ptr<Type> type = expr_types[expr];
-  expr_types.erase(expr);
-  return type;
+  return expr_types[expr];
 }
 
 void TypeChecker::visit(const BlockStmt *stmt) {
@@ -377,7 +373,7 @@ void TypeChecker::visit(const BoolLiteral *expr) {
 }
 
 void TypeChecker::visit(const NumLiteral *expr) {
-  expr_types[expr] = Primitives::Int();
+  expr_types[expr] = Primitives::Float();
 }
 
 void TypeChecker::visit(const StrLiteral *expr) {

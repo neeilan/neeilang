@@ -1,12 +1,15 @@
 #include <vector>
 #include <iostream>
 
+#include "codegen.h"
+
 #include "expr.h"
 #include "stmt.h"
-#include "codegen.h"
+#include "primitives.h"
 
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Value.h"
@@ -34,7 +37,18 @@ Value* CodeGen::emit(const Expr *expr) {
   return val;
 }
 
-void CodeGen::visit(const Unary *expr) {}
+void CodeGen::visit(const Unary *expr) {
+  auto r = emit(&expr->right);
+  auto nl_type = expr_types[expr];
+  if (nl_type == Primitives::Float()) {
+    Value* m1 = ConstantFP::get(ctx, llvm::APFloat(-1.0));
+    expr_values[expr] = builder->CreateFMul(m1, r, "negtmp");
+  } else if (nl_type == Primitives::Int()) {
+    llvm::Type* int_type = llvm::IntegerType::get(ctx, 32);
+    Value* m1 = ConstantInt::get(int_type, -1);
+    expr_values[expr] = builder->CreateMul(m1, r, "negtmp");
+  }
+}
 
 void CodeGen::visit(const Binary *expr) {
   Value *l = emit(&expr->left);
@@ -152,7 +166,9 @@ void CodeGen::visit(const ExprStmt *stmt) {
 }
 
 void CodeGen::visit(const BlockStmt *stmt) {
+  sm.enter();
   emit(stmt->block_contents);
+  sm.exit();
 }
 
 void CodeGen::visit(const PrintStmt *stmt) {}

@@ -50,10 +50,12 @@ public:
   bool match(const Expr *expr, const std::vector<std::shared_ptr<Type>> &types);
   bool has_type_error(const std::vector<std::shared_ptr<Type>> &types);
 
-  ScopeManager &sm;
   std::shared_ptr<TypeTable> types() { return sm.current().typetab; }
 
   std::shared_ptr<SymbolTable> symbols() { return sm.current().symtab; }
+  std::map<const Expr *, std::shared_ptr<Type>> get_expr_types() { return expr_types; }
+  
+  ScopeManager &sm;
 
 private:
   std::map<const Expr *, std::shared_ptr<Type>> expr_types;
