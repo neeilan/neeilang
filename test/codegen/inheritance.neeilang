@@ -1,0 +1,19 @@
+class A  {
+  parentInt : Int;
+  parentFloat : Float;
+}
+
+class B < A {
+  firstChildInt : Int;
+  firstChildFloat : Float;
+}
+
+class B1 < A {
+  secondChildInt : Int;
+  secondChildFloat : Float;
+}
+
+class C < B {
+  grandChildInt : Int;
+  grandChildFloat : Float;
+}
