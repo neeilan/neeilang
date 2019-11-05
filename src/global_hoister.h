@@ -28,15 +28,8 @@ public:
 
   void hoist(const std::vector<Stmt *> statements);
   void hoist(const Stmt *stmt);
-  void visit(const BlockStmt *);
-  void visit(const ExprStmt *);
-  void visit(const PrintStmt *);
-  void visit(const VarStmt *);
-  void visit(const ClassStmt *);
-  void visit(const IfStmt *);
-  void visit(const WhileStmt *);
-  void visit(const FuncStmt *);
-  void visit(const ReturnStmt *);
+
+  STMT_VISITOR_METHODS(void)
 
 private:
   ScopeManager sm;

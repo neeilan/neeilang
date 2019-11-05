@@ -35,29 +35,8 @@ public:
   Value *emit(const Expr *expr);
   void print() { module->print(llvm::errs(), nullptr); }
 
-  void visit(const Unary *);
-  void visit(const Binary *);
-  void visit(const Grouping *);
-  void visit(const StrLiteral *);
-  void visit(const NumLiteral *);
-  void visit(const BoolLiteral *);
-  void visit(const Variable *);
-  void visit(const Assignment *);
-  void visit(const Logical *);
-  void visit(const Call *);
-  void visit(const Get *);
-  void visit(const Set *);
-  void visit(const This *);
-
-  void visit(const BlockStmt *);
-  void visit(const ExprStmt *);
-  void visit(const PrintStmt *);
-  void visit(const VarStmt *);
-  void visit(const ClassStmt *);
-  void visit(const IfStmt *);
-  void visit(const WhileStmt *);
-  void visit(const FuncStmt *);
-  void visit(const ReturnStmt *);
+  EXPR_VISITOR_METHODS(void)
+  STMT_VISITOR_METHODS(void)
 
 private:
   ScopeManager &sm;
