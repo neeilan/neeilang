@@ -1,16 +1,15 @@
 #ifndef _NL_FUNCTYPE_H_
 #define _NL_FUNCTYPE_H_
 
-#include <cassert>
-#include <memory>
 #include <vector>
+#include "nltype.h"
 
 class Type;
 
 struct FuncType {
-  std::shared_ptr<Type> return_type;
-  std::vector<std::shared_ptr<Type>> arg_types;
-  bool accepts_args(std::vector<std::shared_ptr<Type>> &supplied_types);
+  NLType return_type;
+  std::vector<NLType> arg_types;
+  bool accepts_args(std::vector<NLType> &supplied_types);
 };
 
 #endif // _NL_FUNCTYPE_H_

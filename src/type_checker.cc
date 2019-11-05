@@ -15,7 +15,7 @@ void TypeChecker::check(const std::vector<Stmt *> statements) {
 
 void TypeChecker::check(const Stmt *stmt) { stmt->accept(this); }
 
-std::shared_ptr<Type> TypeChecker::check(const Expr *expr) {
+NLType TypeChecker::check(const Expr *expr) {
   expr->accept(this);
   return expr_types[expr];
 }
@@ -166,8 +166,8 @@ void TypeChecker::visit(const WhileStmt *stmt) {
 // Expressions
 
 void TypeChecker::visit(const Binary *expr) {
-  std::shared_ptr<Type> left = check(&expr->left);
-  std::shared_ptr<Type> right = check(&expr->right);
+  NLType left = check(&expr->left);
+  NLType right = check(&expr->right);
 
   if (has_type_error({left, right})) {
     expr_types[expr] = Primitives::TypeError();
@@ -248,7 +248,7 @@ void TypeChecker::visit(const Call *expr) {
     return;
   }
 
-  std::vector<shared_ptr<Type>> arg_types;
+  std::vector<NLType> arg_types;
   for (Expr *arg : expr->args) {
     arg_types.push_back(check(arg));
   }
@@ -329,8 +329,8 @@ void TypeChecker::visit(const Grouping *expr) {
 }
 
 void TypeChecker::visit(const Logical *expr) {
-  std::shared_ptr<Type> lhs_type = check(&expr->left);
-  std::shared_ptr<Type> rhs_type = check(&expr->left);
+  NLType lhs_type = check(&expr->left);
+  NLType rhs_type = check(&expr->left);
   if (has_type_error({lhs_type, rhs_type})) {
     expr_types[expr] = Primitives::TypeError();
     return;
@@ -352,7 +352,7 @@ void TypeChecker::visit(const Logical *expr) {
 }
 
 void TypeChecker::visit(const Unary *expr) {
-  std::shared_ptr<Type> rhs_type = check(&expr->right);
+  NLType rhs_type = check(&expr->right);
   if (has_type_error({rhs_type})) {
     expr_types[expr] = Primitives::TypeError();
     return;
@@ -381,15 +381,15 @@ void TypeChecker::visit(const StrLiteral *expr) {
 }
 
 bool TypeChecker::match(const Expr *expr,
-                        const std::vector<std::shared_ptr<Type>> &types) {
-  std::shared_ptr<Type> expr_type = check(expr);
+                        const std::vector<NLType> &types) {
+  NLType expr_type = check(expr);
   if (has_type_error({expr_type}))
     return false;
   return match(expr_type, types);
 }
 
-bool TypeChecker::match(const std::shared_ptr<Type> expr_type,
-                        const std::vector<std::shared_ptr<Type>> &types) {
+bool TypeChecker::match(const NLType expr_type,
+                        const std::vector<NLType> &types) {
   for (auto type : types) {
     if (expr_type->subclass_of(type.get())) {
       return true;
@@ -399,7 +399,7 @@ bool TypeChecker::match(const std::shared_ptr<Type> expr_type,
 }
 
 bool TypeChecker::has_type_error(
-    const std::vector<std::shared_ptr<Type>> &types) {
+    const std::vector<NLType> &types) {
   for (auto type : types) {
     if (type == Primitives::TypeError()) {
       return true;

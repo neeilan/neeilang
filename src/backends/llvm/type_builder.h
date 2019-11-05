@@ -12,8 +12,6 @@
 #include "type.h"
 #include "primitives.h"
 
-using NLType = std::shared_ptr<Type>;
-
 class TypeBuilder {
 public:
   explicit TypeBuilder(llvm::LLVMContext &ctx) : ctx(ctx) {

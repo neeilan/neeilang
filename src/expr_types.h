@@ -6,6 +6,6 @@
 #include "expr.h"
 #include "type.h"
 
-using ExprTypes = std::map<const Expr*, std::shared_ptr<Type>>;
+using ExprTypes = std::map<const Expr*, NLType>;
 
 #endif  // _NL_EXPR_TYPES_H_

@@ -8,7 +8,7 @@
 #include "type.h"
 #include "stmt.h"
 
-using TypeTable = CactusTable<const std::string, std::shared_ptr<Type>>;
+using TypeTable = CactusTable<const std::string, NLType>;
 
 namespace TypeTableUtil {
   std::string fn_key(const FuncStmt * func);

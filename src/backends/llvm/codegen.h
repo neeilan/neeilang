@@ -49,7 +49,7 @@ private:
       nullptr; // Owns memory for generated IR.
   NamedValueTable named_vals;
   Value *codegen(Expr *expr);
-  std::map<std::shared_ptr<Type>, llvm::Type *> ll_types;
+  std::map<NLType, llvm::Type *> ll_types;
 };
 
 #endif // _NL_BACKENDS_LLVM_CODEGEN_H_

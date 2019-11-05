@@ -34,7 +34,7 @@ void GlobalHoister::visit(const ClassStmt *cls) {
     return;
   }
 
-  std::shared_ptr<Type> cls_type;
+  NLType cls_type;
   if (typetab()->contains(cls_name)) {
     cls_type = typetab()->get(cls_name);
   } else {
@@ -50,7 +50,7 @@ void GlobalHoister::visit(const ClassStmt *cls) {
       return;
     }
 
-    std::shared_ptr<Type> supercls = typetab()->get(supercls_name);
+    NLType supercls = typetab()->get(supercls_name);
 
     // Circular inheritance is an error.
     if (supercls->subclass_of(cls_type.get())) {

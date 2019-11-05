@@ -19,27 +19,27 @@ public:
 
   void check(const std::vector<Stmt *> stmts);
   void check(const Stmt *stmt);
-  std::shared_ptr<Type> check(const Expr *expr);
+  NLType check(const Expr *expr);
 
   EXPR_VISITOR_METHODS(void)
   STMT_VISITOR_METHODS(void)
 
-  bool match(const std::shared_ptr<Type> type,
-             const std::vector<std::shared_ptr<Type>> &types);
-  bool match(const Expr *expr, const std::vector<std::shared_ptr<Type>> &types);
-  bool has_type_error(const std::vector<std::shared_ptr<Type>> &types);
+  bool match(const NLType type,
+             const std::vector<NLType> &types);
+  bool match(const Expr *expr, const std::vector<NLType> &types);
+  bool has_type_error(const std::vector<NLType> &types);
 
   std::shared_ptr<TypeTable> types() { return sm.current().typetab; }
 
   std::shared_ptr<SymbolTable> symbols() { return sm.current().symtab; }
-  std::map<const Expr *, std::shared_ptr<Type>> get_expr_types() { return expr_types; }
+  std::map<const Expr *, NLType> get_expr_types() { return expr_types; }
   
   ScopeManager &sm;
 
 private:
-  std::map<const Expr *, std::shared_ptr<Type>> expr_types;
-  std::shared_ptr<Type> enclosing_class;
-  std::shared_ptr<Type> enclosing_fn;
+  std::map<const Expr *, NLType> expr_types;
+  NLType enclosing_class;
+  NLType enclosing_fn;
 };
 
 #endif //_NL_TYPE_CHECKER_H_
