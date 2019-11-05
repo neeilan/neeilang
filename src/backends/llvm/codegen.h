@@ -11,6 +11,7 @@
 #include "expr_types.h"
 #include "visitor.h"
 #include "scope_manager.h"
+#include "type_builder.h"
 
 #include "llvm/IR/Value.h"
 #include "llvm/IR/IRBuilder.h"
@@ -18,12 +19,12 @@
 #include "llvm/IR/Module.h"
 
 using llvm::Value;
-using NamedValueTable = CactusTable<std::string, Value*>;
+using NamedValueTable = CactusTable<std::string, Value *>;
 
 class CodeGen : public ExprVisitor<>, public StmtVisitor<> {
 public:
-  explicit CodeGen(ScopeManager & sm, ExprTypes expr_types)
-    : sm(sm), expr_types(expr_types) {
+  explicit CodeGen(ScopeManager &sm, ExprTypes expr_types)
+      : sm(sm), expr_types(expr_types), tb(TypeBuilder(ctx)) {
     sm.reset(); // Go to initial (global) scope.
     module = llvm::make_unique<llvm::Module>("neeilang.main_module", ctx);
     builder = llvm::make_unique<llvm::IRBuilder<>>(ctx);
@@ -59,14 +60,17 @@ public:
   void visit(const ReturnStmt *);
 
 private:
-  ScopeManager & sm;
+  ScopeManager &sm;
   ExprTypes expr_types;
   std::map<const Expr *, Value *> expr_values;
   llvm::LLVMContext ctx;
   std::unique_ptr<llvm::IRBuilder<>> builder = nullptr;
-  std::unique_ptr<llvm::Module> module = nullptr; // Owns memory for generated IR.
+  TypeBuilder tb;
+  std::unique_ptr<llvm::Module> module =
+      nullptr; // Owns memory for generated IR.
   NamedValueTable named_vals;
-  Value* codegen(Expr *expr);
+  Value *codegen(Expr *expr);
+  std::map<std::shared_ptr<Type>, llvm::Type *> ll_types;
 };
 
 #endif // _NL_BACKENDS_LLVM_CODEGEN_H_

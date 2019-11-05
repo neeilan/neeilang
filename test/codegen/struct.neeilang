@@ -1,0 +1,10 @@
+class Point {
+  x : Int;
+  y : Int;
+}
+
+class Point3D {
+  x : Float;
+  y : Float;
+  z : Float;
+}

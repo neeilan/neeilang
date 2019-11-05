@@ -1,0 +1,10 @@
+class A {
+  aIntField : Int;
+  aFloatField : Float;
+}
+
+class B {
+  bIntField : Int;
+  bAField : A;
+  bFloatField : Float;
+}
