@@ -1,0 +1,7 @@
+class Parent {
+  c : Child;
+}
+
+class Child < Parent {
+  intField : Int;
+}

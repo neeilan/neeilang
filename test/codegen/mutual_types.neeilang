@@ -1,0 +1,9 @@
+class A {
+  aA : A;
+  aB : B;
+}
+
+class B {
+  bA : A;
+  bB : B;
+}

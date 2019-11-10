@@ -27,14 +27,15 @@ llvm::Type* TypeBuilder::to_llvm(NLType t)
         }
     }
 
-    // TODO: This doesn't handle non-primitive field types well.
-    // Non-primitive field types in classes should really be
-    // treated as pointers to that type.
-    // i.e - class X { child : X } should internally be class X { child : X* };
+    // Create the identified struct type
+    auto opaque_struct = llvm::StructType::create(ctx, t->name);
+    ll_types.insert({ t,  llvm::PointerType::getUnqual(opaque_struct)  });
+
     for (auto field : t->fields) {
         field_types.push_back(to_llvm(field.type));
     }
 
-    ll_types.insert({ t, llvm::StructType::create(ctx, field_types, t->name) });
+    opaque_struct->setBody(field_types);
+
     return ll_types[t];
 }
