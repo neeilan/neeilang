@@ -53,6 +53,11 @@ void Neeilang::run(const std::string &source) {
   Resolver resolver;
   resolver.resolve(program);
 
+  if (had_error) {
+    return;
+  }
+
+
   ScopeManager scope_manager;
 
   GlobalHoister hoister(scope_manager);
