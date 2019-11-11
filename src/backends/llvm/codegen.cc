@@ -159,7 +159,10 @@ void CodeGen::visit(const Logical *expr) {
   }
 }
 
-void CodeGen::visit(const Variable *expr) {}
+void CodeGen::visit(const Variable *expr) {
+  // expr_values[expr] = builder->CreateLoad(tb.to_llvm(expr_types[expr]), stores[expr]  );
+}
+
 void CodeGen::visit(const Assignment *expr) {}
 void CodeGen::visit(const Call *expr) {}
 void CodeGen::visit(const Get *expr) {}
@@ -219,22 +222,25 @@ void CodeGen::visit(const WhileStmt *stmt) {}
 
 void CodeGen::visit(const FuncStmt *stmt) {
   auto key = TypeTableUtil::fn_key(stmt->name.lexeme);
-  auto nl_type = sm.current().typetab->get(key);
-  auto nl_rettype = nl_type->functype->return_type;
-  auto ret_type = nl_rettype == Primitives::Int()
-                      ? llvm::Type::getInt32Ty(ctx)
-                      : llvm::Type::getDoubleTy(ctx);
+  auto nl_functype = sm.current().typetab->get(key)->functype;
 
-  // Only have () -> Double func now - want to generate SOME IR first!
-  std::vector<llvm::Type *> doubles(0, llvm::Type::getDoubleTy(ctx));
-  FunctionType *ft = FunctionType::get(ret_type, doubles, false);
+  llvm::Type *ret_type = tb.to_llvm(nl_functype->return_type);
+  std::vector<llvm::Type *> arg_types;
+  for (NLType nl_argtype : nl_functype->arg_types) {
+    arg_types.push_back(tb.to_llvm(nl_argtype));
+  }
+
+  FunctionType *ft = FunctionType::get(ret_type, arg_types, false);
   Function *func = Function::Create(ft, Function::ExternalLinkage,
                                     stmt->name.lexeme, module.get());
 
   BasicBlock *BB = BasicBlock::Create(ctx, "entry", func);
   builder->SetInsertPoint(BB);
 
+  sm.enter();
   emit(stmt->body);
+  sm.exit();
+
   verifyFunction(*func);
 }
 

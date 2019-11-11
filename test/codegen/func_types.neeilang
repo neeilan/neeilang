@@ -1,0 +1,11 @@
+class A {
+  aInt : Int;
+}
+
+class B < A {
+  bBool : Bool;
+}
+
+fn myFunc(a : A, b : B, num1: Int, num2: Int) : Int {
+    return 3;
+}

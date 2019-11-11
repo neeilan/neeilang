@@ -102,7 +102,16 @@ void TypeChecker::visit(const FuncStmt *stmt) {
   if (types()->contains(fn_key)) {
     auto prev_enclosing_fn = enclosing_fn;
     enclosing_fn = types()->get(fn_key);
+
+    sm.enter();
+    for (int i = 0; i < stmt->parameters.size(); i++) {
+      auto argname = stmt->parameters[i].lexeme;
+      symbols()->insert( argname, Symbol { argname, enclosing_fn->functype->arg_types[i] } );
+    }
+
     check(stmt->body);
+    sm.exit();
+
     enclosing_fn = prev_enclosing_fn;
   }
 }
