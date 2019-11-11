@@ -77,12 +77,16 @@ std::string AstPrinter::visit(const FuncStmt *stmt) {
   }
   out << "))";
 
+  for (auto _stmt : stmt->body) {
+    out << print(*_stmt);
+  }
+
   return out.str();
 }
 
 std::string AstPrinter::visit(const ReturnStmt *stmt) {
-  return "<BLOCK>";
-  //  return "return (" + print(stmt->value) + ")";
+  if (!stmt->value) return "RETURN (void)";
+  return "return (" + print(*stmt->value) + ")";
 }
 
 std::string AstPrinter::visit(const Binary *expr) {
