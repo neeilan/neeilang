@@ -64,6 +64,7 @@ void TypeChecker::visit(const Variable *expr) {
   auto fn_key = TypeTableUtil::fn_key(expr->name.lexeme);
   if (types()->contains(fn_key)) {
     expr_types[expr] = types()->get(fn_key);
+    return;
   }
 }
 
@@ -144,6 +145,12 @@ void TypeChecker::visit(const ReturnStmt *stmt) {
 
   if (stmt->value) {
     auto actual_rettype = check(stmt->value);
+    if (!actual_rettype) {
+      Neeilang::error(stmt->keyword,
+                    "Return value cannot be a Type name. Expected type: " + declared_rettype->name);
+      return;
+    }
+
     if (!actual_rettype->subclass_of(declared_rettype.get())) {
       Neeilang::error(stmt->keyword, "Expected return type: " +
                                          declared_rettype->name +
