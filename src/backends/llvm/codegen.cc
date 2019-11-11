@@ -189,7 +189,32 @@ void CodeGen::visit(const ClassStmt *stmt) {
   Function::Create(ft, Function::ExternalLinkage, "class_func", module.get());
 }
 
-void CodeGen::visit(const IfStmt *stmt) {}
+void CodeGen::visit(const IfStmt *stmt) {
+  Value* cond = emit(stmt->condition); 
+  if (!cond) return;
+  cond = builder->CreateICmpNE(cond, ConstantInt::getFalse(ctx), "ifcond");
+
+  Function* func = builder->GetInsertBlock()->getParent();
+  BasicBlock* br_then = BasicBlock::Create(ctx, "then", func);
+  BasicBlock* br_else = BasicBlock::Create(ctx, "else");
+  BasicBlock* merge = BasicBlock::Create(ctx, "ifcont");
+
+  builder->CreateCondBr(cond, br_then, br_else);
+
+  builder->SetInsertPoint(br_then);
+  emit(stmt->then_branch);
+  builder->CreateBr(merge);
+
+  func->getBasicBlockList().push_back(br_else);
+  builder->SetInsertPoint(br_else);
+  if (stmt->else_branch) emit(stmt->else_branch);
+  // All BBs must be terminated (incl. fall-thru's) to pass verification.
+  builder->CreateBr(merge);
+
+  func->getBasicBlockList().push_back(merge);  
+  builder->SetInsertPoint(merge);
+}
+
 void CodeGen::visit(const WhileStmt *stmt) {}
 
 void CodeGen::visit(const FuncStmt *stmt) {
