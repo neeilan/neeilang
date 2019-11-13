@@ -52,6 +52,7 @@ void TypeChecker::visit(const VarStmt *stmt) {
 
   Symbol symbol{var_name, var_type};
   symbols()->insert(var_name, symbol);
+  types()->insert(var_name, var_type);
 }
 
 void TypeChecker::visit(const Variable *expr) {

@@ -14,12 +14,13 @@
 #include "type_builder.h"
 
 #include "llvm/IR/Value.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 
 using llvm::Value;
-using NamedValueTable = CactusTable<std::string, Value *>;
+using NamedValueTable = CactusTable<std::string, llvm::AllocaInst*>;
 
 class CodeGen : public ExprVisitor<>, public StmtVisitor<> {
 public:
@@ -40,16 +41,18 @@ public:
 
 private:
   ScopeManager &sm;
-  ExprTypes expr_types;
+  ExprTypes expr_types;  // Typing information from type-checker
   std::map<const Expr *, Value *> expr_values;
   llvm::LLVMContext ctx;
   std::unique_ptr<llvm::IRBuilder<>> builder = nullptr;
   TypeBuilder tb;
   std::unique_ptr<llvm::Module> module =
       nullptr; // Owns memory for generated IR.
-  NamedValueTable named_vals;
+  std::shared_ptr<NamedValueTable> named_vals;
+
   Value *codegen(Expr *expr);
-  std::map<NLType, llvm::Type *> ll_types;
+  void enter_scope();
+  void exit_scope();
 };
 
 #endif // _NL_BACKENDS_LLVM_CODEGEN_H_

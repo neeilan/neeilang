@@ -13,9 +13,11 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
 
+using llvm::AllocaInst;
 using llvm::BasicBlock;
 using llvm::ConstantFP;
 using llvm::ConstantInt;
@@ -159,8 +161,38 @@ void CodeGen::visit(const Logical *expr) {
   }
 }
 
+// Variables
+static AllocaInst* entry_block_alloc(Function* fn, const std::string & s, llvm::Type *type) {
+  llvm::IRBuilder<> builder(&fn->getEntryBlock(), fn->getEntryBlock().begin());
+  return builder.CreateAlloca(type, 0, s);
+}
+
+Value* emit_default_val(NLType t) {
+  return nullptr;
+}
+
+void CodeGen::visit(const VarStmt *stmt) {
+ // TODO: Handle global variables.
+  
+  Function *fn = builder->GetInsertBlock()->getParent();
+  Value* init = nullptr;
+  if (stmt->expression) {
+    init = emit(stmt->expression);
+  } else {
+    init = emit_default_val(expr_types[stmt->expression]);
+  }
+
+  const std::string varname = stmt->name.lexeme;
+  NLType nl_type = sm.current().typetab->get(varname);
+
+  AllocaInst *alloca = entry_block_alloc(fn, varname, tb.to_llvm(nl_type));
+  builder->CreateStore(init, alloca);
+
+  named_vals->insert(varname, alloca);
+}
+
 void CodeGen::visit(const Variable *expr) {
-  // expr_values[expr] = builder->CreateLoad(tb.to_llvm(expr_types[expr]), stores[expr]  );
+ // expr_values[expr] = builder->CreateLoad(named_vals[expr], expr->name.c_str() );
 }
 
 void CodeGen::visit(const Assignment *expr) {}
@@ -172,13 +204,12 @@ void CodeGen::visit(const This *expr) {}
 void CodeGen::visit(const ExprStmt *stmt) { emit(stmt->expression); }
 
 void CodeGen::visit(const BlockStmt *stmt) {
-  sm.enter();
+  enter_scope();
   emit(stmt->block_contents);
-  sm.exit();
+  exit_scope();
 }
 
 void CodeGen::visit(const PrintStmt *stmt) {}
-void CodeGen::visit(const VarStmt *stmt) {}
 
 void CodeGen::visit(const ClassStmt *stmt) {
   std::string classname = stmt->name.lexeme;
@@ -237,9 +268,9 @@ void CodeGen::visit(const FuncStmt *stmt) {
   BasicBlock *BB = BasicBlock::Create(ctx, "entry", func);
   builder->SetInsertPoint(BB);
 
-  sm.enter();
+  enter_scope();
   emit(stmt->body);
-  sm.exit();
+  exit_scope();
 
   verifyFunction(*func);
 }
