@@ -1,8 +1,8 @@
 #ifndef _NL_FUNCTYPE_H_
 #define _NL_FUNCTYPE_H_
 
-#include <vector>
 #include "nltype.h"
+#include <vector>
 
 class Type;
 

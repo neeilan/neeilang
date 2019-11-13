@@ -9,18 +9,18 @@
 #include "cactus_table.h"
 #include "expr.h"
 #include "expr_types.h"
-#include "visitor.h"
 #include "scope_manager.h"
 #include "type_builder.h"
+#include "visitor.h"
 
-#include "llvm/IR/Value.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Value.h"
 
 using llvm::Value;
-using NamedValueTable = CactusTable<std::string, llvm::AllocaInst*>;
+using NamedValueTable = CactusTable<std::string, llvm::AllocaInst *>;
 
 class CodeGen : public ExprVisitor<>, public StmtVisitor<> {
 public:
@@ -42,7 +42,7 @@ public:
 
 private:
   ScopeManager &sm;
-  ExprTypes expr_types;  // Typing information from type-checker
+  ExprTypes expr_types; // Typing information from type-checker
   std::map<const Expr *, Value *> expr_values;
   llvm::LLVMContext ctx;
   std::unique_ptr<llvm::IRBuilder<>> builder = nullptr;
@@ -57,9 +57,7 @@ private:
 
   // libc bindings.
   void init_libc();
-  void call_printf(llvm::Value* value, NLType t);
-
-
+  void call_printf(llvm::Value *value, NLType t);
 };
 
 #endif // _NL_BACKENDS_LLVM_CODEGEN_H_

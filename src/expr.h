@@ -70,11 +70,9 @@ public:
   std::string value;
   bool nil;
   bool has_decimal_point() const {
-    return value.find(".") != std::string::npos;  
+    return value.find(".") != std::string::npos;
   }
-  double as_double() const {
-    return stod(value);
-  }
+  double as_double() const { return stod(value); }
 };
 
 class BoolLiteral : public ExprCRTP<BoolLiteral> {

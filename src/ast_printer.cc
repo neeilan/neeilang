@@ -1,6 +1,6 @@
 #include "ast_printer.h"
-#include "stmt.h"
 #include "expr.h"
+#include "stmt.h"
 
 #include <sstream>
 
@@ -85,7 +85,8 @@ std::string AstPrinter::visit(const FuncStmt *stmt) {
 }
 
 std::string AstPrinter::visit(const ReturnStmt *stmt) {
-  if (!stmt->value) return "RETURN (void)";
+  if (!stmt->value)
+    return "RETURN (void)";
   return "return (" + print(*stmt->value) + ")";
 }
 

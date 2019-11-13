@@ -1,14 +1,14 @@
 #ifndef _NL_RESOLVER_H_
 #define _NL_RESOLVER_H_
 
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
 
+#include "scope_manager.h"
 #include "token.h"
 #include "visitable.h"
 #include "visitor.h"
-#include "scope_manager.h"
 
 // Describes what kind of function (if any) we're resolving
 // names in.

@@ -5,9 +5,9 @@
 #include <stdexcept>
 #include <vector>
 
-#include "token.h"
 #include "expr.h"
 #include "stmt.h"
+#include "token.h"
 
 class ParseErr : std::runtime_error {
 public:

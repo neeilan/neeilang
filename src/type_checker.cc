@@ -1,5 +1,5 @@
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include "neeilang.h"
@@ -107,7 +107,8 @@ void TypeChecker::visit(const FuncStmt *stmt) {
     sm.enter();
     for (int i = 0; i < stmt->parameters.size(); i++) {
       auto argname = stmt->parameters[i].lexeme;
-      symbols()->insert( argname, Symbol { argname, enclosing_fn->functype->arg_types[i] } );
+      symbols()->insert(argname,
+                        Symbol{argname, enclosing_fn->functype->arg_types[i]});
     }
 
     check(stmt->body);
@@ -143,10 +144,12 @@ void TypeChecker::visit(const IfStmt *stmt) {
 
 void TypeChecker::visit(const PrintStmt *stmt) {
   auto expr_type = check(stmt->expression);
-  if (!match(expr_type, {Primitives::Int(), Primitives::Float(), Primitives::Bool(), Primitives::String()})) {
-    Neeilang::error(stmt->keyword,
-                    "Expression to be printed must be a String, Int or Float. Got: " +
-                        expr_type->name);
+  if (!match(expr_type, {Primitives::Int(), Primitives::Float(),
+                         Primitives::Bool(), Primitives::String()})) {
+    Neeilang::error(
+        stmt->keyword,
+        "Expression to be printed must be a String, Int or Float. Got: " +
+            expr_type->name);
   }
 }
 
@@ -157,14 +160,15 @@ void TypeChecker::visit(const ReturnStmt *stmt) {
     auto actual_rettype = check(stmt->value);
     if (!actual_rettype) {
       Neeilang::error(stmt->keyword,
-                    "Return value cannot be a Type name. Expected type: " + declared_rettype->name);
+                      "Return value cannot be a Type name. Expected type: " +
+                          declared_rettype->name);
       return;
     }
 
     if (!actual_rettype->subclass_of(declared_rettype.get())) {
-      Neeilang::error(stmt->keyword, "Expected return type: " +
-                                         declared_rettype->name +
-                                         " but found " + actual_rettype->name);
+      Neeilang::error(stmt->keyword,
+                      "Expected return type: " + declared_rettype->name +
+                          " but found " + actual_rettype->name);
     }
   } else if (declared_rettype != Primitives::Void()) {
     Neeilang::error(stmt->keyword,
@@ -390,15 +394,15 @@ void TypeChecker::visit(const BoolLiteral *expr) {
 }
 
 void TypeChecker::visit(const NumLiteral *expr) {
-  expr_types[expr] = expr->has_decimal_point() ? Primitives::Float() : Primitives::Int();
+  expr_types[expr] =
+      expr->has_decimal_point() ? Primitives::Float() : Primitives::Int();
 }
 
 void TypeChecker::visit(const StrLiteral *expr) {
   expr_types[expr] = Primitives::String();
 }
 
-bool TypeChecker::match(const Expr *expr,
-                        const std::vector<NLType> &types) {
+bool TypeChecker::match(const Expr *expr, const std::vector<NLType> &types) {
   NLType expr_type = check(expr);
   if (has_type_error({expr_type}))
     return false;
@@ -415,8 +419,7 @@ bool TypeChecker::match(const NLType expr_type,
   return false;
 }
 
-bool TypeChecker::has_type_error(
-    const std::vector<NLType> &types) {
+bool TypeChecker::has_type_error(const std::vector<NLType> &types) {
   for (auto type : types) {
     if (type == Primitives::TypeError()) {
       return true;

@@ -4,13 +4,13 @@
 #include <map>
 #include <memory>
 
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Value.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Value.h"
 
-#include "type.h"
 #include "primitives.h"
+#include "type.h"
 
 class TypeBuilder {
 public:
@@ -18,7 +18,8 @@ public:
     ll_types[Primitives::Int()] = llvm::Type::getInt32Ty(ctx);
     ll_types[Primitives::Float()] = llvm::Type::getDoubleTy(ctx);
     ll_types[Primitives::Void()] = llvm::Type::getVoidTy(ctx);
-    // LLVM bools use Int1: https://llvm.org/doxygen/Constants_8cpp_source.html#l00612
+    // LLVM bools use Int1:
+    // https://llvm.org/doxygen/Constants_8cpp_source.html#l00612
     ll_types[Primitives::Bool()] = llvm::Type::getInt1Ty(ctx);
   }
 

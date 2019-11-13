@@ -5,8 +5,8 @@
 #include "codegen.h"
 
 #include "expr.h"
-#include "stmt.h"
 #include "primitives.h"
+#include "stmt.h"
 #include "type_builder.h"
 
 #include "llvm/ADT/APFloat.h"
@@ -158,29 +158,34 @@ void CodeGen::visit(const Logical *expr) {
     expr_values[expr] = builder->CreateOr(l, r, "or_tmp");
     return;
   }
-  default: { return; }
+  default: {
+    return;
+  }
   }
 }
 
 // Variables
-static AllocaInst* entry_block_alloc(Function* fn, const std::string & s, llvm::Type *type) {
+static AllocaInst *entry_block_alloc(Function *fn, const std::string &s,
+                                     llvm::Type *type) {
   llvm::IRBuilder<> builder(&fn->getEntryBlock(), fn->getEntryBlock().begin());
   return builder.CreateAlloca(type, 0, s);
 }
 
-static Value* emit_default_val(llvm::LLVMContext & ctx, NLType t) {
-  if (t == Primitives::Bool()) return ConstantInt::getFalse(ctx);
-  if (t == Primitives::Float()) return ConstantFP::get(ctx, llvm::APFloat(0.0));
+static Value *emit_default_val(llvm::LLVMContext &ctx, NLType t) {
+  if (t == Primitives::Bool())
+    return ConstantInt::getFalse(ctx);
+  if (t == Primitives::Float())
+    return ConstantFP::get(ctx, llvm::APFloat(0.0));
   return nullptr;
 }
 
 void CodeGen::visit(const VarStmt *stmt) {
- // TODO: Handle global variables.
+  // TODO: Handle global variables.
   const std::string varname = stmt->name.lexeme;
   NLType nl_type = sm.current().typetab->get(varname);
-  
+
   Function *fn = builder->GetInsertBlock()->getParent();
-  Value* init = nullptr;
+  Value *init = nullptr;
   if (stmt->expression) {
     init = emit(stmt->expression);
   } else {
@@ -194,16 +199,16 @@ void CodeGen::visit(const VarStmt *stmt) {
 }
 
 void CodeGen::visit(const Variable *expr) {
- const std::string varname = expr->name.lexeme;
- expr_values[expr] = builder->CreateLoad(named_vals->get(varname), varname.c_str() );
+  const std::string varname = expr->name.lexeme;
+  expr_values[expr] =
+      builder->CreateLoad(named_vals->get(varname), varname.c_str());
 }
 
 void CodeGen::visit(const Assignment *expr) {
-  llvm::Value* value = emit(&expr->value);
+  llvm::Value *value = emit(&expr->value);
   const std::string varname = expr->name.lexeme;
   builder->CreateStore(value, named_vals->get(varname));
   expr_values[expr] = value;
-  
 }
 
 void CodeGen::visit(const Call *expr) {}
@@ -221,7 +226,7 @@ void CodeGen::visit(const BlockStmt *stmt) {
 
 void CodeGen::visit(const PrintStmt *stmt) {
   if (stmt->expression) {
-    Value* value = emit(stmt->expression);
+    Value *value = emit(stmt->expression);
     call_printf(value, expr_types[stmt->expression]);
   }
 }
@@ -239,14 +244,15 @@ void CodeGen::visit(const ClassStmt *stmt) {
 }
 
 void CodeGen::visit(const IfStmt *stmt) {
-  Value* cond = emit(stmt->condition); 
-  if (!cond) return;
+  Value *cond = emit(stmt->condition);
+  if (!cond)
+    return;
   cond = builder->CreateICmpNE(cond, ConstantInt::getFalse(ctx), "ifcond");
 
-  Function* func = builder->GetInsertBlock()->getParent();
-  BasicBlock* br_then = BasicBlock::Create(ctx, "then", func);
-  BasicBlock* br_else = BasicBlock::Create(ctx, "else");
-  BasicBlock* merge = BasicBlock::Create(ctx, "ifcont");
+  Function *func = builder->GetInsertBlock()->getParent();
+  BasicBlock *br_then = BasicBlock::Create(ctx, "then", func);
+  BasicBlock *br_else = BasicBlock::Create(ctx, "else");
+  BasicBlock *merge = BasicBlock::Create(ctx, "ifcont");
 
   builder->CreateCondBr(cond, br_then, br_else);
 
@@ -256,11 +262,12 @@ void CodeGen::visit(const IfStmt *stmt) {
 
   func->getBasicBlockList().push_back(br_else);
   builder->SetInsertPoint(br_else);
-  if (stmt->else_branch) emit(stmt->else_branch);
+  if (stmt->else_branch)
+    emit(stmt->else_branch);
   // All BBs must be terminated (incl. fall-thru's) to pass verification.
   builder->CreateBr(merge);
 
-  func->getBasicBlockList().push_back(merge);  
+  func->getBasicBlockList().push_back(merge);
   builder->SetInsertPoint(merge);
 }
 

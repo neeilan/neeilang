@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "token.h"
 #include "expr.h"
+#include "token.h"
 #include "visitor.h"
 
 using std::string;

@@ -1,6 +1,6 @@
 #include "scanner.h"
-#include "token.h"
 #include "neeilang.h"
+#include "token.h"
 
 #include <map>
 #include <sstream>

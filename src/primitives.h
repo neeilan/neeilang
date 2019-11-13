@@ -10,6 +10,6 @@ NLType Float();
 NLType Bool();
 NLType Void();
 NLType TypeError();
-}
+} // namespace Primitives
 
 #endif // _NL_PRIMITIVES_H_

@@ -5,16 +5,16 @@
 #include <string>
 #include <vector>
 
+#include "ast_printer.h"
+#include "backends/llvm/codegen.h"
+#include "global_hoister.h"
 #include "neeilang.h"
-#include "token.h"
-#include "scanner.h"
 #include "parser.h"
 #include "resolver.h"
-#include "ast_printer.h"
-#include "global_hoister.h"
-#include "type_checker.h"
+#include "scanner.h"
 #include "scope_manager.h"
-#include "backends/llvm/codegen.h"
+#include "token.h"
+#include "type_checker.h"
 
 bool Neeilang::had_error = false;
 
@@ -57,7 +57,6 @@ void Neeilang::run(const std::string &source) {
     return;
   }
 
-
   ScopeManager scope_manager;
 
   GlobalHoister hoister(scope_manager);
@@ -73,7 +72,6 @@ void Neeilang::run(const std::string &source) {
   CodeGen codegen(scope_manager, type_checker.get_expr_types());
   codegen.emit(program);
   codegen.print();
-
 }
 
 void Neeilang::error(int line, const std::string &message) {

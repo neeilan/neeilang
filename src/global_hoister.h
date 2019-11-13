@@ -1,13 +1,13 @@
 #ifndef _NL_GLOBAL_HOISTER_H_
 #define _NL_GLOBAL_HOISTER_H_
 
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
 
-#include "visitor.h"
-#include "scope_manager.h"
 #include "primitives.h"
+#include "scope_manager.h"
+#include "visitor.h"
 
 /*
  * GlobalHoister helps implement hoist semantics for top-level

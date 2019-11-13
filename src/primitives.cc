@@ -31,4 +31,4 @@ NLType TypeError() {
   static NLType type = std::make_shared<Type>("$TypeError");
   return type;
 }
-}
+} // namespace Primitives

@@ -1,10 +1,10 @@
 #include <string>
 #include <vector>
 
+#include "expr.h"
 #include "neeilang.h"
 #include "resolver.h"
 #include "stmt.h"
-#include "expr.h"
 
 void Resolver::resolve(const std::vector<Stmt *> statements) {
   for (const Stmt *stmt : statements) {

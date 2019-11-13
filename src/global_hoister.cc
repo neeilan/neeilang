@@ -1,12 +1,12 @@
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
 
-#include "neeilang.h"
-#include "global_hoister.h"
-#include "type.h"
 #include "functype.h"
+#include "global_hoister.h"
+#include "neeilang.h"
 #include "stmt.h"
+#include "type.h"
 
 void GlobalHoister::declare(const std::string &type_name) {
   typetab()->insert(type_name, std::make_shared<Type>(type_name));

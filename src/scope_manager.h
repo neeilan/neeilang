@@ -19,7 +19,10 @@ struct ScopeManager {
 
   Scope globals() { return scopes[0]; }
 
-  void reset() { curr_scope = 0; next_id = 1; }
+  void reset() {
+    curr_scope = 0;
+    next_id = 1;
+  }
 
   void enter() {
     if (scopes.size() > next_id) {

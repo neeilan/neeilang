@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 
-#include "nltype.h"
 #include "field.h"
 #include "functype.h"
+#include "nltype.h"
 
 class Type {
 public:
