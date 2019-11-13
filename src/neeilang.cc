@@ -71,7 +71,11 @@ void Neeilang::run(const std::string &source) {
 
   CodeGen codegen(scope_manager, type_checker.get_expr_types());
   codegen.emit(program);
-  codegen.print();
+
+  if (!had_error) {
+    codegen.print();
+    codegen.write_bitcode();
+  }
 }
 
 void Neeilang::error(int line, const std::string &message) {

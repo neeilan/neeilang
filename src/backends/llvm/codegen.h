@@ -35,7 +35,9 @@ public:
   void emit(const std::vector<Stmt *> &stmts);
   void emit(const Stmt *stmt);
   Value *emit(const Expr *expr);
+
   void print() { module->print(llvm::errs(), nullptr); }
+  void write_bitcode();
 
   EXPR_VISITOR_METHODS(void)
   STMT_VISITOR_METHODS(void)

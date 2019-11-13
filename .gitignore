@@ -43,5 +43,6 @@ bin/*
 #CTags file
 src/tags
 
-# Compiler stdout/err dump file
+# Compiler stdout/err dump files
 output
+out.bc
