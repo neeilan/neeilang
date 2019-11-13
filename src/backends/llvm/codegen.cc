@@ -25,6 +25,11 @@ using llvm::Function;
 using llvm::FunctionType;
 using llvm::Value;
 
+#define NUMERIC_CMP(type, instr_float, instr_int)                              \
+  ((type == Primitives::Float())                                               \
+       ? instr_float                                                           \
+       : (type == Primitives::Int()) ? instr_int : nullptr);
+
 void CodeGen::emit(const std::vector<Stmt *> &stmts) {
   for (const Stmt *stmt : stmts) {
     emit(stmt);
@@ -57,58 +62,54 @@ void CodeGen::visit(const Binary *expr) {
   Value *l = emit(&expr->left);
   Value *r = emit(&expr->right);
 
+  NLType l_ty = expr_types[&expr->left];
+  NLType r_ty = expr_types[&expr->right];
+
+  // Cast Int to Float for comparisons.
+  if (l_ty == Primitives::Float() && r_ty == Primitives::Int()) {
+    r = builder->CreateSIToFP(r, tb.to_llvm(Primitives::Float()));
+    r_ty = Primitives::Float();
+  } else if (r_ty == Primitives::Float() && l_ty == Primitives::Int()) {
+    l = builder->CreateSIToFP(l, tb.to_llvm(Primitives::Float()));
+    l_ty = Primitives::Float();
+  }
+
   if (!l || !r)
     return;
 
   switch (expr->op.type) {
+  // For the following instructions, we know both operands are Ints or Floats
+  // (since we don't handle String concat with '+' yet).
   case PLUS: {
-    expr_values[expr] = builder->CreateAdd(l, r, "addtmp");
-    // expr_values[expr] = builder->CreateFAdd(l, r, "addtmp");
-    return;
+    expr_values[expr] = NUMERIC_CMP(l_ty, builder->CreateFAdd(l, r, "addtmp"),
+                                    builder->CreateAdd(l, r, "addtmp")) return;
   }
   case MINUS: {
-    expr_values[expr] = builder->CreateFSub(l, r, "subtmp");
-    return;
-  }
-  case STAR: {
-    expr_values[expr] = builder->CreateFMul(l, r, "multmp");
-    return;
-  }
-  case SLASH: {
-    expr_values[expr] = builder->CreateFDiv(l, r, "divtmp");
-    return;
-  }
-  case LESS: {
-    // Here (and in the following comparisons), 'U' in 'ULT'
-    // refers to 'unordered'. The actual instruction is
-    // 'unordered or less than' - which corresponds to the 'uge'
-    // condition code being the first arg to the fcmp instruction
-    // in the generated IR. (llvm.org/docs/LangRef.html#id305)
-    expr_values[expr] = builder->CreateFCmpULT(l, r, "cmp_lt_tmp");
-    return;
-  }
-  case LESS_EQUAL: {
-    expr_values[expr] = builder->CreateFCmpULE(l, r, "cmp_le_tmp");
-    return;
+    expr_values[expr] = NUMERIC_CMP(l_ty, builder->CreateFSub(l, r, "subtmp"),
+                                    builder->CreateSub(l, r, "subtmp")) return;
   }
   case GREATER: {
-    expr_values[expr] = builder->CreateFCmpUGT(l, r, "cmp_gt_tmp");
-    return;
+    expr_values[expr] =
+        NUMERIC_CMP(l_ty, builder->CreateFCmpUGT(l, r, "cmp_gt_tmp"),
+                    builder->CreateICmpUGT(l, r, "cmp_gt_tmp")) return;
   }
   case GREATER_EQUAL: {
-    expr_values[expr] = builder->CreateFCmpUGE(l, r, "cmp_ge_tmp");
-    return;
+    expr_values[expr] =
+        NUMERIC_CMP(l_ty, builder->CreateFCmpUGE(l, r, "cmp_ge_tmp"),
+                    builder->CreateICmpUGE(l, r, "cmp_ge_tmp")) return;
   }
   case EQUAL_EQUAL: {
     // Use 'ordered and equal' here - 'ordered' means that
     // neither operand is QNAN (quiet NaN).
-    expr_values[expr] = builder->CreateFCmpOEQ(l, r, "cmp_eq_tmp");
-    return;
+    expr_values[expr] =
+        NUMERIC_CMP(l_ty, builder->CreateFCmpOEQ(l, r, "cmp_eq_tmp"),
+                    builder->CreateICmpEQ(l, r, "cmp_eq_tmp")) return;
   }
   case BANG_EQUAL: {
     // Emit fcmp with 'unordered or not equal' condition code.
-    expr_values[expr] = builder->CreateFCmpUNE(l, r, "cmp_ne_tmp");
-    return;
+    expr_values[expr] =
+        NUMERIC_CMP(l_ty, builder->CreateFCmpUNE(l, r, "cmp_ne_tmp"),
+                    builder->CreateICmpNE(l, r, "cmp_ne_tmp")) return;
   }
   default: {
     // Error
@@ -294,7 +295,7 @@ void CodeGen::visit(const FuncStmt *stmt) {
   emit(stmt->body);
   exit_scope();
 
-  verifyFunction(*func);
+  llvm::verifyFunction(*func);
 }
 
 void CodeGen::visit(const ReturnStmt *stmt) {
