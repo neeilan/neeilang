@@ -42,3 +42,6 @@ bin/*
 
 #CTags file
 src/tags
+
+# Compiler stdout/err dump file
+output
