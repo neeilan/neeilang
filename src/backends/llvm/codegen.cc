@@ -62,7 +62,8 @@ void CodeGen::visit(const Binary *expr) {
 
   switch (expr->op.type) {
   case PLUS: {
-    expr_values[expr] = builder->CreateFAdd(l, r, "addtmp");
+    expr_values[expr] = builder->CreateAdd(l, r, "addtmp");
+    // expr_values[expr] = builder->CreateFAdd(l, r, "addtmp");
     return;
   }
   case MINUS: {
@@ -218,7 +219,12 @@ void CodeGen::visit(const BlockStmt *stmt) {
   exit_scope();
 }
 
-void CodeGen::visit(const PrintStmt *stmt) {}
+void CodeGen::visit(const PrintStmt *stmt) {
+  if (stmt->expression) {
+    Value* value = emit(stmt->expression);
+    call_printf(value, expr_types[stmt->expression]);
+  }
+}
 
 void CodeGen::visit(const ClassStmt *stmt) {
   std::string classname = stmt->name.lexeme;

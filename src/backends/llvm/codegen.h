@@ -29,6 +29,7 @@ public:
     sm.reset(); // Go to initial (global) scope.
     module = llvm::make_unique<llvm::Module>("neeilang.main_module", ctx);
     builder = llvm::make_unique<llvm::IRBuilder<>>(ctx);
+    init_libc();
   }
 
   void emit(const std::vector<Stmt *> &stmts);
@@ -53,6 +54,12 @@ private:
   Value *codegen(Expr *expr);
   void enter_scope();
   void exit_scope();
+
+  // libc bindings.
+  void init_libc();
+  void call_printf(llvm::Value* value, NLType t);
+
+
 };
 
 #endif // _NL_BACKENDS_LLVM_CODEGEN_H_

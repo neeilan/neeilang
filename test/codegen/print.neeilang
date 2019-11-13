@@ -1,0 +1,13 @@
+fn main() : Int {
+  var a : Int = 3;
+  var b : Int = 4;
+  print a+b+3;
+  print 1.11;
+
+  print true; 
+  print false; 
+
+  print "Hello world";
+
+  return 0;
+}

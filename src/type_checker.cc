@@ -143,9 +143,9 @@ void TypeChecker::visit(const IfStmt *stmt) {
 
 void TypeChecker::visit(const PrintStmt *stmt) {
   auto expr_type = check(stmt->expression);
-  if (!match(expr_type, {Primitives::String()})) {
+  if (!match(expr_type, {Primitives::Int(), Primitives::Float(), Primitives::Bool(), Primitives::String()})) {
     Neeilang::error(stmt->keyword,
-                    "Expression to be printed must be a String. Got: " +
+                    "Expression to be printed must be a String, Int or Float. Got: " +
                         expr_type->name);
   }
 }
