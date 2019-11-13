@@ -39,3 +39,6 @@ Makefile
 *.out
 *.app
 bin/*
+
+#CTags file
+src/tags
