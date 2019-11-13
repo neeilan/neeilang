@@ -167,23 +167,24 @@ static AllocaInst* entry_block_alloc(Function* fn, const std::string & s, llvm::
   return builder.CreateAlloca(type, 0, s);
 }
 
-Value* emit_default_val(NLType t) {
+static Value* emit_default_val(llvm::LLVMContext & ctx, NLType t) {
+  if (t == Primitives::Bool()) return ConstantInt::getFalse(ctx);
+  if (t == Primitives::Float()) return ConstantFP::get(ctx, llvm::APFloat(0.0));
   return nullptr;
 }
 
 void CodeGen::visit(const VarStmt *stmt) {
  // TODO: Handle global variables.
+  const std::string varname = stmt->name.lexeme;
+  NLType nl_type = sm.current().typetab->get(varname);
   
   Function *fn = builder->GetInsertBlock()->getParent();
   Value* init = nullptr;
   if (stmt->expression) {
     init = emit(stmt->expression);
   } else {
-    init = emit_default_val(expr_types[stmt->expression]);
+    init = emit_default_val(ctx, nl_type);
   }
-
-  const std::string varname = stmt->name.lexeme;
-  NLType nl_type = sm.current().typetab->get(varname);
 
   AllocaInst *alloca = entry_block_alloc(fn, varname, tb.to_llvm(nl_type));
   builder->CreateStore(init, alloca);
@@ -192,7 +193,8 @@ void CodeGen::visit(const VarStmt *stmt) {
 }
 
 void CodeGen::visit(const Variable *expr) {
- // expr_values[expr] = builder->CreateLoad(named_vals[expr], expr->name.c_str() );
+ const std::string varname = expr->name.lexeme;
+ expr_values[expr] = builder->CreateLoad(named_vals->get(varname), varname.c_str() );
 }
 
 void CodeGen::visit(const Assignment *expr) {}

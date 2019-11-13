@@ -1,5 +1,8 @@
 fn fnWithLocalVars() : Void {
   var myInt : Int = 4;
   var myBool : Bool = true;
+  var myFloat : Float;
+
+  myInt;
 
 }
