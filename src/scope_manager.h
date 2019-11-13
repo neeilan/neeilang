@@ -8,18 +8,18 @@
 struct ScopeManager {
   std::vector<Scope> scopes;
   std::size_t curr_scope = 0;
-  std::size_t next_id = 0;
+  std::size_t next_id = 1;
 
   explicit ScopeManager() {
     // Create the 'global' scope, with id 0.
-    scopes.push_back(Scope(next_id++));
+    scopes.push_back(Scope(curr_scope));
   }
 
   Scope current() { return scopes[curr_scope]; }
 
   Scope globals() { return scopes[0]; }
 
-  void reset() { curr_scope = 0; }
+  void reset() { curr_scope = 0; next_id = 1; }
 
   void enter() {
     if (scopes.size() > next_id) {
