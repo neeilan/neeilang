@@ -197,7 +197,14 @@ void CodeGen::visit(const Variable *expr) {
  expr_values[expr] = builder->CreateLoad(named_vals->get(varname), varname.c_str() );
 }
 
-void CodeGen::visit(const Assignment *expr) {}
+void CodeGen::visit(const Assignment *expr) {
+  llvm::Value* value = emit(&expr->value);
+  const std::string varname = expr->name.lexeme;
+  builder->CreateStore(value, named_vals->get(varname));
+  expr_values[expr] = value;
+  
+}
+
 void CodeGen::visit(const Call *expr) {}
 void CodeGen::visit(const Get *expr) {}
 void CodeGen::visit(const Set *expr) {}

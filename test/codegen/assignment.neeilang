@@ -1,0 +1,6 @@
+fn fnWithLocalVars() : Void {
+  var myInt : Int = 4;
+  var yourInt : Int = 5;
+  
+  yourInt = myInt;
+}
