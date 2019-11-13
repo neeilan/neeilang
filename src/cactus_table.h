@@ -13,6 +13,9 @@
 template <typename K, typename V>
 class CactusTable
 {
+  private:
+    std::map<K, V>  mappings;
+
   public:
     CactusTable() {}
     explicit CactusTable(std::shared_ptr<CactusTable<K, V>> parent)
@@ -36,8 +39,6 @@ class CactusTable
       return parent->get(k);
     }
 
-  private:
-    std::map<K, V>  mappings;
     std::shared_ptr<CactusTable<K, V>> parent;
 };
 
