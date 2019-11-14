@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 set(PROJECT_NAME neeilang)
 project(${PROJECT_NAME})
 
-set(CMAKE_CXX_FLAGS "-g -Wall -pedantic -Werror")
+set(CMAKE_CXX_FLAGS "-g -Wall -pedantic -Werror -fvisibility=hidden")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 #----------------------------------------------------------------------------
