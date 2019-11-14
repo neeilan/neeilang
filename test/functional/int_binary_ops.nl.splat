@@ -1,0 +1,27 @@
+fn main() : Int {
+  var a : Int = 5;
+  var b : Int = 3;
+
+  print a + b;  // 8
+  print a - b;  // 2
+  print b - a;  // -2
+
+  if (a >= 5) {
+    print "a >= 5";
+  }
+
+  if (a > 5) {
+    print "a > 5";
+  }
+
+  return 0;
+}
+
+/*
+%output
+8
+2
+-2
+a >= 5
+%output
+*/
