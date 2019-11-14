@@ -7,11 +7,19 @@ fn main() : Int {
   print b - a;    // -2
 
   if (a >= 5) {
-    print "a >= 5";
+    print "a >= 5"; // a >= 5
   }
 
   if (a > 5) {
-    print "a > 5";
+    print "a > 5";  // Not executed
+  }
+
+  if (a == b) {
+    print "a == b"; // Not executed
+  }
+
+  if (b != a) {
+    print "b != a"; // b != a
   }
 
   print a * b;    // 15
@@ -29,6 +37,7 @@ fn main() : Int {
 2
 -2
 a >= 5
+b != a
 15
 1
 0
