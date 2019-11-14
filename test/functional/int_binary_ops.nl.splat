@@ -2,9 +2,9 @@ fn main() : Int {
   var a : Int = 5;
   var b : Int = 3;
 
-  print a + b;  // 8
-  print a - b;  // 2
-  print b - a;  // -2
+  print a + b;    // 8
+  print a - b;    // 2
+  print b - a;    // -2
 
   if (a >= 5) {
     print "a >= 5";
@@ -13,6 +13,12 @@ fn main() : Int {
   if (a > 5) {
     print "a > 5";
   }
+
+  print a * b;    // 15
+
+  print a / b;    // 1
+  print b / a;    // 0
+  print 120 / 9;  // 13
 
   return 0;
 }
@@ -23,5 +29,9 @@ fn main() : Int {
 2
 -2
 a >= 5
+15
+1
+0
+13
 %output
 */

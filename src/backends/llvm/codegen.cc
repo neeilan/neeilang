@@ -111,6 +111,14 @@ void CodeGen::visit(const Binary *expr) {
         NUMERIC_CMP(l_ty, builder->CreateFCmpUNE(l, r, "cmp_ne_tmp"),
                     builder->CreateICmpNE(l, r, "cmp_ne_tmp")) return;
   }
+  case STAR: {
+    expr_values[expr] = NUMERIC_CMP(l_ty, builder->CreateFMul(l, r, "multmp"),
+                                    builder->CreateMul(l, r, "multmp")) return;
+  }
+  case SLASH: {
+    expr_values[expr] = NUMERIC_CMP(l_ty, builder->CreateFDiv(l, r, "divtmp"),
+                                    builder->CreateSDiv(l, r, "divtmp")) return;
+  }
   default: {
     // Error
     expr_values[expr] = nullptr;
