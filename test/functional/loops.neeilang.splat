@@ -1,0 +1,9 @@
+fn main() : Int {
+  var i : Int;
+
+  while (i < 5) {
+    print i;
+    i = i + 1;
+  }
+  return 0;
+}

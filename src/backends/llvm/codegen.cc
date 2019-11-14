@@ -1,3 +1,4 @@
+#include <cassert>
 #include <map>
 #include <memory>
 #include <vector>
@@ -25,7 +26,7 @@ using llvm::Function;
 using llvm::FunctionType;
 using llvm::Value;
 
-#define NUMERIC_CMP(type, instr_float, instr_int)                              \
+#define NUMERIC_BINOP(type, instr_float, instr_int)                            \
   ((type == Primitives::Float())                                               \
        ? instr_float                                                           \
        : (type == Primitives::Int()) ? instr_int : nullptr);
@@ -81,47 +82,61 @@ void CodeGen::visit(const Binary *expr) {
   // For the following instructions, we know both operands are Ints or Floats
   // (since we don't handle String concat with '+' yet).
   case PLUS: {
-    expr_values[expr] = NUMERIC_CMP(l_ty, builder->CreateFAdd(l, r, "addtmp"),
-                                    builder->CreateAdd(l, r, "addtmp")) return;
+    expr_values[expr] =
+        NUMERIC_BINOP(l_ty, builder->CreateFAdd(l, r, "addtmp"),
+                      builder->CreateAdd(l, r, "addtmp")) return;
   }
   case MINUS: {
-    expr_values[expr] = NUMERIC_CMP(l_ty, builder->CreateFSub(l, r, "subtmp"),
-                                    builder->CreateSub(l, r, "subtmp")) return;
+    expr_values[expr] =
+        NUMERIC_BINOP(l_ty, builder->CreateFSub(l, r, "subtmp"),
+                      builder->CreateSub(l, r, "subtmp")) return;
   }
   case GREATER: {
     expr_values[expr] =
-        NUMERIC_CMP(l_ty, builder->CreateFCmpUGT(l, r, "cmp_gt_tmp"),
-                    builder->CreateICmpUGT(l, r, "cmp_gt_tmp")) return;
+        NUMERIC_BINOP(l_ty, builder->CreateFCmpUGT(l, r, "cmp_gt_tmp"),
+                      builder->CreateICmpUGT(l, r, "cmp_gt_tmp")) return;
   }
   case GREATER_EQUAL: {
     expr_values[expr] =
-        NUMERIC_CMP(l_ty, builder->CreateFCmpUGE(l, r, "cmp_ge_tmp"),
-                    builder->CreateICmpUGE(l, r, "cmp_ge_tmp")) return;
+        NUMERIC_BINOP(l_ty, builder->CreateFCmpUGE(l, r, "cmp_ge_tmp"),
+                      builder->CreateICmpUGE(l, r, "cmp_ge_tmp")) return;
+  }
+  case LESS: {
+    expr_values[expr] =
+        NUMERIC_BINOP(l_ty, builder->CreateFCmpULT(l, r, "cmp_lt_tmp"),
+                      builder->CreateICmpULT(l, r, "cmp_lt_tmp")) return;
+  }
+  case LESS_EQUAL: {
+    expr_values[expr] =
+        NUMERIC_BINOP(l_ty, builder->CreateFCmpULE(l, r, "cmp_lte_tmp"),
+                      builder->CreateICmpULE(l, r, "cmp_lte_tmp")) return;
   }
   case EQUAL_EQUAL: {
     // Use 'ordered and equal' here - 'ordered' means that
     // neither operand is QNAN (quiet NaN).
     expr_values[expr] =
-        NUMERIC_CMP(l_ty, builder->CreateFCmpOEQ(l, r, "cmp_eq_tmp"),
-                    builder->CreateICmpEQ(l, r, "cmp_eq_tmp")) return;
+        NUMERIC_BINOP(l_ty, builder->CreateFCmpOEQ(l, r, "cmp_eq_tmp"),
+                      builder->CreateICmpEQ(l, r, "cmp_eq_tmp")) return;
   }
   case BANG_EQUAL: {
     // Emit fcmp with 'unordered or not equal' condition code.
     expr_values[expr] =
-        NUMERIC_CMP(l_ty, builder->CreateFCmpUNE(l, r, "cmp_ne_tmp"),
-                    builder->CreateICmpNE(l, r, "cmp_ne_tmp")) return;
+        NUMERIC_BINOP(l_ty, builder->CreateFCmpUNE(l, r, "cmp_ne_tmp"),
+                      builder->CreateICmpNE(l, r, "cmp_ne_tmp")) return;
   }
   case STAR: {
-    expr_values[expr] = NUMERIC_CMP(l_ty, builder->CreateFMul(l, r, "multmp"),
-                                    builder->CreateMul(l, r, "multmp")) return;
+    expr_values[expr] =
+        NUMERIC_BINOP(l_ty, builder->CreateFMul(l, r, "multmp"),
+                      builder->CreateMul(l, r, "multmp")) return;
   }
   case SLASH: {
-    expr_values[expr] = NUMERIC_CMP(l_ty, builder->CreateFDiv(l, r, "divtmp"),
-                                    builder->CreateSDiv(l, r, "divtmp")) return;
+    expr_values[expr] =
+        NUMERIC_BINOP(l_ty, builder->CreateFDiv(l, r, "divtmp"),
+                      builder->CreateSDiv(l, r, "divtmp")) return;
   }
   default: {
     // Error
-    expr_values[expr] = nullptr;
+    assert(false && "Cannot generate IR for unknown binary operator");
     return;
   }
   }
@@ -185,6 +200,8 @@ static Value *emit_default_val(llvm::LLVMContext &ctx, NLType t) {
     return ConstantInt::getFalse(ctx);
   if (t == Primitives::Float())
     return ConstantFP::get(ctx, llvm::APFloat(0.0));
+  if (t == Primitives::Int())
+    return ConstantInt::get(llvm::Type::getInt32Ty(ctx), 0);
   return nullptr;
 }
 
