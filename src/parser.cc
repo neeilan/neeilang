@@ -145,7 +145,8 @@ Stmt *Parser::while_statement(Token while_tok) {
   Expr *condition = expression();
   consume(RIGHT_PAREN, "Expect ')' after condition.");
 
-  Stmt *body = statement();
+  consume(LEFT_BRACE, "Expect '{' after while condition.");
+  Stmt *body = block_statement();
   return new WhileStmt(while_tok, condition, body);
 }
 

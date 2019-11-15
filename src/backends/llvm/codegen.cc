@@ -297,7 +297,25 @@ void CodeGen::visit(const IfStmt *stmt) {
   builder->SetInsertPoint(merge);
 }
 
-void CodeGen::visit(const WhileStmt *stmt) {}
+void CodeGen::visit(const WhileStmt *stmt) {
+  Function *func = builder->GetInsertBlock()->getParent();
+  BasicBlock *check_cond = BasicBlock::Create(ctx, "check_cond", func);
+  BasicBlock *loop = BasicBlock::Create(ctx, "loop", func);
+  BasicBlock *post_loop = BasicBlock::Create(ctx, "post_loop", func);
+
+  builder->CreateBr(check_cond);
+  builder->SetInsertPoint(check_cond);
+  Value *cond = emit(stmt->condition);
+  builder->CreateCondBr(cond, loop, post_loop);
+
+  builder->SetInsertPoint(loop);
+  if (stmt->body) {
+    emit(stmt->body);
+  }
+
+  builder->CreateBr(check_cond);
+  builder->SetInsertPoint(post_loop);
+}
 
 void CodeGen::visit(const FuncStmt *stmt) {
   auto key = TypeTableUtil::fn_key(stmt->name.lexeme);

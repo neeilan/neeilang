@@ -1,9 +1,30 @@
 fn main() : Int {
-  var i : Int;
+  var i : Int; // Default value is 0
 
-  while (i < 5) {
+  while (i < 3) {
+    // Try: var i : Int; - couple ways to handle it.
     print i;
     i = i + 1;
   }
+
+  var j : Int = i;
+
+  while (j > 0) {
+    var k : Int = 2;
+    print j * k;
+    j = j - 1;
+  }
+
   return 0;
 }
+
+/*
+%output
+0
+1
+2
+6
+4
+2
+%output
+*/
