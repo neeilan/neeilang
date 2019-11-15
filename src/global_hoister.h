@@ -34,6 +34,7 @@ public:
 private:
   ScopeManager sm;
   bool decl_only_pass;
+  NLType encl_class;
 
   void declare(const std::string &type_name);
 

@@ -216,6 +216,7 @@ void CodeGen::visit(const VarStmt *stmt) {
     init = emit(stmt->expression);
   } else {
     init = emit_default_val(ctx, nl_type);
+    assert(init != nullptr && "Could not retrieve default value for type.");
   }
 
   AllocaInst *alloca = entry_block_alloc(fn, varname, tb.to_llvm(nl_type));
@@ -260,13 +261,18 @@ void CodeGen::visit(const PrintStmt *stmt) {
 void CodeGen::visit(const ClassStmt *stmt) {
   std::string classname = stmt->name.lexeme;
   auto nl_type = sm.current().typetab->get(classname);
-  llvm::Type *struct_type = tb.to_llvm(nl_type);
+  tb.to_llvm(nl_type);
 
-  // Hack: Generate a function so the IR for the class is dumped (for debug)
-  // and not optimized away.
-  std::vector<llvm::Type *> doubles(0, llvm::Type::getDoubleTy(ctx));
-  FunctionType *ft = FunctionType::get(struct_type, doubles, false);
-  Function::Create(ft, Function::ExternalLinkage, "class_func", module.get());
+  NLType prev_encl_class = encl_class;
+  encl_class = nl_type;
+
+  enter_scope();
+  for (const Stmt *method : stmt->methods) {
+    emit(method);
+  }
+  exit_scope();
+
+  encl_class = prev_encl_class;
 }
 
 void CodeGen::visit(const IfStmt *stmt) {
@@ -318,11 +324,25 @@ void CodeGen::visit(const WhileStmt *stmt) {
 }
 
 void CodeGen::visit(const FuncStmt *stmt) {
-  auto key = TypeTableUtil::fn_key(stmt->name.lexeme);
-  auto nl_functype = sm.current().typetab->get(key)->functype;
+  std::shared_ptr<FuncType> nl_functype;
+  if (encl_class) {
+    nl_functype = encl_class->get_method(stmt->name.lexeme);
+  } else {
+    auto key = TypeTableUtil::fn_key(stmt->name.lexeme);
+    nl_functype = sm.current().typetab->get(key)->functype;
+  }
+
+  assert(nl_functype != nullptr &&
+         "Cannot codegen function: FuncType not found.");
 
   llvm::Type *ret_type = tb.to_llvm(nl_functype->return_type);
   std::vector<llvm::Type *> arg_types;
+
+  // Methods take object pointer as first arg
+  if (encl_class) {
+    arg_types.push_back(tb.to_llvm(encl_class));
+  }
+
   for (NLType nl_argtype : nl_functype->arg_types) {
     arg_types.push_back(tb.to_llvm(nl_argtype));
   }

@@ -52,6 +52,7 @@ private:
   std::unique_ptr<llvm::Module> module =
       nullptr; // Owns memory for generated IR.
   std::shared_ptr<NamedValueTable> named_vals;
+  NLType encl_class = nullptr;
 
   Value *codegen(Expr *expr);
   void enter_scope();

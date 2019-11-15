@@ -10,6 +10,8 @@
 #include "functype.h"
 #include "nltype.h"
 
+struct FuncType;
+
 class Type {
 public:
   Type(std::string name) : name(name) {}
@@ -26,27 +28,16 @@ public:
     return other->superclass_of(this);
   }
 
-  bool has_field(std::string name) {
-    for (auto field : fields) {
-      if (field.name == name)
-        return true;
-    }
-    return false;
-  }
+  bool has_field(const std::string &name);
+  Field get_field(const std::string &name);
+  bool has_method(const std::string &name);
+  std::shared_ptr<FuncType> get_method(const std::string &name);
 
-  Field get_field(std::string name) {
-    assert(has_field(name));
-    for (auto field : fields) {
-      if (field.name == name)
-        return field;
-    }
-    return Field{"NO_SUCH_FIELD", nullptr}; // Unreachable
-  }
-
-  std::string
-      name; // TODO : look into using Token here to preserve source info.
+  std::string name;
   std::shared_ptr<Type> supertype;
   std::vector<Field> fields;
+  std::vector<std::shared_ptr<FuncType>> methods;
+
   std::shared_ptr<FuncType> functype = nullptr;
 };
 

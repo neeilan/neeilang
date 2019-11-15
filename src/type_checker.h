@@ -37,7 +37,7 @@ public:
 private:
   std::map<const Expr *, NLType> expr_types;
   NLType enclosing_class;
-  NLType enclosing_fn;
+  std::shared_ptr<FuncType> enclosing_fn;
 };
 
 #endif //_NL_TYPE_CHECKER_H_

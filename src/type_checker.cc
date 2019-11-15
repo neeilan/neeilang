@@ -99,30 +99,40 @@ void TypeChecker::visit(const This *expr) {
 void TypeChecker::visit(const FuncStmt *stmt) {
   // GlobalHoister does a majority of the work.
   // TODO : Perhaps move some of that logic here?
+
+  auto prev_enclosing_fn = enclosing_fn;
+
+  enclosing_fn = nullptr;
   auto fn_key = TypeTableUtil::fn_key(stmt->name.lexeme);
-  if (types()->contains(fn_key)) {
-    auto prev_enclosing_fn = enclosing_fn;
-    enclosing_fn = types()->get(fn_key);
-
-    sm.enter();
-    for (int i = 0; i < stmt->parameters.size(); i++) {
-      auto argname = stmt->parameters[i].lexeme;
-      symbols()->insert(argname,
-                        Symbol{argname, enclosing_fn->functype->arg_types[i]});
-    }
-
-    check(stmt->body);
-    sm.exit();
-
-    enclosing_fn = prev_enclosing_fn;
+  if (enclosing_class) {
+    enclosing_fn = enclosing_class->get_method(stmt->name.lexeme);
+  } else if (types()->contains(fn_key)) {
+    enclosing_fn = types()->get(fn_key)->functype;
   }
+
+  assert(enclosing_fn && "FuncType not found for function");
+
+  sm.enter();
+  for (int i = 0; i < stmt->parameters.size(); i++) {
+    auto argname = stmt->parameters[i].lexeme;
+    symbols()->insert(argname, Symbol{argname, enclosing_fn->arg_types[i]});
+  }
+
+  check(stmt->body);
+  sm.exit();
+
+  enclosing_fn = prev_enclosing_fn;
 }
 
 void TypeChecker::visit(const ClassStmt *stmt) {
   // Hoister should already have checked field types.
   auto prev_enclosing_class = enclosing_class;
   enclosing_class = types()->get(stmt->name.lexeme);
+
+  sm.enter();
   check(stmt->methods);
+  sm.exit();
+
   enclosing_class = prev_enclosing_class;
 }
 
@@ -154,7 +164,7 @@ void TypeChecker::visit(const PrintStmt *stmt) {
 }
 
 void TypeChecker::visit(const ReturnStmt *stmt) {
-  auto declared_rettype = enclosing_fn->functype->return_type;
+  auto declared_rettype = enclosing_fn->return_type;
 
   if (stmt->value) {
     auto actual_rettype = check(stmt->value);

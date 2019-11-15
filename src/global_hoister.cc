@@ -74,6 +74,14 @@ void GlobalHoister::visit(const ClassStmt *cls) {
     cls_type->fields.push_back(
         Field{field_name, typetab()->get(field_type_name)});
   }
+
+  // Methods
+  NLType old_encl_class = encl_class;
+  encl_class = cls_type;
+  for (const Stmt *method : cls->methods) {
+    hoist(method);
+  }
+  encl_class = old_encl_class;
 }
 
 void GlobalHoister::visit(const FuncStmt *stmt) {
@@ -87,6 +95,8 @@ void GlobalHoister::visit(const FuncStmt *stmt) {
   const std::string return_type_name = stmt->return_type.lexeme;
 
   std::shared_ptr<FuncType> functype = std::make_shared<FuncType>();
+  functype->name = fn_name; // TODO: Constructor this.
+
   bool had_error = false;
 
   if (!typetab()->contains(stmt->return_type.lexeme)) {
@@ -105,7 +115,14 @@ void GlobalHoister::visit(const FuncStmt *stmt) {
     }
   }
 
-  if (!had_error) {
+  if (had_error)
+    return;
+
+  if (encl_class) {
+    // Method
+    encl_class->methods.push_back(functype);
+  } else {
+    // Regular (global) function
     const std::string fn_key = TypeTableUtil::fn_key(stmt);
     declare(fn_key);
     typetab()->get(fn_key)->functype = functype;
