@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/Argument.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
@@ -30,6 +31,12 @@ using llvm::Value;
   ((type == Primitives::Float())                                               \
        ? instr_float                                                           \
        : (type == Primitives::Int()) ? instr_int : nullptr);
+
+static AllocaInst *entry_block_alloca(Function *fn, const std::string &s,
+                                     llvm::Type *type) {
+  llvm::IRBuilder<> builder(&fn->getEntryBlock(), fn->getEntryBlock().begin());
+  return builder.CreateAlloca(type, 0, s);
+}
 
 void CodeGen::emit(const std::vector<Stmt *> &stmts) {
   for (const Stmt *stmt : stmts) {
@@ -189,12 +196,6 @@ void CodeGen::visit(const Logical *expr) {
 }
 
 // Variables
-static AllocaInst *entry_block_alloc(Function *fn, const std::string &s,
-                                     llvm::Type *type) {
-  llvm::IRBuilder<> builder(&fn->getEntryBlock(), fn->getEntryBlock().begin());
-  return builder.CreateAlloca(type, 0, s);
-}
-
 static Value *emit_default_val(llvm::LLVMContext &ctx, NLType t) {
   if (t == Primitives::Bool())
     return ConstantInt::getFalse(ctx);
@@ -219,7 +220,7 @@ void CodeGen::visit(const VarStmt *stmt) {
     assert(init != nullptr && "Could not retrieve default value for type.");
   }
 
-  AllocaInst *alloca = entry_block_alloc(fn, varname, tb.to_llvm(nl_type));
+  AllocaInst *alloca = entry_block_alloca(fn, varname, tb.to_llvm(nl_type));
   builder->CreateStore(init, alloca);
 
   named_vals->insert(varname, alloca);
@@ -239,6 +240,7 @@ void CodeGen::visit(const Assignment *expr) {
 }
 
 void CodeGen::visit(const Call *expr) {}
+
 void CodeGen::visit(const Get *expr) {}
 void CodeGen::visit(const Set *expr) {}
 void CodeGen::visit(const This *expr) {}
@@ -354,7 +356,26 @@ void CodeGen::visit(const FuncStmt *stmt) {
   BasicBlock *BB = BasicBlock::Create(ctx, "entry", func);
   builder->SetInsertPoint(BB);
 
+  std::vector<std::string> arg_names;
+  if (encl_class)
+    arg_names.push_back("this");
+  for (auto &tok : stmt->parameters) {
+    arg_names.push_back(tok.lexeme);
+  }
+
   enter_scope();
+
+  int arg_idx = 0;
+  for (auto &arg : func->args()) {
+    arg.setName(arg_names[arg_idx]);
+    llvm::AllocaInst *alloca =
+        entry_block_alloca(func, arg.getName(), arg_types[arg_idx]);
+    arg_idx++;
+
+    builder->CreateStore(&arg, alloca);
+    named_vals->insert(arg.getName(), alloca);
+  }
+
   emit(stmt->body);
   exit_scope();
 

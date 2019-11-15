@@ -1,0 +1,20 @@
+fn main() : Int {
+  return 0;
+}
+
+fn sayHiNTimes(n : Int) : Void {
+  var hi : String = "hi";
+  var i : Int = 0;
+  while (i < n) {
+    print hi;
+    i = i + 1;
+  }
+  return;
+}
+
+class Animal {
+  sayHi() : Void {
+    this;
+    return;
+  }
+}
