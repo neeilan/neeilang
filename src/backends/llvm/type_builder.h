@@ -18,9 +18,9 @@ public:
     ll_types[Primitives::Int()] = llvm::Type::getInt32Ty(ctx);
     ll_types[Primitives::Float()] = llvm::Type::getDoubleTy(ctx);
     ll_types[Primitives::Void()] = llvm::Type::getVoidTy(ctx);
-    // LLVM bools use Int1:
-    // https://llvm.org/doxygen/Constants_8cpp_source.html#l00612
     ll_types[Primitives::Bool()] = llvm::Type::getInt1Ty(ctx);
+    ll_types[Primitives::String()] =
+        llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx));
   }
 
   llvm::Type *to_llvm(NLType t);
