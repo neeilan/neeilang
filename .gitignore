@@ -46,3 +46,6 @@ src/tags
 # Compiler stdout/err dump files
 output
 out.bc
+
+# vim swap files
+*.swp
