@@ -7,6 +7,8 @@
 
 #include "primitives.h"
 #include "scope_manager.h"
+#include "symtab.h"
+#include "type_table.h"
 #include "visitor.h"
 
 /*
@@ -39,6 +41,7 @@ private:
   void declare(const std::string &type_name);
 
   std::shared_ptr<TypeTable> typetab() { return sm.current().typetab; }
+  std::shared_ptr<SymbolTable> symtab() { return sm.current().symtab; }
 };
 
 #endif //_NL_GLOBAL_HOISTER_H_

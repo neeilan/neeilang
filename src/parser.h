@@ -27,6 +27,7 @@ private:
   bool match(const std::vector<TokenType> &);
   bool check(const TokenType &type);
   bool at_end();
+  const std::string *outer_class = nullptr;
 
   Token &advance();
   Token &consume(TokenType type, std::string msg);

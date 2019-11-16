@@ -4,6 +4,7 @@
 #include "type.h"
 
 namespace Primitives {
+NLType Class();
 NLType String();
 NLType Int();
 NLType Float();

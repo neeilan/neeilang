@@ -1,0 +1,17 @@
+fn main() : Int {
+  var a : Animal = Animal.init();  
+  var i : Int = a.notInit();
+  print a.intField;
+  return 0;
+}
+
+class Animal {
+  intField : Int;
+  floatField : Float;
+  init() {
+    this;
+  }
+
+  notInit() : Int { return 4; }
+}
+

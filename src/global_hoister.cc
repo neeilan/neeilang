@@ -6,6 +6,7 @@
 #include "global_hoister.h"
 #include "neeilang.h"
 #include "stmt.h"
+#include "symtab.h"
 #include "type.h"
 
 void GlobalHoister::declare(const std::string &type_name) {
@@ -33,6 +34,10 @@ void GlobalHoister::visit(const ClassStmt *cls) {
     declare(cls_name); // store a pointer to this type to hoist later
     return;
   }
+
+  // Insert a symbol (of Class type)
+  Symbol symbol{cls_name, Primitives::Class()};
+  symtab()->insert(cls_name, symbol);
 
   NLType cls_type;
   if (typetab()->contains(cls_name)) {
@@ -100,7 +105,8 @@ void GlobalHoister::visit(const FuncStmt *stmt) {
   bool had_error = false;
 
   if (!typetab()->contains(stmt->return_type.lexeme)) {
-    Neeilang::error(stmt->return_type, "Unknown return type");
+    Neeilang::error(stmt->return_type,
+                    "Unknown return type " + stmt->return_type.lexeme);
     had_error = true;
   } else {
     functype->return_type = typetab()->get(stmt->return_type.lexeme);

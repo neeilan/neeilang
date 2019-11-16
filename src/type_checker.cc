@@ -7,6 +7,8 @@
 #include "type_checker.h"
 #include "type_table.h"
 
+using Primitives::TypeError;
+
 void TypeChecker::check(const std::vector<Stmt *> statements) {
   for (const Stmt *stmt : statements) {
     check(stmt);
@@ -41,7 +43,7 @@ void TypeChecker::visit(const VarStmt *stmt) {
 
   if (stmt->expression != nullptr) {
     auto expr_type = check(stmt->expression);
-    if (!expr_type->subclass_of(var_type.get())) {
+    if (expr_type != TypeError() && !expr_type->subclass_of(var_type.get())) {
       std::ostringstream msg;
       msg << "Illegal initialization of variable of type " << var_type->name
           << " with expression of type " << expr_type->name;
@@ -69,12 +71,13 @@ void TypeChecker::visit(const Variable *expr) {
   }
 
   Neeilang::error(expr->name, "Unknown variable");
+  expr_types[expr] = TypeError();
 }
 
 void TypeChecker::visit(const Assignment *expr) {
   auto right = check(&expr->value);
   if (has_type_error({right})) {
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
@@ -87,7 +90,7 @@ void TypeChecker::visit(const Assignment *expr) {
     msg << "Cannot assign value of type " << right->name << " to variable '"
         << var.name << "' of type " << left->name;
     Neeilang::error(expr->name, msg.str());
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
@@ -128,6 +131,10 @@ void TypeChecker::visit(const FuncStmt *stmt) {
 
 void TypeChecker::visit(const ClassStmt *stmt) {
   // Hoister should already have checked field types.
+  const std::string name = stmt->name.lexeme;
+  Symbol symbol{name, Primitives::Class()};
+  symbols()->insert(name, symbol);
+
   auto prev_enclosing_class = enclosing_class;
   enclosing_class = types()->get(stmt->name.lexeme);
 
@@ -203,7 +210,7 @@ void TypeChecker::visit(const Binary *expr) {
   NLType right = check(&expr->right);
 
   if (has_type_error({left, right})) {
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
@@ -224,7 +231,7 @@ void TypeChecker::visit(const Binary *expr) {
       return;
     } else {
       Neeilang::error(expr->op, "Left and right operands must be numbers");
-      expr_types[expr] = Primitives::TypeError();
+      expr_types[expr] = TypeError();
       return;
     }
   }
@@ -261,12 +268,12 @@ void TypeChecker::visit(const Binary *expr) {
 
     Neeilang::error(expr->op,
                     "Left and right operands must be numbers or Strings");
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
   default: {
     // Unreachable.
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
   }
@@ -280,7 +287,7 @@ void TypeChecker::visit(const Call *expr) {
 
   if (!callee_type->functype) {
     Neeilang::error(expr->paren, "Expression is not callable");
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
@@ -295,7 +302,7 @@ void TypeChecker::visit(const Call *expr) {
     msg << "Expected " << functype->arg_types.size() << " args, but got "
         << arg_types.size();
     Neeilang::error(expr->paren, msg.str());
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
@@ -312,7 +319,7 @@ void TypeChecker::visit(const Call *expr) {
     msg << ")";
 
     Neeilang::error(expr->paren, msg.str());
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
@@ -322,24 +329,42 @@ void TypeChecker::visit(const Call *expr) {
 void TypeChecker::visit(const Get *expr) {
   auto callee_type = check(&expr->callee);
   if (has_type_error({callee_type})) {
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
+  if (callee_type == Primitives::Class()) {
+    // We'd like this to be general enough for any static method, but just init
+    // for now.
+    // TODO: Provide default init if user hasn't defined an init method
+    const Variable *callee = static_cast<const Variable *>(&expr->callee);
+    // TODO : This assumes call is always of the form Type.init();
+    // This isn't necesarily bad, but we want to ensure other forms are allowed
+    // in previous passes.
+    // Change callee from Class type to real type.
+    callee_type = types()->get(callee->name.lexeme);
+  }
+
   auto field_name = expr->name.lexeme;
-  if (!callee_type->has_field(field_name)) {
+  if (!callee_type->has_field(field_name) &&
+      !callee_type->has_method(field_name)) {
     std::ostringstream msg;
-    msg << "Type " << callee_type->name << " does not have field '"
+    msg << "Type " << callee_type->name << " does not have field or method '"
         << field_name << "'";
 
     Neeilang::error(expr->name, msg.str());
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
   // TODO : Check that this is an l-value.
-
-  expr_types[expr] = callee_type;
+  if (callee_type->has_field(field_name)) {
+    expr_types[expr] = callee_type->get_field(field_name).type;
+  } else {
+    NLType method_type = NLTypeUtil::create(field_name + "_wrapper");
+    method_type->functype = callee_type->get_method(field_name);
+    expr_types[expr] = method_type;
+  }
 }
 
 void TypeChecker::visit(const Set *expr) {
@@ -347,13 +372,13 @@ void TypeChecker::visit(const Set *expr) {
   auto callee_type = check(&expr->callee);
 
   if (has_type_error({expr_type, callee_type})) {
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
   if (!expr_type->subclass_of(callee_type.get())) {
     Neeilang::error(expr->name, "Incompatible types in Set expression");
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
@@ -368,19 +393,19 @@ void TypeChecker::visit(const Logical *expr) {
   NLType lhs_type = check(&expr->left);
   NLType rhs_type = check(&expr->left);
   if (has_type_error({lhs_type, rhs_type})) {
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
   if (!match(lhs_type, {Primitives::Int(), Primitives::Float()})) {
     Neeilang::error(expr->op, "Left operand of logical operator must be Bool");
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
   if (!match(rhs_type, {Primitives::Int(), Primitives::Float()})) {
     Neeilang::error(expr->op, "Right operand of logical operator must be Bool");
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
@@ -390,14 +415,14 @@ void TypeChecker::visit(const Logical *expr) {
 void TypeChecker::visit(const Unary *expr) {
   NLType rhs_type = check(&expr->right);
   if (has_type_error({rhs_type})) {
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
   if (!match(rhs_type, {Primitives::Int(), Primitives::Float()})) {
     Neeilang::error(expr->op,
                     "Right side of unary expression must be a number.");
-    expr_types[expr] = Primitives::TypeError();
+    expr_types[expr] = TypeError();
     return;
   }
 
@@ -436,7 +461,7 @@ bool TypeChecker::match(const NLType expr_type,
 
 bool TypeChecker::has_type_error(const std::vector<NLType> &types) {
   for (auto type : types) {
-    if (type == Primitives::TypeError()) {
+    if (type == TypeError()) {
       return true;
     }
   }

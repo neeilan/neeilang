@@ -1,6 +1,11 @@
 #include "primitives.h"
 
 namespace Primitives {
+NLType Class() {
+  static NLType type = std::make_shared<Type>("Class");
+  return type;
+}
+
 NLType String() {
   static NLType type = std::make_shared<Type>("String");
   return type;

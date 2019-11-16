@@ -51,6 +51,8 @@ Stmt *Parser::var_declaration() {
 
 Stmt *Parser::class_declaration() {
   Token name = consume(IDENTIFIER, "Expect class name.");
+  const std::string *prev_outer_class = outer_class;
+  outer_class = &name.lexeme;
 
   Token *superclass = nullptr;
 
@@ -77,6 +79,7 @@ Stmt *Parser::class_declaration() {
 
   consume(RIGHT_BRACE, "Expect '}' after class body.");
 
+  outer_class = prev_outer_class;
   return new ClassStmt(name, superclass, fields, field_types, methods);
 }
 
@@ -214,6 +217,7 @@ Stmt *Parser::func_statement(std::string kind) {
       }
 
       parameters.push_back(consume(IDENTIFIER, "Expect parameter name."));
+
       consume(COLON, "Expect ':' after parameter name.");
       parameter_types.push_back(
           consume(IDENTIFIER, "Expect parameter type after ':'"));
@@ -222,12 +226,18 @@ Stmt *Parser::func_statement(std::string kind) {
 
   consume(RIGHT_PAREN, "Expect ')' after parameters.");
 
-  consume(COLON, "Expect ':' after parameter list in function statement.");
-
-  Token return_type =
-      consume(IDENTIFIER, "Expect return type in function statement");
-
-  consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+  Token return_type;
+  ;
+  if (outer_class && name.lexeme == "init") {
+    return_type = Token(IDENTIFIER, *outer_class, "", -1);
+    consume(LEFT_BRACE, "Expect '{' before init body. Note: Return type is not "
+                        "declared for init methods");
+  } else {
+    consume(COLON, "Expect ':' after parameter list in function statement.");
+    return_type =
+        consume(IDENTIFIER, "Expect return type in " + kind + " statement");
+    consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+  }
 
   std::vector<Stmt *> body;
   body.push_back(block_statement());
