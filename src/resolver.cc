@@ -6,12 +6,19 @@
 #include "resolver.h"
 #include "stmt.h"
 
+void Resolver::resolve_program(const std::vector<Stmt *> program) {
+  decl_only_pass = true;
+  resolve(program);
+
+  decl_only_pass = false;
+  resolve(program);
+  // TODO : free remaining scopes here.
+}
+
 void Resolver::resolve(const std::vector<Stmt *> statements) {
   for (const Stmt *stmt : statements) {
     resolve(stmt);
   }
-
-  // TODO : free remaining scopes here.
 }
 
 void Resolver::resolve(const Stmt *stmt) { stmt->accept(this); }
@@ -19,12 +26,17 @@ void Resolver::resolve(const Stmt *stmt) { stmt->accept(this); }
 void Resolver::resolve(const Expr *expr) { expr->accept(this); }
 
 void Resolver::visit(const BlockStmt *stmt) {
+  if (decl_only_pass)
+    return;
   begin_scope();
   resolve(stmt->block_contents);
   end_scope();
 }
 
 void Resolver::visit(const VarStmt *stmt) {
+  // TODO: Semantically, should these be hoisted?
+  if (decl_only_pass)
+    return;
   declare(stmt->name);
   if (stmt->expression) {
     resolve(stmt->expression);
@@ -57,7 +69,11 @@ void Resolver::visit(const This *expr) {
 }
 
 void Resolver::visit(const FuncStmt *stmt) {
-  declare(stmt->name);
+  if (decl_only_pass) {
+    declare(stmt->name);
+    return;
+  }
+
   define(stmt->name);
   resolve_fn(FunctionType::FUNCTION, stmt);
 }
@@ -66,7 +82,11 @@ void Resolver::visit(const ClassStmt *stmt) {
   ClassType enclosing_class = current_class;
   current_class = ClassType::IN_CLASS;
 
-  declare(stmt->name);
+  if (decl_only_pass) {
+    declare(stmt->name);
+    return;
+  }
+
   define(stmt->name);
 
   begin_scope();

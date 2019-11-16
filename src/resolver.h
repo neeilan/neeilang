@@ -33,8 +33,7 @@ struct ScopeMap {
 class Resolver : public ExprVisitor<void>, public StmtVisitor<void> {
 public:
   Resolver() { scopes.push_back(&globals); }
-
-  void resolve(const std::vector<Stmt *> statements);
+  void resolve_program(const std::vector<Stmt *> program);
 
   //  private:
   ScopeMap globals;
@@ -43,6 +42,7 @@ public:
 
   ClassType current_class = NOT_IN_CLASS;
   FunctionType current_function = NOT_IN_FN;
+  bool decl_only_pass = true;
 
   EXPR_VISITOR_METHODS(void)
   STMT_VISITOR_METHODS(void)
@@ -52,6 +52,7 @@ public:
   void resolve(const Stmt *);
   void resolve(const Expr *);
   void resolve_local(const Expr *expr, const Token name);
+  void resolve(const std::vector<Stmt *> statements);
   void resolve_fn(FunctionType declaration, const FuncStmt *fn);
   void declare(const Token);
   void define(const Token);

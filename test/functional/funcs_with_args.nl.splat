@@ -1,6 +1,15 @@
 fn main() : Int {
+  sayHiNTimes(3);
   return 0;
 }
+
+/*
+%output
+hi
+hi
+hi
+%output
+*/
 
 fn sayHiNTimes(n : Int) : Void {
   var hi : String = "hi";
@@ -11,10 +20,10 @@ fn sayHiNTimes(n : Int) : Void {
   }
   return;
 }
-
 class Animal {
   sayHi() : Void {
     this;
     return;
   }
 }
+

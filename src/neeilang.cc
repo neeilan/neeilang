@@ -71,7 +71,7 @@ void Neeilang::run(const std::string &source) {
 
   std::cout << ";CODEGEN" << std::endl;
   CodeGen codegen(scope_manager, type_checker.get_expr_types());
-  codegen.emit(program);
+  codegen.generate(program);
 
   if (!had_error) {
     codegen.print();

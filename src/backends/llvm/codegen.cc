@@ -14,6 +14,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
@@ -33,9 +34,16 @@ using llvm::Value;
        : (type == Primitives::Int()) ? instr_int : nullptr);
 
 static AllocaInst *entry_block_alloca(Function *fn, const std::string &s,
-                                     llvm::Type *type) {
+                                      llvm::Type *type) {
   llvm::IRBuilder<> builder(&fn->getEntryBlock(), fn->getEntryBlock().begin());
   return builder.CreateAlloca(type, 0, s);
+}
+
+void CodeGen::generate(const std::vector<Stmt *> &program) {
+  globals_only_pass = true;
+  emit(program);
+  globals_only_pass = false;
+  emit(program);
 }
 
 void CodeGen::emit(const std::vector<Stmt *> &stmts) {
@@ -228,8 +236,20 @@ void CodeGen::visit(const VarStmt *stmt) {
 
 void CodeGen::visit(const Variable *expr) {
   const std::string varname = expr->name.lexeme;
-  expr_values[expr] =
-      builder->CreateLoad(named_vals->get(varname), varname.c_str());
+
+  // HACK
+  if (module->getFunction(varname)) {
+    expr_values[expr] = module->getFunction(varname);
+    return;
+  }
+
+  if (named_vals->contains(varname)) {
+    expr_values[expr] =
+        builder->CreateLoad(named_vals->get(varname), varname.c_str());
+  }
+
+  assert(expr_values[expr] != nullptr &&
+         "No function or variable found with given name");
 }
 
 void CodeGen::visit(const Assignment *expr) {
@@ -239,7 +259,26 @@ void CodeGen::visit(const Assignment *expr) {
   expr_values[expr] = value;
 }
 
-void CodeGen::visit(const Call *expr) {}
+void CodeGen::visit(const Call *expr) {
+  Value *callee = emit(&expr->callee);
+  // callee->getType()->print(llvm::outs());
+  assert(callee->getType()->isPointerTy() &&
+         "Callee is not a (function) pointer");
+  assert(static_cast<llvm::PointerType *>(callee->getType())
+             ->getElementType()
+             ->isFunctionTy() &&
+         "Callee expr does not produce a function pointer");
+
+  Function *fn = static_cast<Function *>(callee);
+
+  std::vector<Value *> args;
+  for (const Expr *arg : expr->args) {
+    args.push_back(emit(arg));
+  }
+
+  // Cannot attach a name ("calltmp") to void values, so no name here.
+  builder->CreateCall(fn, args);
+}
 
 void CodeGen::visit(const Get *expr) {}
 void CodeGen::visit(const Set *expr) {}
@@ -261,6 +300,9 @@ void CodeGen::visit(const PrintStmt *stmt) {
 }
 
 void CodeGen::visit(const ClassStmt *stmt) {
+  if (!globals_only_pass)
+    return;
+
   std::string classname = stmt->name.lexeme;
   auto nl_type = sm.current().typetab->get(classname);
   tb.to_llvm(nl_type);
@@ -326,35 +368,41 @@ void CodeGen::visit(const WhileStmt *stmt) {
 }
 
 void CodeGen::visit(const FuncStmt *stmt) {
-  std::shared_ptr<FuncType> nl_functype;
-  if (encl_class) {
-    nl_functype = encl_class->get_method(stmt->name.lexeme);
-  } else {
-    auto key = TypeTableUtil::fn_key(stmt->name.lexeme);
-    nl_functype = sm.current().typetab->get(key)->functype;
+  if (globals_only_pass) {
+    std::shared_ptr<FuncType> nl_functype;
+    if (encl_class) {
+      nl_functype = encl_class->get_method(stmt->name.lexeme);
+    } else {
+      auto key = TypeTableUtil::fn_key(stmt->name.lexeme);
+      nl_functype = sm.current().typetab->get(key)->functype;
+    }
+
+    assert(nl_functype != nullptr &&
+           "Cannot codegen function: FuncType not found.");
+
+    llvm::Type *ret_type = tb.to_llvm(nl_functype->return_type);
+    std::vector<llvm::Type *> arg_types;
+
+    // Methods take object pointer as first arg
+    if (encl_class) {
+      arg_types.push_back(tb.to_llvm(encl_class));
+    }
+
+    for (NLType nl_argtype : nl_functype->arg_types) {
+      arg_types.push_back(tb.to_llvm(nl_argtype));
+    }
+
+    FunctionType *ft = FunctionType::get(ret_type, arg_types, false);
+    Function::Create(ft, Function::ExternalLinkage, stmt->name.lexeme,
+                     module.get());
+    return;
   }
 
-  assert(nl_functype != nullptr &&
-         "Cannot codegen function: FuncType not found.");
+  Function *func = module->getFunction(stmt->name.lexeme);
+  auto arg_types = func->getFunctionType()->params();
 
-  llvm::Type *ret_type = tb.to_llvm(nl_functype->return_type);
-  std::vector<llvm::Type *> arg_types;
-
-  // Methods take object pointer as first arg
-  if (encl_class) {
-    arg_types.push_back(tb.to_llvm(encl_class));
-  }
-
-  for (NLType nl_argtype : nl_functype->arg_types) {
-    arg_types.push_back(tb.to_llvm(nl_argtype));
-  }
-
-  FunctionType *ft = FunctionType::get(ret_type, arg_types, false);
-  Function *func = Function::Create(ft, Function::ExternalLinkage,
-                                    stmt->name.lexeme, module.get());
-
-  BasicBlock *BB = BasicBlock::Create(ctx, "entry", func);
-  builder->SetInsertPoint(BB);
+  BasicBlock *entry = BasicBlock::Create(ctx, "entry", func);
+  builder->SetInsertPoint(entry);
 
   std::vector<std::string> arg_names;
   if (encl_class)

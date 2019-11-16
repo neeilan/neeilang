@@ -67,6 +67,8 @@ void TypeChecker::visit(const Variable *expr) {
     expr_types[expr] = types()->get(fn_key);
     return;
   }
+
+  Neeilang::error(expr->name, "Unknown variable");
 }
 
 void TypeChecker::visit(const Assignment *expr) {
@@ -273,7 +275,10 @@ void TypeChecker::visit(const Binary *expr) {
 void TypeChecker::visit(const Call *expr) {
   auto callee_type = check(&expr->callee);
 
-  if (!callee_type || !callee_type->functype) {
+  if (!callee_type)
+    return;
+
+  if (!callee_type->functype) {
     Neeilang::error(expr->paren, "Expression is not callable");
     expr_types[expr] = Primitives::TypeError();
     return;

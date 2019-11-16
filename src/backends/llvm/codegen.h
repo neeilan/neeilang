@@ -32,9 +32,7 @@ public:
     init_libc();
   }
 
-  void emit(const std::vector<Stmt *> &stmts);
-  void emit(const Stmt *stmt);
-  Value *emit(const Expr *expr);
+  void generate(const std::vector<Stmt *> &program);
 
   void print() { module->print(llvm::errs(), nullptr); }
   void write_bitcode();
@@ -53,6 +51,7 @@ private:
       nullptr; // Owns memory for generated IR.
   std::shared_ptr<NamedValueTable> named_vals;
   NLType encl_class = nullptr;
+  bool globals_only_pass = true; // Only codegen global classes and functions
 
   Value *codegen(Expr *expr);
   void enter_scope();
@@ -61,6 +60,10 @@ private:
   // libc bindings.
   void init_libc();
   void call_printf(llvm::Value *value, NLType t);
+
+  void emit(const std::vector<Stmt *> &stmts);
+  void emit(const Stmt *stmt);
+  Value *emit(const Expr *expr);
 };
 
 #endif // _NL_BACKENDS_LLVM_CODEGEN_H_
