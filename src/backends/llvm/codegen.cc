@@ -14,14 +14,19 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
 
 using llvm::AllocaInst;
 using llvm::BasicBlock;
+using llvm::CallInst;
+using llvm::Constant;
+using llvm::ConstantExpr;
 using llvm::ConstantFP;
 using llvm::ConstantInt;
 using llvm::Function;
@@ -40,8 +45,11 @@ static AllocaInst *entry_block_alloca(Function *fn, const std::string &s,
 }
 
 void CodeGen::generate(const std::vector<Stmt *> &program) {
+  sm.reset();
   globals_only_pass = true;
   emit(program);
+
+  sm.reset();
   globals_only_pass = false;
   emit(program);
 }
@@ -259,6 +267,15 @@ void CodeGen::visit(const Assignment *expr) {
   expr_values[expr] = value;
 }
 
+static bool is_initializer(const std::string &fn) {
+  const std::string init("_init");
+  if (fn.length() >= init.length()) {
+    return (0 == fn.compare(fn.length() - init.length(), init.length(), init));
+  } else {
+    return false;
+  }
+}
+
 void CodeGen::visit(const Call *expr) {
   Value *callee = emit(&expr->callee);
   // callee->getType()->print(llvm::outs());
@@ -269,20 +286,56 @@ void CodeGen::visit(const Call *expr) {
              ->isFunctionTy() &&
          "Callee expr does not produce a function pointer");
 
-  Function *fn = static_cast<Function *>(callee);
-
   std::vector<Value *> args;
+
+  // Initializer are special :)
+  std::string fn_name = callee->getName();
+  if (is_initializer(fn_name)) {
+    const std::string classname = fn_name.substr(0, fn_name.find("_init"));
+    auto nl_type = sm.current().typetab->get(classname);
+    llvm::PointerType *ll_type =
+        static_cast<llvm::PointerType *>(tb.to_llvm(nl_type));
+    llvm::Type *ll_element_type = ll_type->getElementType();
+
+    Constant *alloc_size = ConstantExpr::getSizeOf(ll_element_type);
+    llvm::Instruction *malloc_instr = CallInst::CreateMalloc(
+        builder->GetInsertBlock(), llvm::Type::getInt64Ty(ctx), ll_element_type,
+        alloc_size, nullptr, nullptr, "malloced_" + classname);
+
+    builder->Insert(malloc_instr);
+
+    args.push_back(malloc_instr); // 'this' pointer.
+  }
+
   for (const Expr *arg : expr->args) {
     args.push_back(emit(arg));
   }
 
   // Cannot attach a name ("calltmp") to void values, so no name here.
-  builder->CreateCall(fn, args);
+  expr_values[expr] = builder->CreateCall(callee, args);
 }
 
-void CodeGen::visit(const Get *expr) {}
+void CodeGen::visit(const Get *expr) {
+  auto field_name = expr->name.lexeme;
+
+  NLType callee_nltype = expr_types[&expr->callee];
+  assert(callee_nltype && "NL Type of callee unknown");
+
+  if (callee_nltype == Primitives::Class()) {
+    const Variable *callee = static_cast<const Variable *>(&expr->callee);
+    const std::string class_name = callee->name.lexeme;
+
+    if (field_name == "init") {
+      expr_values[expr] = module->getFunction(class_name + "_init");
+    }
+  }
+}
+
 void CodeGen::visit(const Set *expr) {}
-void CodeGen::visit(const This *expr) {}
+
+void CodeGen::visit(const This *expr) {
+  expr_values[expr] = builder->CreateLoad(named_vals->get("this"), "this");
+}
 
 void CodeGen::visit(const ExprStmt *stmt) { emit(stmt->expression); }
 
@@ -300,12 +353,12 @@ void CodeGen::visit(const PrintStmt *stmt) {
 }
 
 void CodeGen::visit(const ClassStmt *stmt) {
-  if (!globals_only_pass)
-    return;
-
   std::string classname = stmt->name.lexeme;
   auto nl_type = sm.current().typetab->get(classname);
-  tb.to_llvm(nl_type);
+
+  if (globals_only_pass) {
+    tb.to_llvm(nl_type);
+  }
 
   NLType prev_encl_class = encl_class;
   encl_class = nl_type;
@@ -368,6 +421,10 @@ void CodeGen::visit(const WhileStmt *stmt) {
 }
 
 void CodeGen::visit(const FuncStmt *stmt) {
+  std::string fn_name = stmt->name.lexeme;
+  if (encl_class) {
+    fn_name = encl_class->name + "_" + fn_name;
+  }
   if (globals_only_pass) {
     std::shared_ptr<FuncType> nl_functype;
     if (encl_class) {
@@ -393,12 +450,14 @@ void CodeGen::visit(const FuncStmt *stmt) {
     }
 
     FunctionType *ft = FunctionType::get(ret_type, arg_types, false);
-    Function::Create(ft, Function::ExternalLinkage, stmt->name.lexeme,
-                     module.get());
+    Function::Create(ft, Function::ExternalLinkage, fn_name, module.get());
     return;
   }
 
-  Function *func = module->getFunction(stmt->name.lexeme);
+  if (!((encl_class && globals_only_pass) || !globals_only_pass))
+    return;
+
+  Function *func = module->getFunction(fn_name);
   auto arg_types = func->getFunctionType()->params();
 
   BasicBlock *entry = BasicBlock::Create(ctx, "entry", func);

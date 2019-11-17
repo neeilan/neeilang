@@ -1,15 +1,21 @@
 fn main() : Int {
   var a : Animal = Animal.init();  
   var i : Int = a.notInit();
-  print a.intField;
   return 0;
 }
+
+/*
+fn globalFunc(i : Int) : Float {
+  return i / 0.5;
+}
+*/
 
 class Animal {
   intField : Int;
   floatField : Float;
   init() {
-    this;
+    var x : Int = 5;
+    return this;
   }
 
   notInit() : Int { return 4; }

@@ -361,7 +361,8 @@ void TypeChecker::visit(const Get *expr) {
   if (callee_type->has_field(field_name)) {
     expr_types[expr] = callee_type->get_field(field_name).type;
   } else {
-    NLType method_type = NLTypeUtil::create(field_name + "_wrapper");
+    NLType method_type =
+        NLTypeUtil::create(callee_type->name + "::" + field_name);
     method_type->functype = callee_type->get_method(field_name);
     expr_types[expr] = method_type;
   }
