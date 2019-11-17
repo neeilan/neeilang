@@ -1,14 +1,12 @@
 fn main() : Int {
   var a : Animal = Animal.init();  
-  var i : Int = a.notInit();
+  print "init called successfully";
   return 0;
 }
 
-/*
 fn globalFunc(i : Int) : Float {
   return i / 0.5;
 }
-*/
 
 class Animal {
   intField : Int;
@@ -21,3 +19,8 @@ class Animal {
   notInit() : Int { return 4; }
 }
 
+/* splat segment
+%output
+init called successfully
+%output
+*/
