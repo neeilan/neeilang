@@ -1,0 +1,23 @@
+fn main() : Int {
+  var a : Animal = Animal.init("somename");
+  print a.feet;
+  print a.height;
+  return 0;
+}
+
+class Animal {
+  feet : Int;
+  height : Float;
+
+  init(name : String) {
+    print "Creating";
+    print name;
+    return this;
+  }
+}
+
+%output
+Creating
+somename
+0
+0.000000

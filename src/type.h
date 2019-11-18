@@ -30,6 +30,7 @@ public:
 
   bool has_field(const std::string &name);
   Field get_field(const std::string &name);
+  int field_idx(const std::string &name);
   bool has_method(const std::string &name);
   std::shared_ptr<FuncType> get_method(const std::string &name);
 

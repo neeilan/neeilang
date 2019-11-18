@@ -321,6 +321,7 @@ void CodeGen::visit(const Get *expr) {
   NLType callee_nltype = expr_types[&expr->callee];
   assert(callee_nltype && "NL Type of callee unknown");
 
+  // Initializers / static fields
   if (callee_nltype == Primitives::Class()) {
     const Variable *callee = static_cast<const Variable *>(&expr->callee);
     const std::string class_name = callee->name.lexeme;
@@ -328,10 +329,25 @@ void CodeGen::visit(const Get *expr) {
     if (field_name == "init") {
       expr_values[expr] = module->getFunction(class_name + "_init");
     }
+    return;
   }
+
+  Value *callee = emit(&expr->callee);
+
+  // Instance fields / methods
+  const int field_idx = callee_nltype->field_idx(field_name);
+  llvm::Type *int_type = llvm::IntegerType::get(ctx, 32);
+  Value *idx = ConstantInt::get(int_type, field_idx);
+  expr_values[expr] =
+      builder->CreateLoad(builder->CreateGEP(callee, idx, ""), "get");
 }
 
-void CodeGen::visit(const Set *expr) {}
+void CodeGen::visit(const Set *expr) {
+  /*
+  Expr &callee;
+  const Expr &value;
+  */
+}
 
 void CodeGen::visit(const This *expr) {
   expr_values[expr] = builder->CreateLoad(named_vals->get("this"), "this");

@@ -12,11 +12,16 @@ bool Type::has_field(const std::string &name) {
 
 Field Type::get_field(const std::string &name) {
   assert(has_field(name));
-  for (auto field : fields) {
-    if (field.name == name)
-      return field;
+  return fields[field_idx(name)];
+}
+
+int Type::field_idx(const std::string &name) {
+  assert(has_field(name));
+  for (int i = 0; i < fields.size(); i++) {
+    if (fields[i].name == name)
+      return i;
   }
-  return Field{"NO_SUCH_FIELD", nullptr}; // Unreachable
+  return -1; // Unreachable
 }
 
 bool Type::has_method(const std::string &name) {
