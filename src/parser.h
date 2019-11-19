@@ -34,6 +34,7 @@ private:
   Token &peek();
   Token &peek_ahead();
   Token &previous();
+  Token &type_token(const std::string &msg);
 
   Expr *assignment();
   Expr *logical_or();

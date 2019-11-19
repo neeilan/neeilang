@@ -45,6 +45,12 @@ void Scanner::scan_token() {
   case '}':
     add_token(RIGHT_BRACE);
     break;
+  case '[':
+    add_token(LEFT_BRACKET);
+    break;
+  case ']':
+    add_token(RIGHT_BRACKET);
+    break;
   case ',':
     add_token(COMMA);
     break;

@@ -28,8 +28,7 @@ public:
     typetab()->insert("Void", Primitives::Void());
   }
 
-  void hoist(const std::vector<Stmt *> statements);
-  void hoist(const Stmt *stmt);
+  void hoist_program(const std::vector<Stmt *> statements);
 
   STMT_VISITOR_METHODS(void)
 
@@ -38,6 +37,9 @@ private:
   bool decl_only_pass;
   NLType encl_class;
 
+  void hoist(const std::vector<Stmt *> statements);
+  void hoist(const Stmt *stmt);
+  void hoist_type(const std::string &type);
   void declare(const std::string &type_name);
 
   std::shared_ptr<TypeTable> typetab() { return sm.current().typetab; }

@@ -60,7 +60,11 @@ void Neeilang::run(const std::string &source) {
   ScopeManager scope_manager;
 
   GlobalHoister hoister(scope_manager);
-  hoister.hoist(program);
+  hoister.hoist_program(program);
+
+  if (had_error) {
+    return;
+  }
 
   TypeChecker type_checker(scope_manager);
   type_checker.check(program);

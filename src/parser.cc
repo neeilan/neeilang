@@ -32,10 +32,27 @@ Stmt *Parser::declaration() {
   }
 }
 
+static std::string nest(const std::string &type_name, const int depth) {
+  return std::string(depth, '[') + type_name + std::string(depth, ']');
+}
+
+Token &Parser::type_token(const std::string &msg) {
+  // var_type -> identifier | [ var_type ]
+  // Types are named as "nesting_depth^type_name"
+  int array_depth = 0;
+  while (match({LEFT_BRACKET}))
+    array_depth++;
+  Token &type = consume(IDENTIFIER, msg);
+  type.lexeme = nest(type.lexeme, array_depth);
+  while (array_depth--)
+    consume(RIGHT_BRACKET, "Expect matching ']'");
+  return type;
+}
+
 Stmt *Parser::var_declaration() {
   Token name = consume(IDENTIFIER, "Expect variable name.");
   consume(COLON, "Expect ':' after name in variable declaration.");
-  Token type = consume(IDENTIFIER, "Expect variable type.");
+  Token type = type_token("Expect variable type.");
 
   // By default, initialize to nil
   // TODO : Handle nil initialization.
@@ -219,8 +236,7 @@ Stmt *Parser::func_statement(std::string kind) {
       parameters.push_back(consume(IDENTIFIER, "Expect parameter name."));
 
       consume(COLON, "Expect ':' after parameter name.");
-      parameter_types.push_back(
-          consume(IDENTIFIER, "Expect parameter type after ':'"));
+      parameter_types.push_back(type_token("Expect parameter type after ':'"));
     } while (match({COMMA}));
   }
 
@@ -234,8 +250,7 @@ Stmt *Parser::func_statement(std::string kind) {
                         "declared for init methods");
   } else {
     consume(COLON, "Expect ':' after parameter list in function statement.");
-    return_type =
-        consume(IDENTIFIER, "Expect return type in " + kind + " statement");
+    return_type = type_token("Expect return type in " + kind + " statement");
     consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
   }
 

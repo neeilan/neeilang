@@ -1,0 +1,15 @@
+fn main() : Int {
+  var int : Int;
+  var sum : [[Animal]];
+  var arr : [Int];
+  return 0;
+}
+
+
+fn test(a: [[Animal]]) : [Animal] {
+
+}
+
+class Animal {
+
+}

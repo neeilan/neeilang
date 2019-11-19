@@ -38,6 +38,8 @@ public:
   std::shared_ptr<Type> supertype;
   std::vector<Field> fields;
   std::vector<std::shared_ptr<FuncType>> methods;
+  int arr_depth = 0;
+  std::shared_ptr<Type> element_type = nullptr;
 
   std::shared_ptr<FuncType> functype = nullptr;
 };
