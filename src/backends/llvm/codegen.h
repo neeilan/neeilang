@@ -64,6 +64,8 @@ private:
   void emit(const std::vector<Stmt *> &stmts);
   void emit(const Stmt *stmt);
   Value *emit(const Expr *expr);
+
+  Value *get_int32(int value);
 };
 
 #endif // _NL_BACKENDS_LLVM_CODEGEN_H_

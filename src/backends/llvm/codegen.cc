@@ -44,6 +44,11 @@ static AllocaInst *entry_block_alloca(Function *fn, const std::string &s,
   return builder.CreateAlloca(type, 0, s);
 }
 
+Value *CodeGen::get_int32(int value) {
+  llvm::Type *int_type = llvm::IntegerType::get(ctx, 32);
+  return ConstantInt::get(int_type, value);
+}
+
 void CodeGen::generate(const std::vector<Stmt *> &program) {
   sm.reset();
   globals_only_pass = true;
@@ -278,7 +283,6 @@ static bool is_initializer(const std::string &fn) {
 
 void CodeGen::visit(const Call *expr) {
   Value *callee = emit(&expr->callee);
-  // callee->getType()->print(llvm::outs());
   assert(callee->getType()->isPointerTy() &&
          "Callee is not a (function) pointer");
   assert(static_cast<llvm::PointerType *>(callee->getType())
@@ -336,17 +340,29 @@ void CodeGen::visit(const Get *expr) {
 
   // Instance fields / methods
   const int field_idx = callee_nltype->field_idx(field_name);
-  llvm::Type *int_type = llvm::IntegerType::get(ctx, 32);
-  Value *idx = ConstantInt::get(int_type, field_idx);
-  expr_values[expr] =
-      builder->CreateLoad(builder->CreateGEP(callee, idx, ""), "get");
+  expr_values[expr] = builder->CreateLoad(
+      builder->CreateGEP(callee, {get_int32(0), get_int32(field_idx)},
+                         "fieldaccess_" + field_name),
+      "load_" + field_name);
 }
 
 void CodeGen::visit(const Set *expr) {
-  /*
-  Expr &callee;
-  const Expr &value;
-  */
+  auto field_name = expr->name.lexeme;
+  NLType callee_nltype = expr_types[&expr->callee];
+  assert(callee_nltype && "NL Type of callee unknown");
+
+  Value *callee = emit(&expr->callee);
+  Value *value = emit(&expr->value);
+
+  assert(value && "Set value cannot be null");
+
+  const int field_idx = callee_nltype->field_idx(field_name);
+  Value *elem_ptr =
+      builder->CreateGEP(callee, {get_int32(0), get_int32(field_idx)},
+                         "fieldaccess_" + field_name);
+
+  // Instance fields / methods
+  expr_values[expr] = builder->CreateStore(value, elem_ptr);
 }
 
 void CodeGen::visit(const This *expr) {

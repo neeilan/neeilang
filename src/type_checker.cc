@@ -377,8 +377,23 @@ void TypeChecker::visit(const Set *expr) {
     return;
   }
 
-  if (!expr_type->subclass_of(callee_type.get())) {
-    Neeilang::error(expr->name, "Incompatible types in Set expression");
+  auto field_name = expr->name.lexeme;
+  if (!callee_type->has_field(field_name)) {
+    std::ostringstream msg;
+    msg << "Type " << callee_type->name << " does not have field '"
+        << field_name << "'";
+
+    Neeilang::error(expr->name, msg.str());
+    expr_types[expr] = TypeError();
+    return;
+  }
+
+  NLType field_type = callee_type->get_field(field_name).type;
+  if (!expr_type->subclass_of(field_type.get())) {
+    std::ostringstream msg;
+    msg << "Incompatible types in Set expression. Expected " << field_type->name
+        << " but found " << expr_type->name;
+    Neeilang::error(expr->name, msg.str());
     expr_types[expr] = TypeError();
     return;
   }

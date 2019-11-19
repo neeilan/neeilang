@@ -1,23 +1,37 @@
 fn main() : Int {
   var a : Animal = Animal.init("somename");
   print a.feet;
-  print a.height;
+  print a.pi;
+
+  a.feet = 4;
+  print a.feet;
+
+  a.feet = 2;
+  print a.feet;
+
+  a.pi = 3.141592;
+  print a.pi;
+
   return 0;
 }
 
 class Animal {
   feet : Int;
-  height : Float;
+  pi : Float;
 
   init(name : String) {
-    print "Creating";
-    print name;
+    this.feet = 1;
+    this.pi = 0.0;
     return this;
   }
 }
 
+/*
 %output
-Creating
-somename
-0
+1
 0.000000
+4
+2
+3.141592
+%output
+*/
