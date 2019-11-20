@@ -14,6 +14,8 @@ class Logical;
 class Call;
 class Get;
 class Set;
+class GetIndex;
+class SetIndex;
 class This;
 
 class Stmt;

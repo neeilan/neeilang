@@ -6,88 +6,145 @@
 
 using std::ostringstream;
 
+static int nest = 0;
+
+#define OUT out << std::string(nest, ' ')
+
+std::string AstPrinter::print(const std::vector<Stmt *> &program) {
+  ostringstream out;
+  for (const Stmt *stmt : program) {
+    out << print(stmt) << std::endl;
+  }
+  return out.str();
+}
+
 std::string AstPrinter::visit(const BlockStmt *stmt) {
   ostringstream out;
-  out << "(BLOCKSTMT " << std::endl;
-  for (Stmt *inner_stmt : stmt->block_contents) {
-    out << "  " << print(*inner_stmt) << std::endl;
+  if (!stmt->block_contents.size()) {
+    return "<Block>";
   }
-  out << ")";
-
+  OUT << "<Block";
+  out << std::endl;
+  nest++;
+  out << print(stmt->block_contents);
+  nest--;
+  OUT << ">" << std::endl;
   return out.str();
 }
 
 std::string AstPrinter::visit(const ExprStmt *stmt) {
-  return print(*stmt->expression);
+  return std::string(nest, ' ') + print(stmt->expression);
 }
 
 std::string AstPrinter::visit(const PrintStmt *stmt) {
-  return "(PRINTSTMT " + print(*(stmt->expression)) + ")";
+  return "<Print " + print(stmt->expression) + ">";
 }
 
 std::string AstPrinter::visit(const VarStmt *stmt) {
   ostringstream out;
-  out << "(VARSTMT name=" << stmt->name.lexeme << " type=" << stmt->type.lexeme
-      << " initializer = " << print(*stmt->expression) << ")";
+  OUT << "<Var name=" << stmt->name.lexeme << " type=" << stmt->type.lexeme;
+  if (stmt->expression) {
+    out << " initializer=" << print(stmt->expression);
+  }
+  out << ">";
+
   return out.str();
 }
 
 std::string AstPrinter::visit(const ClassStmt *stmt) {
   ostringstream out;
-  out << "(CLASS " << stmt->name.str() << std::endl;
+  OUT << "<Class " << stmt->name.lexeme << std::endl;
   if (stmt->superclass) {
-    out << "  superclass: " << stmt->superclass->lexeme << std::endl;
+    out << "  superclass=" << stmt->superclass->lexeme << std::endl;
   }
-  out << "  fields: ";
-
+  nest++;
+  OUT << "fields: " << std::endl;
+  nest++;
   for (int i = 0; i < stmt->fields.size(); i++) {
-    out << stmt->fields[i].lexeme << " type : " << stmt->field_types[i].lexeme;
+    OUT << stmt->fields[i].lexeme << " type : " << stmt->field_types[i].lexeme;
     out << " ";
   }
+  nest--;
 
-  out << std::endl << "  methods:";
+  OUT << std::endl;
+  OUT << "methods: " << std::endl;
+
+  nest++;
   for (int i = 0; i < stmt->methods.size(); i++) {
-    out << "  " << stmt->methods[i]->accept(this);
+    OUT << print(stmt->methods[i]);
   }
-
-  out << std::endl << ")";
+  nest--;
+  OUT << ">";
   return out.str();
 }
 
 std::string AstPrinter::visit(const IfStmt *stmt) {
-  return "<BLOCK>";
-  // return "if (" + visit(stmt->condition) + ") { " + visit(stmt->then_branch)
-  // + "} else {" + print(stmt->else_branch) + "}":
+  ostringstream out;
+  OUT << "<IfStmt condition=";
+  if (stmt->condition) {
+    out << print(stmt->condition);
+  }
+  if (stmt->then_branch) {
+    OUT << "then: ";
+    nest++;
+    out << print(stmt->then_branch);
+    nest--;
+  }
+  if (stmt->else_branch) {
+    OUT << "else: ";
+    nest++;
+    out << print(stmt->else_branch);
+    nest--;
+  }
+  nest--;
+  return out.str();
 }
 
 std::string AstPrinter::visit(const WhileStmt *stmt) {
-  return "<BLOCK>";
-  // return "while (" + visit(stmt->condition) + ") { " + visit(stmt->body) +
-  // "}";
+  ostringstream out;
+  OUT << "<While condition=";
+  if (stmt->condition) {
+    out << print(stmt->condition);
+  }
+  if (stmt->body) {
+    OUT << "body:" << std::endl;
+    nest++;
+    out << print(stmt->body) << std::endl;
+    nest--;
+  }
+  return out.str();
 }
 
 std::string AstPrinter::visit(const FuncStmt *stmt) {
   ostringstream out;
-  out << "(FUNCTION NAME=(" << stmt->name.str() << ")"
-      << "  RETURNTYPE=(" << stmt->return_type.str() << ")"
-      << "  ARGS=(";
+  out << "<Function name='" << stmt->name.lexeme << "'  returns='"
+      << stmt->return_type.lexeme << "'"
+      << "  args=( ";
 
   for (int i = 0; i < stmt->parameters.size(); i++) {
-    out << stmt->parameters[i].str() << ": " << stmt->parameter_types[i].str();
+    OUT << stmt->parameters[i].lexeme << ":" << stmt->parameter_types[i].lexeme
+        << " ";
   }
-  out << "))";
+  out << ") Body=" << std::endl;
 
+  nest++;
   for (auto _stmt : stmt->body) {
-    out << print(*_stmt);
+    out << print(_stmt);
   }
+  nest--;
+
+  out << ">";
 
   return out.str();
 }
 
 std::string AstPrinter::visit(const ReturnStmt *stmt) {
+  ostringstream out;
   if (!stmt->value)
-    return "RETURN (void)";
-  return "return (" + print(*stmt->value) + ")";
+    OUT << "<Return (void)>";
+  else
+    OUT << "<Return (" + print(stmt->value) + ")>";
+  return out.str();
 }
 
 std::string AstPrinter::visit(const Binary *expr) {
@@ -100,9 +157,21 @@ std::string AstPrinter::visit(const Get *expr) { return "Get"; }
 
 std::string AstPrinter::visit(const Set *expr) { return "Set"; }
 
+std::string AstPrinter::visit(const GetIndex *expr) {
+  return "<GetIndex " + print(&expr->callee) + "[" + print(&expr->index) + "]>";
+}
+
+std::string AstPrinter::visit(const SetIndex *expr) {
+  return "<SetIndex " + print(&expr->callee) + "[" + print(&expr->index) +
+         "] = " + print(&expr->value) + ">";
+}
+
 std::string AstPrinter::visit(const This *expr) { return "This"; }
 
-std::string AstPrinter::visit(const Assignment *expr) { return "Assignment"; }
+std::string AstPrinter::visit(const Assignment *expr) {
+  return "<Assignment var=" + expr->name.lexeme +
+         " value=" + print(&expr->value) + ">";
+}
 
 std::string AstPrinter::visit(const StrLiteral *expr) {
   if (expr->nil) {
@@ -122,9 +191,9 @@ std::string AstPrinter::visit(const NumLiteral *expr) {
 
 std::string AstPrinter::visit(const BoolLiteral *expr) {
   if (expr->value) {
-    return "TRUE";
+    return "True";
   } else {
-    return "FALSE";
+    return "False";
   }
 }
 
@@ -145,11 +214,10 @@ std::string AstPrinter::visit(const Logical *expr) {
 }
 
 std::string AstPrinter::parenthesize(std::string name, const Expr *expr) {
-  return "(" + name + " " + expr->accept(this) + ")";
+  return "(" + name + " " + print(expr) + ")";
 }
 
 std::string AstPrinter::parenthesize(std::string name, const Expr *expr1,
                                      const Expr *expr2) {
-  return "(" + name + " " + expr1->accept(this) + " " + expr2->accept(this) +
-         ")";
+  return "(" + name + " " + print(expr1) + " " + print(expr2) + ")";
 }

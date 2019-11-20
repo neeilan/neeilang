@@ -18,6 +18,7 @@ public:
 
   virtual bool lvalue() const { return false; }
   virtual bool is_object_field() const { return false; }
+  virtual bool is_indexed() const { return false; }
   virtual bool callable() const { return false; }
   virtual ~Expr(){};
 };
@@ -131,6 +132,30 @@ public:
   const Expr &callee;
   const Token paren;
   const std::vector<Expr *> args;
+};
+
+class GetIndex : public ExprCRTP<GetIndex> {
+public:
+  GetIndex(const Expr &callee, Token bracket, const Expr &index)
+      : callee(callee), bracket(bracket), index(index) {}
+
+  virtual bool is_indexed() const { return true; }
+
+  const Expr &callee;
+  const Token bracket;
+  const Expr &index;
+};
+
+class SetIndex : public ExprCRTP<SetIndex> {
+public:
+  SetIndex(const Expr &callee, Token bracket, const Expr &index,
+           const Expr &value)
+      : callee(callee), bracket(bracket), index(index), value(value) {}
+
+  const Expr &callee;
+  const Token bracket;
+  const Expr &index;
+  const Expr &value;
 };
 
 class Get : public ExprCRTP<Get> {

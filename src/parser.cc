@@ -284,6 +284,9 @@ Expr *Parser::assignment() {
     } else if (expr->is_object_field()) {
       Get *get = static_cast<Get *>(expr);
       return new Set(get->callee, get->name, *value);
+    } else if (expr->is_indexed()) {
+      GetIndex *get = static_cast<GetIndex *>(expr);
+      return new SetIndex(get->callee, get->bracket, get->index, *value);
     }
 
     Neeilang::error(equals, "Invalid assignment target.");
@@ -428,6 +431,8 @@ Expr *Parser::call() {
        * ex - returns_fn()also_returns_fn(arg)returns_val();
        */
       expr = finish_call(expr);
+    } else if (match({LEFT_BRACKET})) {
+      expr = finish_index_get(expr);
     } else if (match({DOT})) {
       Token name = consume(IDENTIFIER, "Expect property name after '.'.");
       expr = new Get(*expr, name);
@@ -437,6 +442,12 @@ Expr *Parser::call() {
   }
 
   return expr;
+}
+
+Expr *Parser::finish_index_get(Expr *expr) {
+  Expr *index = expression();
+  Token bracket = consume(RIGHT_BRACKET, "Expect ']' after index");
+  return new GetIndex(*expr, bracket, *index);
 }
 
 Expr *Parser::finish_call(Expr *callee) {

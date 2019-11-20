@@ -47,6 +47,7 @@ private:
   Expr *unary();
   Expr *call();
   Expr *finish_call(Expr *caller);
+  Expr *finish_index_get(Expr *expr);
   Expr *primary();
 
   Stmt *declaration();

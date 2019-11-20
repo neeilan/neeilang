@@ -483,3 +483,6 @@ bool TypeChecker::has_type_error(const std::vector<NLType> &types) {
   }
   return false;
 }
+
+void TypeChecker::visit(const GetIndex *expr) {}
+void TypeChecker::visit(const SetIndex *expr) {}

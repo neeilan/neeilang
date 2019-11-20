@@ -21,6 +21,6 @@ static std::vector<std::string> token_names{
     "VAR",           "WHILE",       "EOF"};
 
 std::string Token::str() const {
-  return token_names[type] + " " + lexeme + " " +
-         ((type == NUMBER || type == STRING) ? literal : "");
+  return token_names[type] + " " + lexeme +
+         ((type == NUMBER || type == STRING) ? " " + literal : "");
 }

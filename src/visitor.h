@@ -34,6 +34,8 @@ public:
   virtual T visit(const Call *) = 0;
   virtual T visit(const Get *) = 0;
   virtual T visit(const Set *) = 0;
+  virtual T visit(const GetIndex *) = 0;
+  virtual T visit(const SetIndex *) = 0;
   virtual T visit(const This *) = 0;
 };
 
@@ -61,6 +63,8 @@ public:
   virtual T visit(const Call *);                                               \
   virtual T visit(const Get *);                                                \
   virtual T visit(const Set *);                                                \
+  virtual T visit(const GetIndex *);                                           \
+  virtual T visit(const SetIndex *);                                           \
   virtual T visit(const This *);
 
 #endif //_NL_VISITOR_H_

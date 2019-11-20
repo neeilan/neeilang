@@ -529,3 +529,7 @@ void CodeGen::visit(const ReturnStmt *stmt) {
     builder->CreateRetVoid();
   }
 }
+
+
+void CodeGen::visit(const GetIndex *expr) {}
+void CodeGen::visit(const SetIndex *expr) {}

@@ -251,6 +251,10 @@ void Resolver::visit(const Logical *expr) {
 
 void Resolver::visit(const Unary *expr) { resolve(&expr->right); }
 
+// TODO: Resolve these
+void Resolver::visit(const GetIndex *expr) {}
+void Resolver::visit(const SetIndex *expr) {}
+
 // since literals contain no variables, nothing to be done
 void Resolver::visit(const BoolLiteral *expr) {}
 void Resolver::visit(const NumLiteral *expr) {}

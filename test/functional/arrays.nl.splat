@@ -1,7 +1,11 @@
 fn main() : Int {
-  var int : Int;
-  var sum : [[Animal]];
-  var arr : [Int];
+ var int : Int = 3;
+ var sum : [[Animal]];
+ var arr : [Int];
+
+ arr[0];
+ arr[0] = arr[1];
+
   return 0;
 }
 
@@ -11,5 +15,9 @@ fn test(a: [[Animal]]) : [Animal] {
 }
 
 class Animal {
+  sayHi() : String {
+    var hi : String = "hello";
+    return hi;
+  }
 
 }
