@@ -3,50 +3,18 @@
 #include <ostream>
 #include <string>
 
-#include "label.h"
-#include "register.h"
-#include "syscall.h"
+#include "backends/x86-64/label.h"
+#include "backends/x86-64/address.h"
+#include "backends/x86-64/register.h"
+#include "backends/x86-64/syscall.h"
+
+#include "backends/x86-64/codegen.h"
 
 #define EXPLAIN(exp) << " ; \t\t" << exp << endl
 
-
 static const char endl = '\n';
 
-
-class Address {
-public:
-  Address(const std::string loc, int size)
-    : loc(loc), size(size)  {}
-  const std::string loc;
-  int size; // in bytes
-};
-
-class CodeGen {
-public:
-  CodeGen();
-  void exit(const int status);
-  void dump(std::ostream & out);
-  Address str_const(const std::string & s);
-  void print(const Address & addr);
-  void begin_func(const std::string & name);
-  const Register & add(const Register & a, const Register & b);
-  const Register & move(const Register & dest, const Register & src);
-  const Register load_const(int value);
-  void call(const std::string & label);
-  void ret();
-  void print(const Register & r);
-
-  void push(const Register & r);
-  void pop(const Register & r);
-  const Register pop();
-
-private:
-  std::ostringstream _asm;
-  std::ostringstream _data;
-  std::ostringstream _bss;
-  std::ostringstream & _instr();
-};
-
+using CodeGen = X86_64::CodeGen;
 
 CodeGen::CodeGen() {
   _asm << "default rel" << endl
@@ -149,18 +117,10 @@ const Register CodeGen::pop() {
   return r;
 }
 
+/*
 int main() {
   CodeGen cg;
   std::ofstream out("out.asm");
-
-/*
-  const Address label = cg.str_const("hello world");
-  //cg.print(label);
-  const Address label2 = cg.str_const("Bye world!");
-  //cg.print(label2);
-
-  cg.call("label_2_math"); // This should be populated later
-*/
 
   Register arg = cg.load_const(4);
   cg.push(arg);
@@ -190,3 +150,4 @@ int main() {
   out.close();
   return 0;
 }
+*/

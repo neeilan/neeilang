@@ -7,6 +7,7 @@
 
 #include "ast_printer.h"
 #include "backends/llvm/codegen.h"
+#include "backends/x86-64/codegen.h"
 #include "global_hoister.h"
 #include "neeilang.h"
 #include "parser.h"
@@ -79,6 +80,8 @@ void Neeilang::run(const std::string &source) {
     codegen.print();
     codegen.write_bitcode();
   }
+
+  X86_64::CodeGen x64cg;
 }
 
 void Neeilang::error(int line, const std::string &message) {
