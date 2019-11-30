@@ -6,13 +6,15 @@
 #include <ostream>
 #include <string>
 
+#include "visitor.h"
+
 #include "backends/x86-64/label.h"
 #include "backends/x86-64/address.h"
 #include "backends/x86-64/register.h"
 #include "backends/x86-64/syscall.h"
 
 namespace X86_64 {
-class CodeGen {
+class CodeGen  : public ExprVisitor<>, public StmtVisitor<> {
 public:
   CodeGen();
   void exit(const int status);
@@ -30,6 +32,9 @@ public:
   void push(const Register & r);
   void pop(const Register & r);
   const Register pop();
+
+  EXPR_VISITOR_METHODS(void)
+  STMT_VISITOR_METHODS(void)
 
 private:
   std::ostringstream _asm;
