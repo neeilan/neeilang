@@ -1,5 +1,6 @@
 #include "backends/x86-64/asm.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 Asm_t *asm_start(Asm_t *a) {
@@ -32,4 +33,19 @@ Asm_t *asm_create_instr_arg2(Asm_t *prev, AsmInstr instr, const char *arg1,
   Asm_t *a = asm_create_instr_arg1(prev, instr, arg1);
   a->arg2 = arg2;
   return a;
+}
+
+void asm_print(FILE *f, Asm_t *a) {
+  while (a) {
+    if (a->label) {
+      fprintf(f, "%s:\n", a->label);
+    }
+    fprintf(f, "%s", a->instr);
+    if (a->arg1)
+      fprintf(f, " %s", a->arg1);
+    if (a->arg2)
+      fprintf(f, ", %s", a->arg2);
+    fprintf(f, "\n");
+    a = a->next;
+  }
 }
