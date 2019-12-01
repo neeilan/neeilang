@@ -10,6 +10,7 @@
 #include "visitor.h"
 
 #include "backends/x86-64/address.h"
+#include "backends/x86-64/asm.h"
 #include "backends/x86-64/label.h"
 #include "backends/x86-64/register.h"
 #include "backends/x86-64/syscall.h"
@@ -42,6 +43,7 @@ public:
   virtual void generate(const std::vector<Stmt *> &program);
 
 private:
+  Asm_t *asm_tail = NULL;
   std::ostringstream _asm;
   std::ostringstream _data;
   std::ostringstream _bss;

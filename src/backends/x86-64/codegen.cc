@@ -1,10 +1,14 @@
 #include "backends/x86-64/codegen.h"
+#include "backends/x86-64/asm.h"
 
 using CodeGen = X86_64::CodeGen;
 
 void CodeGen::generate(const std::vector<Stmt *> &program) { emit(program); }
 
-void CodeGen::emit(const std::vector<Stmt *> &stmts) {}
+void CodeGen::emit(const std::vector<Stmt *> &stmts) {
+  for (const Stmt *stmt : stmts)
+    emit(stmt);
+}
 
 void CodeGen::emit(const Stmt *stmt) { stmt->accept(this); }
 
@@ -25,7 +29,12 @@ void CodeGen::visit(const Unary *) {}
 void CodeGen::visit(const Binary *) {}
 void CodeGen::visit(const Grouping *) {}
 void CodeGen::visit(const StrLiteral *) {}
-void CodeGen::visit(const NumLiteral *) {}
+
+void CodeGen::visit(const NumLiteral *expr) {
+  asm_tail = asm_create_1arg(asm_tail, "push", expr->value.c_str());
+  asm_print(stderr, asm_tail);
+}
+
 void CodeGen::visit(const BoolLiteral *) {}
 void CodeGen::visit(const Variable *) {}
 void CodeGen::visit(const Assignment *) {}

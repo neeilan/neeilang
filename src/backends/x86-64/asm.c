@@ -10,7 +10,7 @@ Asm_t *asm_start(Asm_t *a) {
   return curr;
 }
 
-Asm_t *asm_create_instr(Asm_t *prev, AsmInstr instr) {
+Asm_t *asm_create_instr_only(Asm_t *prev, AsmInstr instr) {
   Asm_t *a = (Asm_t *)malloc(sizeof(Asm_t));
   a->instr = instr;
   a->prev = prev;
@@ -22,15 +22,15 @@ Asm_t *asm_create_instr(Asm_t *prev, AsmInstr instr) {
   return a;
 }
 
-Asm_t *asm_create_instr_arg1(Asm_t *prev, AsmInstr instr, const char *arg1) {
-  Asm_t *a = asm_create_instr(prev, instr);
+Asm_t *asm_create_1arg(Asm_t *prev, AsmInstr instr, const char *arg1) {
+  Asm_t *a = asm_create_instr_only(prev, instr);
   a->arg1 = arg1;
   return a;
 }
 
-Asm_t *asm_create_instr_arg2(Asm_t *prev, AsmInstr instr, const char *arg1,
-                             const char *arg2) {
-  Asm_t *a = asm_create_instr_arg1(prev, instr, arg1);
+Asm_t *asm_create(Asm_t *prev, AsmInstr instr, const char *arg1,
+                  const char *arg2) {
+  Asm_t *a = asm_create_1arg(prev, instr, arg1);
   a->arg2 = arg2;
   return a;
 }

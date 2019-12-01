@@ -82,6 +82,7 @@ void Neeilang::run(const std::string &source) {
   }
 
   X86_64::CodeGen x64cg;
+  // x64cg.generate(program);
 }
 
 void Neeilang::error(int line, const std::string &message) {

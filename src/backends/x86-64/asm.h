@@ -17,11 +17,17 @@ typedef struct Asm {
   struct Asm *next;
 } Asm_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 Asm_t *asm_start(Asm_t *a);
-Asm_t *asm_create_instr(Asm_t *prev, AsmInstr instr);
-Asm_t *asm_create_instr_arg1(Asm_t *prev, AsmInstr instr, const char *arg1);
-Asm_t *asm_create_instr_arg2(Asm_t *prev, AsmInstr instr, const char *arg1,
-                             const char *arg2);
+Asm_t *asm_create_instr_only(Asm_t *prev, AsmInstr instr);
+Asm_t *asm_create_1arg(Asm_t *prev, AsmInstr instr, const char *arg1);
+Asm_t *asm_create(Asm_t *prev, AsmInstr instr, const char *arg1,
+                  const char *arg2);
 void asm_print(FILE *f, Asm_t *a);
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __NL_BACKENDS_X86_64_ASM_H__
