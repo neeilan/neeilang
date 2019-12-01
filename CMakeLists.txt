@@ -39,7 +39,8 @@ set(CMAKE_EXE_LINKER_FLAGS ${LLVM_LD_FLAGS_STRING})
 ###############################
 # x86-64 Backend impl.
 ###############################
-file(GLOB X86_64_BACKEND_FILES ${PROJECT_SOURCE_DIR}/src/backends/x86-64/*.cc)
+file(GLOB X86_64_BACKEND_FILES ${PROJECT_SOURCE_DIR}/src/backends/x86-64/*.c
+  ${PROJECT_SOURCE_DIR}/src/backends/x86-64/*.cc)
 list(APPEND SRC_FILES ${X86_64_BACKEND_FILES})
 set(X86_64_BACKEND_INCLUDES ${PROJECT_SOURCE_DIR}/src/backends/x86-64)
 include_directories(${X86_64_BACKEND_INCLUDE_DIRS})

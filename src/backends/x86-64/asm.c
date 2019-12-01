@@ -1,0 +1,35 @@
+#include "backends/x86-64/asm.h"
+
+#include <stdlib.h>
+
+Asm_t *asm_start(Asm_t *a) {
+  Asm_t *curr = a;
+  while (curr && curr->prev)
+    curr = curr->prev;
+  return curr;
+}
+
+Asm_t *asm_create_instr(Asm_t *prev, AsmInstr instr) {
+  Asm_t *a = (Asm_t *)malloc(sizeof(Asm_t));
+  a->instr = instr;
+  a->prev = prev;
+
+  a->next = NULL;
+  a->label = NULL;
+  a->arg1 = NULL;
+  a->arg2 = NULL;
+  return a;
+}
+
+Asm_t *asm_create_instr_arg1(Asm_t *prev, AsmInstr instr, const char *arg1) {
+  Asm_t *a = asm_create_instr(prev, instr);
+  a->arg1 = arg1;
+  return a;
+}
+
+Asm_t *asm_create_instr_arg2(Asm_t *prev, AsmInstr instr, const char *arg1,
+                             const char *arg2) {
+  Asm_t *a = asm_create_instr_arg1(prev, instr, arg1);
+  a->arg2 = arg2;
+  return a;
+}
