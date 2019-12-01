@@ -530,6 +530,5 @@ void CodeGen::visit(const ReturnStmt *stmt) {
   }
 }
 
-
 void CodeGen::visit(const GetIndex *expr) {}
 void CodeGen::visit(const SetIndex *expr) {}

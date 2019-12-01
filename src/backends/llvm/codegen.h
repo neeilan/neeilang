@@ -13,6 +13,8 @@
 #include "type_builder.h"
 #include "visitor.h"
 
+#include "backends/AbstractCodegen.h"
+
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
@@ -22,7 +24,9 @@
 using llvm::Value;
 using NamedValueTable = CactusTable<std::string, llvm::AllocaInst *>;
 
-class CodeGen : public ExprVisitor<>, public StmtVisitor<> {
+class CodeGen : public AbstractCodegen,
+                public ExprVisitor<>,
+                public StmtVisitor<> {
 public:
   explicit CodeGen(ScopeManager &sm, ExprTypes expr_types)
       : sm(sm), expr_types(expr_types), tb(TypeBuilder(ctx)) {

@@ -2,8 +2,17 @@
 
 using CodeGen = X86_64::CodeGen;
 
+void CodeGen::generate(const std::vector<Stmt *> &program) { emit(program); }
+
+void CodeGen::emit(const std::vector<Stmt *> &stmts) {}
+
+void CodeGen::emit(const Stmt *stmt) { stmt->accept(this); }
+
+void CodeGen::emit(const Expr *expr) { expr->accept(this); }
+
+void CodeGen::visit(const ExprStmt *stmt) { emit(stmt->expression); }
+
 void CodeGen::visit(const BlockStmt *) {}
-void CodeGen::visit(const ExprStmt *) {}
 void CodeGen::visit(const PrintStmt *) {}
 void CodeGen::visit(const VarStmt *) {}
 void CodeGen::visit(const ClassStmt *) {}
