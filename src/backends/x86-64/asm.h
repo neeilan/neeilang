@@ -21,10 +21,10 @@ typedef struct Asm {
 extern "C" {
 #endif
 Asm_t *asm_start(Asm_t *a);
-Asm_t *asm_create_instr_only(Asm_t *prev, AsmInstr instr);
-Asm_t *asm_create_1arg(Asm_t *prev, AsmInstr instr, const char *arg1);
-Asm_t *asm_create(Asm_t *prev, AsmInstr instr, const char *arg1,
-                  const char *arg2);
+void asm_create_instr_only(Asm_t **last, AsmInstr instr);
+void asm_create_1arg(Asm_t **last, AsmInstr instr, const char *arg1);
+void asm_create(Asm_t **last, AsmInstr instr, const char *arg1,
+                const char *arg2);
 void asm_print(FILE *f, Asm_t *a);
 #ifdef __cplusplus
 }

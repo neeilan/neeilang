@@ -3,7 +3,10 @@
 
 using CodeGen = X86_64::CodeGen;
 
-void CodeGen::generate(const std::vector<Stmt *> &program) { emit(program); }
+void CodeGen::generate(const std::vector<Stmt *> &program) {
+  emit(program);
+  asm_print(stderr, asm_start(asm_tail));
+}
 
 void CodeGen::emit(const std::vector<Stmt *> &stmts) {
   for (const Stmt *stmt : stmts)
@@ -26,13 +29,39 @@ void CodeGen::visit(const FuncStmt *) {}
 void CodeGen::visit(const ReturnStmt *) {}
 
 void CodeGen::visit(const Unary *) {}
-void CodeGen::visit(const Binary *) {}
+
+void CodeGen::visit(const Binary *expr) {
+  emit(&expr->left);
+  emit(&expr->right);
+
+  asm_create_1arg(&asm_tail, "pop", "rdi"); // right
+  asm_create_1arg(&asm_tail, "pop", "rax"); // left
+
+  switch (expr->op.type) {
+  case PLUS: {
+    asm_create(&asm_tail, "add", "rax", "rdi");
+    break;
+  }
+  case MINUS: {
+    asm_create(&asm_tail, "sub", "rax", "rdi");
+    break;
+  }
+  case STAR: {
+    asm_create(&asm_tail, "imul", "rax", "rdi");
+    break;
+  }
+  default: {
+    return;
+  }
+  }
+  asm_create_1arg(&asm_tail, "push", "rax");
+}
+
 void CodeGen::visit(const Grouping *) {}
 void CodeGen::visit(const StrLiteral *) {}
 
 void CodeGen::visit(const NumLiteral *expr) {
-  asm_tail = asm_create_1arg(asm_tail, "push", expr->value.c_str());
-  asm_print(stderr, asm_tail);
+  asm_create_1arg(&asm_tail, "push", expr->value.c_str());
 }
 
 void CodeGen::visit(const BoolLiteral *) {}
