@@ -65,21 +65,40 @@ void CodeGen::visit(const Binary *expr) {
     asm_emit({"imul", "rax", "rdi"});
     break;
   }
-  default: {
-    return;
+  case SLASH: {
+    /*
+    idiv takes RDX and RAX, and divides the sum by
+    the arg register value.
+    Quotient is stored into RAX, remainder in RDX.
+    The CQO instruction (available in 64-bit mode only) copies the
+    sign (bit 63) of the value in the RAX register into every bit
+    position in the RDX register (Intel 64 and IA-32 Architectures
+    Software Developer’s Manual
+    */
+    asm_emit({"cqo"});
+    asm_emit({"idiv", "rdi"});
+    break;
   }
+  default: return;
   }
   asm_emit({"push", "rax"});
 }
 
-void CodeGen::visit(const Grouping *) {}
+void CodeGen::visit(const Grouping * expr) {
+  emit(&expr->expression);
+}
+
 void CodeGen::visit(const StrLiteral *) {}
 
 void CodeGen::visit(const NumLiteral *expr) {
   asm_emit({"push", expr->value.c_str()});
 }
 
-void CodeGen::visit(const BoolLiteral *) {}
+void CodeGen::visit(const BoolLiteral *expr) {
+  if (expr->value) asm_emit({"push", "1"});
+  else asm_emit({"push", "0"});
+}
+
 void CodeGen::visit(const Variable *) {}
 void CodeGen::visit(const Assignment *) {}
 void CodeGen::visit(const Logical *) {}
