@@ -11,6 +11,7 @@
 #include "global_hoister.h"
 #include "neeilang.h"
 #include "parser.h"
+#include "reachability.h"
 #include "resolver.h"
 #include "scanner.h"
 #include "scope_manager.h"
@@ -60,6 +61,13 @@ void Neeilang::run(const std::string &source) {
 
   GlobalHoister hoister(scope_manager);
   hoister.hoist_program(program);
+
+  if (had_error) {
+    return;
+  }
+
+  NL::Reachability dce;
+  dce.analyze_program(program);
 
   if (had_error) {
     return;

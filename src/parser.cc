@@ -197,13 +197,13 @@ Stmt *Parser::for_statement(Token for_tok) {
   if (!check(RIGHT_PAREN)) {
     increment = expression();
   }
-  consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+  const Token & rparen = consume(RIGHT_PAREN, "Expect ')' after for clauses.");
 
   Stmt *body = statement();
 
   // Construct block stmt with initializer + desugared while-loop
   if (increment) {
-    body = new BlockStmt({body, new ExprStmt(increment)});
+    body = new BlockStmt({body, new ExprStmt(increment, rparen)});
   }
 
   if (!condition) {
@@ -262,8 +262,8 @@ Stmt *Parser::func_statement(std::string kind) {
 
 Stmt *Parser::expression_statement() {
   Expr *value = expression();
-  consume(SEMICOLON, "Expect ';' after expression.");
-  return new ExprStmt(value);
+  Token & sc = consume(SEMICOLON, "Expect ';' after expression.");
+  return new ExprStmt(value, sc);
 }
 
 Expr *Parser::expression() { return assignment(); }

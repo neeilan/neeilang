@@ -30,9 +30,11 @@ public:
 
 class ExprStmt : public StmtCRTP<ExprStmt> {
 public:
-  explicit ExprStmt(const Expr *expression) : expression(expression) {}
+  explicit ExprStmt(const Expr *expression, const Token &sc)
+      : expression(expression), sc(sc) {}
 
   const Expr *expression = nullptr;
+  const Token &sc;
 };
 
 class PrintStmt : public StmtCRTP<PrintStmt> {
@@ -92,6 +94,8 @@ public:
                     std::vector<Stmt *> body)
       : name(name), parameters(parameters), parameter_types(parameter_types),
         return_type(return_type), body(body) {}
+
+  bool is_void() const { return return_type.lexeme == "Void"; }
 
   const Token name;
   const std::vector<Token> parameters;
