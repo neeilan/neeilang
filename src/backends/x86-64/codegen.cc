@@ -1,7 +1,22 @@
 #include "backends/x86-64/codegen.h"
 #include "backends/x86-64/asm.h"
 
+#include <cassert>
+
 using CodeGen = X86_64::CodeGen;
+
+void CodeGen::asm_emit(std::vector<const char *> args) {
+  assert(args.size() > 0 && args.size() <= 3 &&
+         "Asm instr + args must number 1 - 3.");
+  if (args.size() == 1) {
+    asm_create_instr_only(&asm_tail, args[0]);
+
+  } else if (args.size() == 2) {
+    asm_create_1arg(&asm_tail, args[0], args[1]);
+  } else {
+    asm_create(&asm_tail, args[0], args[1], args[2]);
+  }
+}
 
 void CodeGen::generate(const std::vector<Stmt *> &program) {
   emit(program);
@@ -34,34 +49,34 @@ void CodeGen::visit(const Binary *expr) {
   emit(&expr->left);
   emit(&expr->right);
 
-  asm_create_1arg(&asm_tail, "pop", "rdi"); // right
-  asm_create_1arg(&asm_tail, "pop", "rax"); // left
+  asm_emit({"pop", "rdi"}); // right
+  asm_emit({"pop", "rax"}); // left
 
   switch (expr->op.type) {
   case PLUS: {
-    asm_create(&asm_tail, "add", "rax", "rdi");
+    asm_emit({"add", "rax", "rdi"});
     break;
   }
   case MINUS: {
-    asm_create(&asm_tail, "sub", "rax", "rdi");
+    asm_emit({"sub", "rax", "rdi"});
     break;
   }
   case STAR: {
-    asm_create(&asm_tail, "imul", "rax", "rdi");
+    asm_emit({"imul", "rax", "rdi"});
     break;
   }
   default: {
     return;
   }
   }
-  asm_create_1arg(&asm_tail, "push", "rax");
+  asm_emit({"push", "rax"});
 }
 
 void CodeGen::visit(const Grouping *) {}
 void CodeGen::visit(const StrLiteral *) {}
 
 void CodeGen::visit(const NumLiteral *expr) {
-  asm_create_1arg(&asm_tail, "push", expr->value.c_str());
+  asm_emit({"push", expr->value.c_str()});
 }
 
 void CodeGen::visit(const BoolLiteral *) {}

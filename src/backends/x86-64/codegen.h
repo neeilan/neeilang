@@ -44,6 +44,7 @@ public:
 
 private:
   Asm_t *asm_tail = NULL;
+  void asm_emit(std::vector<const char*> args);
   std::ostringstream _asm;
   std::ostringstream _data;
   std::ostringstream _bss;
