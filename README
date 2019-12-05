@@ -1,0 +1,10 @@
+The NeeiLang Programming Language
+=================================
+
+NeeiLang (NL) is a lightweight programming language that is under construction.
+It is designed to be:
+
+*  Performant : emits native code with a minimal runtime system
+*  Type-safe  : via aggressive type-checking and semantic analyses
+*  Effortless : GC, minimal C-like syntax, ~15 keywords
+
