@@ -1,7 +1,7 @@
 #include <cassert>
 #include <vector>
 
-#include "type_builder.h"
+#include "type-builder.h"
 
 #include "primitives.h"
 

@@ -1,4 +1,4 @@
-#include "type_table.h"
+#include "type-table.h"
 
 namespace TypeTableUtil {
 std::string fn_key(const FuncStmt *func) {

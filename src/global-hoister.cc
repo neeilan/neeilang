@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "functype.h"
-#include "global_hoister.h"
+#include "global-hoister.h"
 #include "neeilang.h"
 #include "stmt.h"
 #include "symtab.h"

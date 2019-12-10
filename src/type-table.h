@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "cactus_table.h"
+#include "cactus-table.h"
 #include "stmt.h"
 #include "type.h"
 

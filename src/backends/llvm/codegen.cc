@@ -8,7 +8,7 @@
 #include "expr.h"
 #include "primitives.h"
 #include "stmt.h"
-#include "type_builder.h"
+#include "type-builder.h"
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringRef.h"

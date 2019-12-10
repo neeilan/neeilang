@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "scope_manager.h"
+#include "scope-manager.h"
 #include "token.h"
 #include "visitable.h"
 #include "visitor.h"

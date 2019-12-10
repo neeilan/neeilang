@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "symtab.h"
-#include "type_table.h"
+#include "type-table.h"
 
 struct Scope {
   std::size_t id;

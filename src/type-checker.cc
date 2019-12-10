@@ -4,8 +4,8 @@
 
 #include "neeilang.h"
 #include "primitives.h"
-#include "type_checker.h"
-#include "type_table.h"
+#include "type-checker.h"
+#include "type-table.h"
 
 using Primitives::TypeError;
 

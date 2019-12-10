@@ -6,11 +6,11 @@
 #include <string>
 #include <vector>
 
-#include "cactus_table.h"
+#include "cactus-table.h"
 #include "expr.h"
-#include "expr_types.h"
-#include "scope_manager.h"
-#include "type_builder.h"
+#include "expr-types.h"
+#include "scope-manager.h"
+#include "type-builder.h"
 #include "visitor.h"
 
 #include "backends/AbstractCodegen.h"

@@ -5,18 +5,18 @@
 #include <string>
 #include <vector>
 
-#include "ast_printer.h"
+#include "ast-printer.h"
 #include "backends/llvm/codegen.h"
 #include "backends/x86-64/codegen.h"
-#include "global_hoister.h"
+#include "global-hoister.h"
 #include "neeilang.h"
 #include "parser.h"
 #include "reachability.h"
 #include "resolver.h"
 #include "scanner.h"
-#include "scope_manager.h"
+#include "scope-manager.h"
 #include "token.h"
-#include "type_checker.h"
+#include "type-checker.h"
 
 bool Neeilang::had_error = false;
 

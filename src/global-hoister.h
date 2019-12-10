@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "primitives.h"
-#include "scope_manager.h"
+#include "scope-manager.h"
 #include "symtab.h"
-#include "type_table.h"
+#include "type-table.h"
 #include "visitor.h"
 
 /*
