@@ -11,9 +11,9 @@
 class AstPrinter : public ExprVisitor<std::string>,
                    public StmtVisitor<std::string> {
 public:
-  std::string print(const std::vector<Stmt*> & program);
-  std::string print(const Expr * expr) { return expr->accept(this); }
-  std::string print(const Stmt * stmt) { return stmt->accept(this); }
+  std::string print(const std::vector<Stmt *> &program);
+  std::string print(const Expr *expr) { return expr->accept(this); }
+  std::string print(const Stmt *stmt) { return stmt->accept(this); }
 
   EXPR_VISITOR_METHODS(std::string)
   STMT_VISITOR_METHODS(std::string)

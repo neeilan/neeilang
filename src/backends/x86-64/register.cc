@@ -5,10 +5,9 @@
 
 Register NO_REGISTER_AVAILABLE("no_reg_available");
 
-// These are the 64-bit registers that are callee-saved (preserved across syscalls).
-// See page 21 of https://www.uclibc.org/docs/psABI-x86_64.pdf 
-static std::set<std::string> unallocated
-  = {  "r12", "r13", "r14", "r15" };
+// These are the 64-bit registers that are callee-saved (preserved across
+// syscalls). See page 21 of https://www.uclibc.org/docs/psABI-x86_64.pdf
+static std::set<std::string> unallocated = {"r12", "r13", "r14", "r15"};
 
 Register allocate_reg64() {
   // Allocates a general-purpose 64-bit register
@@ -23,8 +22,4 @@ Register allocate_reg64() {
   }
 }
 
-void Register::free() const {
-  unallocated.insert(name);
-}
-
-
+void Register::free() const { unallocated.insert(name); }

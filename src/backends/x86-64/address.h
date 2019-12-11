@@ -5,8 +5,7 @@
 
 class Address {
 public:
-  Address(const std::string loc, int size)
-    : loc(loc), size(size)  {}
+  Address(const std::string loc, int size) : loc(loc), size(size) {}
   const std::string loc;
   int size; // in bytes
 };

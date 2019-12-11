@@ -79,14 +79,13 @@ void CodeGen::visit(const Binary *expr) {
     asm_emit({"idiv", "rdi"});
     break;
   }
-  default: return;
+  default:
+    return;
   }
   asm_emit({"push", "rax"});
 }
 
-void CodeGen::visit(const Grouping * expr) {
-  emit(&expr->expression);
-}
+void CodeGen::visit(const Grouping *expr) { emit(&expr->expression); }
 
 void CodeGen::visit(const StrLiteral *) {}
 
@@ -95,8 +94,10 @@ void CodeGen::visit(const NumLiteral *expr) {
 }
 
 void CodeGen::visit(const BoolLiteral *expr) {
-  if (expr->value) asm_emit({"push", "1"});
-  else asm_emit({"push", "0"});
+  if (expr->value)
+    asm_emit({"push", "1"});
+  else
+    asm_emit({"push", "0"});
 }
 
 void CodeGen::visit(const Variable *) {}

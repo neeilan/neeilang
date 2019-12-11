@@ -1,10 +1,10 @@
-#include <sstream>
 #include <fstream>
 #include <ostream>
+#include <sstream>
 #include <string>
 
-#include "backends/x86-64/label.h"
 #include "backends/x86-64/address.h"
+#include "backends/x86-64/label.h"
 #include "backends/x86-64/register.h"
 #include "backends/x86-64/syscall.h"
 
@@ -18,19 +18,19 @@ using CodeGen = X86_64::CodeGen;
 
 CodeGen::CodeGen() {
   _asm << "default rel" << endl
-       << "global start"  << endl
-       << "section .text"  << endl
+       << "global start" << endl
+       << "section .text" << endl
        << endl
-       << "start:"        << endl;
+       << "start:" << endl;
 
-  _data << "section .data" << endl
-        << "newline db 10" << endl;
+  _data << "section .data" << endl << "newline db 10" << endl;
 
   _bss << "section .bss" << endl
-       << "  dump_reg resb 8" << endl; // For debugging (print register contents).
+       << "  dump_reg resb 8"
+       << endl; // For debugging (print register contents).
 }
 
-void CodeGen::print(const Address & addr) {
+void CodeGen::print(const Address &addr) {
   syscall_id(_instr(), SYSCALL_write);
   syscall_arg1(_instr(), "1"); // 1 here means STDOUT
   syscall_arg2(_instr(), addr.loc);
@@ -38,7 +38,7 @@ void CodeGen::print(const Address & addr) {
   _instr() << "syscall" << endl;
 }
 
-void CodeGen::print(const Register & r) {
+void CodeGen::print(const Register &r) {
   _instr() << endl;
   const Register temp = load_const(48);
   add(temp, r); // offset by 48 to get ASCII code for digits.
@@ -49,13 +49,11 @@ void CodeGen::print(const Register & r) {
   print(Address("newline", 1));
 }
 
-void CodeGen::call(const std::string & label) {
+void CodeGen::call(const std::string &label) {
   _instr() << "call " << label << endl;
 }
 
-void CodeGen::ret() {
-  _instr() << "ret " << endl;
-}
+void CodeGen::ret() { _instr() << "ret " << endl; }
 
 const Register CodeGen::load_const(int value) {
   const Register r = allocate_reg64();
@@ -63,53 +61,49 @@ const Register CodeGen::load_const(int value) {
   return r;
 }
 
-void CodeGen::begin_func(const std::string & name) {
+void CodeGen::begin_func(const std::string &name) {
   const std::string label = generate_label(name);
   _asm << endl << label << ":" << endl;
 }
 
-const Register & CodeGen::add(const Register & a, const Register & b) {
+const Register &CodeGen::add(const Register &a, const Register &b) {
   _instr() << "add " << a.name << ", " << b.name << endl;
   return a;
 }
 
-const Register & CodeGen::move(const Register & dest, const Register & src) {
-  // MOV copies the contents of its source (second) operand into its destination (first) operand.
+const Register &CodeGen::move(const Register &dest, const Register &src) {
+  // MOV copies the contents of its source (second) operand into its destination
+  // (first) operand.
   _instr() << "mov " << dest.name << ", " << src.name << endl;
   return dest;
 }
 
-Address CodeGen::str_const(const std::string & s) {
+Address CodeGen::str_const(const std::string &s) {
   const std::string label = generate_label();
-  _data << "    " << label << " db " << "\"" <<  s << "\"" << ", 10" EXPLAIN("10 is newline char");
+  _data << "    " << label << " db "
+        << "\"" << s << "\""
+        << ", 10" EXPLAIN("10 is newline char");
   return Address(label, s.size() + 1); // +1 for newline
 }
 
-std::ostringstream & CodeGen::_instr() {
+std::ostringstream &CodeGen::_instr() {
   _asm << "\t";
   return _asm;
 }
 
-void CodeGen::dump(std::ostream & out) {
-  out << _data.str() << endl
-      << _bss.str() << endl
-      << _asm.str() << endl;
+void CodeGen::dump(std::ostream &out) {
+  out << _data.str() << endl << _bss.str() << endl << _asm.str() << endl;
 }
 
 void CodeGen::exit(const int status) {
   syscall_id(_instr(), SYSCALL_exit);
-  _instr() << "mov edi, " << status  EXPLAIN("edi holds the exit status");
+  _instr() << "mov edi, " << status EXPLAIN("edi holds the exit status");
   _instr() << "syscall" << endl;
 }
 
+void CodeGen::push(const Register &r) { _instr() << "push " << r.name << endl; }
 
-void CodeGen::push(const Register & r) {
-  _instr() << "push " << r.name  << endl;
-}
-
-void CodeGen::pop(const Register & r) {
-  _instr() << "pop " << r.name  << endl;
-}
+void CodeGen::pop(const Register &r) { _instr() << "pop " << r.name << endl; }
 
 const Register CodeGen::pop() {
   const Register r = allocate_reg64();

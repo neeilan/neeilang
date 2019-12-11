@@ -6,11 +6,11 @@
 
 class Register {
 public:
-  Register(const std::string name) : name(name) {};
+  Register(const std::string name) : name(name){};
   void free() const;
   std::string name;
 };
 
-Register allocate_reg64(); 
+Register allocate_reg64();
 
 #endif // __NS_REGISTER_H__

@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-#include "backends/AbstractCodegen.h"
+#include "backends/abstract-codegen.h"
 #include "visitor.h"
 
 #include "backends/x86-64/address.h"
@@ -44,7 +44,7 @@ public:
 
 private:
   Asm_t *asm_tail = NULL;
-  void asm_emit(std::vector<const char*> args);
+  void asm_emit(std::vector<const char *> args);
   std::ostringstream _asm;
   std::ostringstream _data;
   std::ostringstream _bss;

@@ -14,6 +14,8 @@ private:
   std::map<K, V> mappings;
 
 public:
+  std::shared_ptr<CactusTable<K, V>> parent;
+
   CactusTable() {}
   explicit CactusTable(std::shared_ptr<CactusTable<K, V>> parent)
       : parent(parent) {}
@@ -33,8 +35,6 @@ public:
     }
     return parent->get(k);
   }
-
-  std::shared_ptr<CactusTable<K, V>> parent;
 };
 
 #endif // _NL_CACTUS_TABLE_H_

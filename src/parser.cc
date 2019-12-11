@@ -197,7 +197,7 @@ Stmt *Parser::for_statement(Token for_tok) {
   if (!check(RIGHT_PAREN)) {
     increment = expression();
   }
-  const Token & rparen = consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+  const Token &rparen = consume(RIGHT_PAREN, "Expect ')' after for clauses.");
 
   Stmt *body = statement();
 
@@ -262,7 +262,7 @@ Stmt *Parser::func_statement(std::string kind) {
 
 Stmt *Parser::expression_statement() {
   Expr *value = expression();
-  Token & sc = consume(SEMICOLON, "Expect ';' after expression.");
+  Token &sc = consume(SEMICOLON, "Expect ';' after expression.");
   return new ExprStmt(value, sc);
 }
 
