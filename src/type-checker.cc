@@ -484,5 +484,57 @@ bool TypeChecker::has_type_error(const std::vector<NLType> &types) {
   return false;
 }
 
-void TypeChecker::visit(const GetIndex *expr) {}
-void TypeChecker::visit(const SetIndex *expr) {}
+void TypeChecker::visit(const GetIndex *expr) {
+  NLType lhs_type = check(&expr->callee);
+  NLType idx_type = check(&expr->index);
+
+  if (has_type_error({lhs_type, idx_type})) {
+    expr_types[expr] = TypeError();
+    return;
+  }
+
+  if (lhs_type->arr_depth > 0) {
+    // This is indeed an array...
+    if (idx_type != Primitives::Int()) {
+      Neeilang::error(expr->bracket, "Array index must be Int. Got: " + idx_type->name);
+      expr_types[expr] = Primitives::TypeError();
+      return;
+    }
+    expr_types[expr] = lhs_type->element_type;
+  } else {
+    Neeilang::error(expr->bracket, "Expected indexable type. Got: " + lhs_type->name);
+    expr_types[expr] = Primitives::TypeError();
+  }
+}
+
+void TypeChecker::visit(const SetIndex *expr) {
+  NLType lhs_type = check(&expr->callee);
+  NLType idx_type = check(&expr->index);
+  NLType rhs_type = check(&expr->value);
+
+  if (has_type_error({lhs_type, idx_type, rhs_type})) {
+    expr_types[expr] = TypeError();
+    return;
+  }
+
+  if (lhs_type->arr_depth > 0) {
+    if (idx_type != Primitives::Int()) {
+      Neeilang::error(expr->bracket, "Array index must be Int. Got: " + idx_type->name);
+      expr_types[expr] = Primitives::TypeError();
+      return;
+    }
+    NLType elem_type = lhs_type->element_type;
+    if (!rhs_type->subclass_of(elem_type.get())) {
+      std::ostringstream msg;
+      msg << "Cannot store value of type " << rhs_type->name
+          << " as an element in array of " << elem_type->name;
+      Neeilang::error(expr->bracket, msg.str());
+      expr_types[expr] = Primitives::TypeError();
+      return;
+    }
+    expr_types[expr] = lhs_type->element_type;
+  } else {
+    Neeilang::error(expr->bracket, "Expected indexable type. Got: " + lhs_type->name);
+    expr_types[expr] = Primitives::TypeError();
+  }
+}

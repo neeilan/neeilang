@@ -1,6 +1,8 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <sstream>
 
 #include "functype.h"
 #include "global-hoister.h"
@@ -19,6 +21,14 @@ static int arr_depth(const std::string &type) {
 static std::string element_type(const std::string &type) {
   int depth = arr_depth(type);
   return type.substr(depth, type.size() - 2 * depth);
+}
+
+static std::string array_typename(const std::string & type_name, int depth) {
+    std::ostringstream name;
+    for (int i = 0; i < depth; i++) name << "[";
+    name << type_name;
+    for (int i = 0; i < depth; i++) name << "]";
+    return name.str();
 }
 
 void GlobalHoister::declare(const std::string &type_name) {
@@ -107,6 +117,7 @@ void GlobalHoister::hoist_type(const std::string &type) {
   if (typetab()->contains(type))
     return;
 
+  // This could be an array.
   if (typetab()->contains(element_type(type))) {
     declare(type);
     auto arr_type = typetab()->get(type);
@@ -176,6 +187,14 @@ void GlobalHoister::visit(const VarStmt *stmt) {
   if (decl_only_pass)
     return;
   const std::string type = stmt->type.lexeme;
+
+    int depth = arr_depth(type);
+    if (depth > 0) {
+        for (int i = 1; i <= depth; i++) {
+            hoist_type(array_typename(element_type(type), depth));
+        }
+    }
+
   hoist_type(type);
   if (!typetab()->contains(type)) {
     Neeilang::error(stmt->type, "Unknown type in variable declaration.");
