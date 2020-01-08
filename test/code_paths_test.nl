@@ -1,9 +1,4 @@
 fn main() : Int {
-  test();
-  return 0;
-}
-
-fn test() : Void {
   var a : Int = 5;
   var b : Int = 3;
 
@@ -42,7 +37,7 @@ fn test() : Void {
   print b / a;    // 0
   print 120 / 9;  // 13
 
-  return;
+  return 0;
 }
 
 /*
