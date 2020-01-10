@@ -6,6 +6,7 @@
 #include "codegen.h"
 
 #include "expr.h"
+#include "object.h"
 #include "primitives.h"
 #include "stmt.h"
 #include "type-builder.h"
@@ -339,7 +340,8 @@ void CodeGen::visit(const Get *expr) {
   Value *callee = emit(&expr->callee);
 
   // Instance fields / methods
-  const int field_idx = callee_nltype->field_idx(field_name);
+  const int field_idx =
+      obj_header_size(ctx) + callee_nltype->field_idx(field_name);
   expr_values[expr] = builder->CreateLoad(
       builder->CreateGEP(callee, {get_int32(0), get_int32(field_idx)},
                          "fieldaccess_" + field_name),
@@ -356,7 +358,8 @@ void CodeGen::visit(const Set *expr) {
 
   assert(value && "Set value cannot be null");
 
-  const int field_idx = callee_nltype->field_idx(field_name);
+  const int field_idx =
+      obj_header_size(ctx) + callee_nltype->field_idx(field_name);
   Value *elem_ptr =
       builder->CreateGEP(callee, {get_int32(0), get_int32(field_idx)},
                          "fieldaccess_" + field_name);
@@ -516,6 +519,7 @@ void CodeGen::visit(const FuncStmt *stmt) {
   }
 
   emit(stmt->body);
+  /* TODO: Here check that there is a return in all predecessors */
   exit_scope();
 
   llvm::verifyFunction(*func);
@@ -531,4 +535,5 @@ void CodeGen::visit(const ReturnStmt *stmt) {
 }
 
 void CodeGen::visit(const GetIndex *expr) {}
+
 void CodeGen::visit(const SetIndex *expr) {}

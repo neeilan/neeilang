@@ -3,6 +3,7 @@
 
 #include "type-builder.h"
 
+#include "backends/llvm/object.h"
 #include "primitives.h"
 
 #include "llvm/IR/DerivedTypes.h"
@@ -30,6 +31,10 @@ llvm::Type *TypeBuilder::to_llvm(NLType t) {
   // Create the identified struct type
   auto opaque_struct = llvm::StructType::create(ctx, t->name);
   ll_types.insert({t, llvm::PointerType::getUnqual(opaque_struct)});
+
+  for (auto hdr_field_ty : object_header(ctx)) {
+    field_types.push_back(hdr_field_ty);
+  }
 
   for (auto field : t->fields) {
     field_types.push_back(to_llvm(field.type));
