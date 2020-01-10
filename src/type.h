@@ -28,6 +28,24 @@ public:
     return other->superclass_of(this);
   }
 
+  bool is_function_type() { return functype != nullptr; }
+
+  int num_methods() { return get_methods().size(); }
+
+  std::vector<std::shared_ptr<FuncType>> get_methods();
+
+  int method_idx(const std::string &name) {
+    auto m = get_method(name);
+    auto methods = get_methods();
+
+    for (int i = 0; i < methods.size(); i++) {
+      if (methods[i] == m)
+        return i;
+    }
+
+    return -1;
+  }
+
   bool has_field(const std::string &name);
   Field get_field(const std::string &name);
   int field_idx(const std::string &name);
@@ -40,7 +58,6 @@ public:
   std::vector<std::shared_ptr<FuncType>> methods;
   int arr_depth = 0;
   std::shared_ptr<Type> element_type = nullptr;
-
   std::shared_ptr<FuncType> functype = nullptr;
 };
 

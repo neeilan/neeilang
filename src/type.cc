@@ -40,3 +40,31 @@ std::shared_ptr<FuncType> Type::get_method(const std::string &name) {
   }
   return std::make_shared<FuncType>(); // Unreachable
 }
+
+std::vector<std::shared_ptr<FuncType>> Type::get_methods() {
+  if (!supertype) {
+    return methods;
+  }
+
+  std::vector<std::shared_ptr<FuncType>> all_methods;
+  auto super_methods = supertype->get_methods();
+  for (auto sm : super_methods) {
+    all_methods.push_back(sm);
+  }
+
+  for (std::shared_ptr<FuncType> m : methods) {
+    bool overridden = false;
+    for (int i = 0; i < all_methods.size(); i++) {
+      if (m->name == all_methods[i]->name) {
+        overridden = true;
+        all_methods[i] = m;
+        break;
+      }
+    }
+    if (!overridden) {
+      all_methods.push_back(m);
+    }
+  }
+
+  return all_methods;
+}
