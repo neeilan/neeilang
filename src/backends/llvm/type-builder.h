@@ -24,10 +24,13 @@ public:
   }
 
   llvm::Type *to_llvm(NLType t);
+  llvm::FunctionType *to_llvm(std::shared_ptr<FuncType>, NLType receiver);
 
 private:
-  std::map<NLType, llvm::Type *> ll_types;
   llvm::LLVMContext &ctx;
+  std::map<NLType, llvm::Type *> ll_types;
+  llvm::Type *vtable_type(NLType t);
+  std::map<NLType, llvm::Type *> vtabs;
 };
 
 #endif // _NL_BACKENDS_LLVM_TYPE_BUILDER_H_

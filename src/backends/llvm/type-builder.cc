@@ -14,12 +14,12 @@ llvm::Type *TypeBuilder::to_llvm(NLType t) {
     return ll_types[t];
   }
 
-  // We don't support function type fields/variables (yet?).
+  // We don't support function type fields/variables (yet?)
   assert(t->functype == NULL);
 
   std::vector<llvm::Type *> field_types;
 
-  // Inheritance.
+  // Inheritance
   if (t->supertype) {
     llvm::Type *parent = to_llvm(t->supertype);
     for (llvm::Type *field :
@@ -43,4 +43,21 @@ llvm::Type *TypeBuilder::to_llvm(NLType t) {
   opaque_struct->setBody(field_types);
 
   return ll_types[t];
+}
+
+llvm::FunctionType *TypeBuilder::to_llvm(std::shared_ptr<FuncType> f,
+                                         NLType receiver) {
+  llvm::Type *ret_type = to_llvm(f->return_type);
+  std::vector<llvm::Type *> arg_types;
+
+  // Methods take object pointer as first arg
+  if (receiver) {
+    arg_types.push_back(to_llvm(receiver));
+  }
+
+  for (NLType nl_argtype : f->arg_types) {
+    arg_types.push_back(to_llvm(nl_argtype));
+  }
+
+  return llvm::FunctionType::get(ret_type, arg_types, false);
 }

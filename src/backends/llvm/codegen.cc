@@ -472,19 +472,7 @@ void CodeGen::visit(const FuncStmt *stmt) {
     assert(nl_functype != nullptr &&
            "Cannot codegen function: FuncType not found.");
 
-    llvm::Type *ret_type = tb.to_llvm(nl_functype->return_type);
-    std::vector<llvm::Type *> arg_types;
-
-    // Methods take object pointer as first arg
-    if (encl_class) {
-      arg_types.push_back(tb.to_llvm(encl_class));
-    }
-
-    for (NLType nl_argtype : nl_functype->arg_types) {
-      arg_types.push_back(tb.to_llvm(nl_argtype));
-    }
-
-    FunctionType *ft = FunctionType::get(ret_type, arg_types, false);
+    FunctionType *ft = tb.to_llvm(nl_functype, encl_class);
     Function::Create(ft, Function::ExternalLinkage, fn_name, module.get());
     return;
   }
