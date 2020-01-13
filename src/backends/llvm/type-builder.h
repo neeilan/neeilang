@@ -25,6 +25,7 @@ public:
 
   llvm::Type *to_llvm(NLType t);
   llvm::FunctionType *to_llvm(std::shared_ptr<FuncType>, NLType receiver);
+  llvm::Type *build_vtable(NLType t, std::vector<llvm::FunctionType *> methods);
 
 private:
   llvm::LLVMContext &ctx;

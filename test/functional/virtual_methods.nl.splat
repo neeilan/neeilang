@@ -1,0 +1,33 @@
+class Animal {
+  legs : Int;
+  hands : Int;
+  init(i : Int) { return this; }
+  sound() : Void { print "animal!"; return; }
+
+}
+class Feline < Animal {
+  i : Int;
+  init() { return this; }
+  sound() : Void { print "feline!"; return; }
+}
+
+class Cat < Feline {
+  init() { return this; }
+}
+
+
+fn main() : Int {
+  var a : Animal = Animal.init(3);  
+  a.sound();
+  var f : Animal = Feline.init();  
+  f.sound();
+  var c : Animal = Cat.init();
+  c.sound();
+  return 0;
+}
+
+%output
+animal!
+feline!
+feline!
+%output

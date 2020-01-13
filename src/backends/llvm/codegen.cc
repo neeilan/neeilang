@@ -32,6 +32,7 @@ using llvm::ConstantFP;
 using llvm::ConstantInt;
 using llvm::Function;
 using llvm::FunctionType;
+using llvm::PointerType;
 using llvm::Value;
 
 #define NUMERIC_BINOP(type, instr_float, instr_int)                            \
@@ -54,6 +55,9 @@ void CodeGen::generate(const std::vector<Stmt *> &program) {
   sm.reset();
   globals_only_pass = true;
   emit(program);
+
+  // First pass will have collected enough type info to build vtables
+  build_vtables();
 
   sm.reset();
   globals_only_pass = false;
@@ -232,6 +236,7 @@ void CodeGen::visit(const VarStmt *stmt) {
   // TODO: Handle global variables.
   const std::string varname = stmt->name.lexeme;
   NLType nl_type = sm.current().typetab->get(varname);
+  llvm::Type *ll_type = tb.to_llvm(nl_type);
 
   Function *fn = builder->GetInsertBlock()->getParent();
   Value *init = nullptr;
@@ -242,8 +247,9 @@ void CodeGen::visit(const VarStmt *stmt) {
     assert(init != nullptr && "Could not retrieve default value for type.");
   }
 
-  AllocaInst *alloca = entry_block_alloca(fn, varname, tb.to_llvm(nl_type));
-  builder->CreateStore(init, alloca);
+  AllocaInst *alloca = entry_block_alloca(fn, varname, ll_type);
+  // Bitcast to match variable type.
+  builder->CreateStore(builder->CreateBitCast(init, ll_type), alloca);
 
   named_vals->insert(varname, alloca);
 }
@@ -286,20 +292,19 @@ void CodeGen::visit(const Call *expr) {
   Value *callee = emit(&expr->callee);
   assert(callee->getType()->isPointerTy() &&
          "Callee is not a (function) pointer");
-  assert(static_cast<llvm::PointerType *>(callee->getType())
+  assert(llvm::cast<PointerType>(callee->getType())
              ->getElementType()
              ->isFunctionTy() &&
          "Callee expr does not produce a function pointer");
 
   std::vector<Value *> args;
 
-  // Initializer are special :)
+  // Initializers are special :)
   std::string fn_name = callee->getName();
   if (is_initializer(fn_name)) {
     const std::string classname = fn_name.substr(0, fn_name.find("_init"));
     auto nl_type = sm.current().typetab->get(classname);
-    llvm::PointerType *ll_type =
-        static_cast<llvm::PointerType *>(tb.to_llvm(nl_type));
+    PointerType *ll_type = llvm::cast<PointerType>(tb.to_llvm(nl_type));
     llvm::Type *ll_element_type = ll_type->getElementType();
 
     Constant *alloc_size = ConstantExpr::getSizeOf(ll_element_type);
@@ -310,6 +315,29 @@ void CodeGen::visit(const Call *expr) {
     builder->Insert(malloc_instr);
 
     args.push_back(malloc_instr); // 'this' pointer.
+
+    Value *vt_ptr = builder->CreateGEP(
+        malloc_instr, {get_int32(0), get_int32(NL_OBJ_VT_IDX)});
+    assert(vt_ptr && "VT pointer in object header cannot be retrieved");
+
+    // Set the vtable pointer.
+    llvm::GlobalVariable *vt =
+        module->getGlobalVariable("__vtable_" + nl_type->name);
+    assert(vt && "VTable for type not found");
+
+    builder->CreateStore(
+        builder->CreateBitCast(
+            vt, PointerType::getUnqual(llvm::Type::getInt64PtrTy(ctx))),
+        vt_ptr, "store_vtptr");
+  }
+
+  // Possibly a method call
+  if (!is_initializer(fn_name) && expr->callee.is_object_field()) {
+    // Bitcast 'this' to the right type and supply it as first arg.
+    llvm::FunctionType *ll_fn_type = llvm::cast<llvm::FunctionType>(
+        llvm::cast<PointerType>(callee->getType())->getElementType());
+    args.push_back(
+        builder->CreateBitCast(last_deref_obj, ll_fn_type->params()[0]));
   }
 
   for (const Expr *arg : expr->args) {
@@ -326,6 +354,8 @@ void CodeGen::visit(const Get *expr) {
   NLType callee_nltype = expr_types[&expr->callee];
   assert(callee_nltype && "NL Type of callee unknown");
 
+  assert(last_deref_obj && "No Value found for last dereferenced object");
+
   // Initializers / static fields
   if (callee_nltype == Primitives::Class()) {
     const Variable *callee = static_cast<const Variable *>(&expr->callee);
@@ -338,8 +368,37 @@ void CodeGen::visit(const Get *expr) {
   }
 
   Value *callee = emit(&expr->callee);
+  last_deref_obj = callee;
+  llvm::Type *int64PtrTy = llvm::Type::getInt64PtrTy(ctx);
+  llvm::Type *int64PtrPtrTy = PointerType::getUnqual(int64PtrTy);
 
-  // Instance fields / methods
+  // Virtual method call
+  if (callee_nltype->has_method(field_name)) {
+
+    llvm::Type *ll_vt_type =
+        module->getTypeByName("__vtable_t_" + callee_nltype->name);
+    llvm::Type *fn_type =
+        tb.to_llvm(callee_nltype->get_method(field_name), callee_nltype);
+
+    const int method_idx = callee_nltype->method_idx(field_name);
+    auto vtable_ptr_ptr = builder->CreateGEP(
+        last_deref_obj, {get_int32(0), get_int32(NL_OBJ_VT_IDX)});
+
+    // Load the method pointer from this object's vtable
+    llvm::Value *vtable_ptr =
+        builder->CreateLoad(int64PtrPtrTy, vtable_ptr_ptr);
+    vtable_ptr =
+        builder->CreateBitCast(vtable_ptr, PointerType::getUnqual(ll_vt_type));
+    llvm::Value *vt_entry =
+        builder->CreateGEP(vtable_ptr, {get_int32(0), get_int32(method_idx)});
+    llvm::Value *method_impl =
+        builder->CreateLoad(PointerType::getUnqual(fn_type), vt_entry);
+
+    expr_values[expr] = method_impl;
+    return;
+  }
+
+  // Instance fields
   const int field_idx =
       obj_header_size(ctx) + callee_nltype->field_idx(field_name);
   expr_values[expr] = builder->CreateLoad(
@@ -387,9 +446,32 @@ void CodeGen::visit(const PrintStmt *stmt) {
   }
 }
 
+/* Fetches the correct implementation of method that should be used
+ for dynamic dispatch with type. Note that NL doesn't allow name reuse
+ within a class, so the method name alone suffices here. However, it can
+ be mangled to allow such behavior in the future. */
+llvm::Function *CodeGen::get_virtual_method(NLType type,
+                                            const std::string &method) {
+  NLType curr = type; // Curr is self or parent
+  for (NLType curr = type; curr != nullptr; curr = curr->supertype) {
+    for (llvm::Function *f : methods[curr]) {
+      // TODO: Extract method name building into a function.
+      std::string method_name = curr->name + "_" + method;
+      if (f->getName() == method_name) {
+        return f;
+      }
+    }
+  }
+
+  // Unreachable, if type-checked correctly
+  assert(false && "Virtual method impl not found");
+  return nullptr;
+}
+
 void CodeGen::visit(const ClassStmt *stmt) {
   std::string classname = stmt->name.lexeme;
   auto nl_type = sm.current().typetab->get(classname);
+  assert(nl_type && "NLType for class not found");
 
   if (globals_only_pass) {
     tb.to_llvm(nl_type);
@@ -397,14 +479,35 @@ void CodeGen::visit(const ClassStmt *stmt) {
 
   NLType prev_encl_class = encl_class;
   encl_class = nl_type;
-
   enter_scope();
+
   for (const Stmt *method : stmt->methods) {
     emit(method);
   }
-  exit_scope();
 
+  exit_scope();
   encl_class = prev_encl_class;
+}
+
+void CodeGen::build_vtables() {
+  for (const auto &entry : methods) {
+    NLType nl_type = entry.first;
+
+    std::vector<llvm::FunctionType *> fn_types;
+    std::vector<llvm::Constant *> method_ptrs;
+    for (auto m : nl_type->get_methods()) {
+      llvm::Function *vm = get_virtual_method(nl_type, m->name);
+      fn_types.push_back(vm->getFunctionType());
+      method_ptrs.push_back(llvm::cast<llvm::Constant>(vm));
+    }
+
+    auto vtable_type = tb.build_vtable(nl_type, fn_types);
+    llvm::Constant *c =
+        module->getOrInsertGlobal("__vtable_" + nl_type->name, vtable_type);
+    llvm::GlobalVariable *gv = llvm::cast<llvm::GlobalVariable>(c);
+    gv->setInitializer(llvm::ConstantStruct::get(
+        llvm::cast<llvm::StructType>(vtable_type), method_ptrs));
+  }
 }
 
 void CodeGen::visit(const IfStmt *stmt) {
@@ -457,6 +560,8 @@ void CodeGen::visit(const WhileStmt *stmt) {
 
 void CodeGen::visit(const FuncStmt *stmt) {
   std::string fn_name = stmt->name.lexeme;
+  std::string orig_fn_name = fn_name;
+
   if (encl_class) {
     fn_name = encl_class->name + "_" + fn_name;
   }
@@ -473,7 +578,12 @@ void CodeGen::visit(const FuncStmt *stmt) {
            "Cannot codegen function: FuncType not found.");
 
     FunctionType *ft = tb.to_llvm(nl_functype, encl_class);
-    Function::Create(ft, Function::ExternalLinkage, fn_name, module.get());
+    Function *f =
+        Function::Create(ft, Function::ExternalLinkage, fn_name, module.get());
+    if (encl_class) {
+      methods[encl_class].push_back(f);
+    }
+
     return;
   }
 

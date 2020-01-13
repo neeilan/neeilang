@@ -19,23 +19,26 @@ llvm::Type *TypeBuilder::to_llvm(NLType t) {
 
   std::vector<llvm::Type *> field_types;
 
-  // Inheritance
-  if (t->supertype) {
-    llvm::Type *parent = to_llvm(t->supertype);
-    for (llvm::Type *field :
-         static_cast<llvm::StructType *>(parent)->elements()) {
-      field_types.push_back(field);
-    }
-  }
-
   // Create the identified struct type
   auto opaque_struct = llvm::StructType::create(ctx, t->name);
   ll_types.insert({t, llvm::PointerType::getUnqual(opaque_struct)});
 
-  for (auto hdr_field_ty : object_header(ctx)) {
-    field_types.push_back(hdr_field_ty);
+  // Inheritance
+  if (t->supertype) {
+    llvm::Type *parent = to_llvm(t->supertype);
+    for (llvm::Type *field :
+         llvm::cast<llvm::StructType>(
+             llvm::cast<llvm::PointerType>(parent)->getElementType())
+             ->elements()) {
+      field_types.push_back(field);
+    }
+  } else {
+    for (auto hdr_field_ty : object_header(ctx)) {
+      field_types.push_back(hdr_field_ty);
+    }
   }
 
+  // Own fields
   for (auto field : t->fields) {
     field_types.push_back(to_llvm(field.type));
   }
@@ -60,4 +63,15 @@ llvm::FunctionType *TypeBuilder::to_llvm(std::shared_ptr<FuncType> f,
   }
 
   return llvm::FunctionType::get(ret_type, arg_types, false);
+}
+
+llvm::Type *
+TypeBuilder::build_vtable(NLType t, std::vector<llvm::FunctionType *> methods) {
+  std::vector<llvm::Type *> field_types;
+  auto opaque_struct = llvm::StructType::create(ctx, "__vtable_t_" + t->name);
+  for (auto ft : methods) {
+    field_types.push_back(llvm::PointerType::getUnqual(ft));
+  }
+  opaque_struct->setBody(field_types);
+  return opaque_struct;
 }

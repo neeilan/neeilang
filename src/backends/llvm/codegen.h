@@ -48,6 +48,7 @@ private:
   ScopeManager &sm;
   ExprTypes expr_types; // Typing information from type-checker
   std::map<const Expr *, Value *> expr_values;
+  Value *last_deref_obj; // Last dereferenced object
   llvm::LLVMContext ctx;
   std::unique_ptr<llvm::IRBuilder<>> builder = nullptr;
   TypeBuilder tb;
@@ -70,6 +71,11 @@ private:
   Value *emit(const Expr *expr);
 
   Value *get_int32(int value);
+
+  // Virtual methods
+  std::map<NLType, std::vector<llvm::Function *>> methods;
+  llvm::Function *get_virtual_method(NLType type, const std::string &method);
+  void build_vtables();
 };
 
 #endif // _NL_BACKENDS_LLVM_CODEGEN_H_

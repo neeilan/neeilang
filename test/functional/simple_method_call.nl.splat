@@ -1,0 +1,36 @@
+fn main() : Int {
+  var a : Animal = Animal.init();  
+  print "init called successfully";
+  a.notInit(1,2);
+  a.getCat().meow();
+  return 0;
+}
+
+class Animal {
+  intField : Int;
+  floatField : Float;
+  init() {
+    var x : Int = 5;
+    return this;
+  }
+
+  notInit(i : Int, j : Int) : Void {
+    print "notInit called";
+    return;
+  }
+
+  getCat() : Cat { return Cat.init(); }
+}
+
+class Cat {
+  init() { return this; }
+  meow() : Void { print "meow"; return; }
+}
+
+/* splat segment
+%output
+init called successfully
+notInit called
+meow
+%output
+*/
