@@ -522,6 +522,8 @@ void CodeGen::visit(const IfStmt *stmt) {
   BasicBlock *merge = BasicBlock::Create(ctx, "ifcont");
 
   builder->CreateCondBr(cond, br_then, br_else);
+  bool merge_occurs =
+      false; // FIXME: Replace with hasNPredecessorsOrMore in LLVM 10.
 
   builder->SetInsertPoint(br_then);
   emit(stmt->then_branch);
@@ -529,6 +531,7 @@ void CodeGen::visit(const IfStmt *stmt) {
   // return), do not terminate it again via a branch as it
   // generates incorrect IR.
   if (!builder->GetInsertBlock()->getTerminator()) {
+    merge_occurs = true;
     builder->CreateBr(merge);
   }
 
@@ -539,11 +542,14 @@ void CodeGen::visit(const IfStmt *stmt) {
   }
   // All BBs must be terminated (incl. fall-thru's) to pass verification.
   if (!builder->GetInsertBlock()->getTerminator()) {
+    merge_occurs = true;
     builder->CreateBr(merge);
   }
 
-  func->getBasicBlockList().push_back(merge);
-  builder->SetInsertPoint(merge);
+  if (merge_occurs) {
+    func->getBasicBlockList().push_back(merge);
+    builder->SetInsertPoint(merge);
+  }
 }
 
 void CodeGen::visit(const WhileStmt *stmt) {

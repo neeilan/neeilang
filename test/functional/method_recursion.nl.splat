@@ -3,8 +3,10 @@ class FibonacciCalculator {
   calculateNthFib(n : Int) : Int {
     if (n <= 0) { return 0; }
     if (n == 1) { return 1; }
-    return this.calculateNthFib(n-1)
-      + this.calculateNthFib(n-2);
+    else {
+      return this.calculateNthFib(n-1)
+        + this.calculateNthFib(n-2);
+    }
   }
 }
 
@@ -16,9 +18,11 @@ fn main() : Int {
   return 0;
 }
 
+/*
 %output
 0
 1
 1
 2
 %output
+*/
