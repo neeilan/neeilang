@@ -79,12 +79,12 @@ void Reachability::visit(const IfStmt *stmt) {
 
   assert(!graph.empty() && "Predecessor entry BB does not exist");
 
-  std::shared_ptr<BasicBlock> pred = graph.back();
+  std::shared_ptr<BasicBlock> pred = graph.back(), then_bb, else_bb;
   /* Does this statement result in an unconditional return? */
   bool if_always_rets = false, else_always_rets = false;
 
   if (stmt->then_branch) {
-    auto then_bb = BasicBlock::non_entry();
+    then_bb = BasicBlock::non_entry();
     pred->add_successor(then_bb);
     graph.push_back(then_bb);
 
@@ -93,7 +93,7 @@ void Reachability::visit(const IfStmt *stmt) {
   }
 
   if (stmt->else_branch) {
-    auto else_bb = BasicBlock::non_entry();
+    else_bb = BasicBlock::non_entry();
     pred->add_successor(else_bb);
     graph.push_back(else_bb);
 
@@ -101,15 +101,39 @@ void Reachability::visit(const IfStmt *stmt) {
     else_always_rets = graph.back()->returns();
   }
 
-  if (if_always_rets && else_always_rets) {
+  if (if_always_rets && (else_bb && else_always_rets)) {
     // This unconditional-return BB does not need to be a
     // successor of pred - it's only needed for detecting
     // any dead code that follows this if-else statement.
+    // Form:
+    // if { always ret } else { always ret }
     graph.push_back(BasicBlock::unconditional_return());
-  } else {
-    // Insert a possibly-conditionally-returning post-loop BB
+  } else if (!else_bb) {
+    // Have an if but no else, so the pre-if/else BB has
+    // has the post-if/else BB as a successor because the
+    // if-condition may not be true;
+    // Form: if { maybe ret; }
+    //   or  if { always ret; }
     auto post_if = BasicBlock::non_entry();
     pred->add_successor(post_if);
+    then_bb->add_successor(post_if);
+    graph.push_back(post_if);
+  } else {
+    // Have both an if and else, but they don't always
+    // return (if they both did, case 1 would be true).
+    // Form : if { always ret; } else { maybe ret; }
+    //     or if { maybe ret; }  else { always ret; }
+    //     or if { maybe ret; }  else { maybe ret; }
+    // For all these cases, the non-returning BB(s), as
+    // well as the pre-if/else BB, have the post-if/else BB
+    // as a successor.
+    auto post_if = BasicBlock::non_entry();
+    pred->add_successor(post_if);
+
+    if (!if_always_rets)
+      then_bb->add_successor(post_if);
+    if (!else_always_rets)
+      else_bb->add_successor(post_if);
     graph.push_back(post_if);
   }
 }
