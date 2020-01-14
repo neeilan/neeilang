@@ -35,9 +35,9 @@ void TypeChecker::visit(const VarStmt *stmt) {
     return;
   }
 
-  auto var_type = types()->get(stmt->type.lexeme);
+  auto var_type = types()->get(stmt->tp.name.lexeme);
   if (!var_type) {
-    Neeilang::error(stmt->type, "Unknown type");
+    Neeilang::error(stmt->tp.name, "Unknown type");
     return;
   }
 
@@ -47,7 +47,7 @@ void TypeChecker::visit(const VarStmt *stmt) {
       std::ostringstream msg;
       msg << "Illegal initialization of variable of type " << var_type->name
           << " with expression of type " << expr_type->name;
-      Neeilang::error(stmt->type, msg.str());
+      Neeilang::error(stmt->tp.name, msg.str());
       return;
     }
   }
@@ -496,13 +496,15 @@ void TypeChecker::visit(const GetIndex *expr) {
   if (lhs_type->arr_depth > 0) {
     // This is indeed an array...
     if (idx_type != Primitives::Int()) {
-      Neeilang::error(expr->bracket, "Array index must be Int. Got: " + idx_type->name);
+      Neeilang::error(expr->bracket,
+                      "Array index must be Int. Got: " + idx_type->name);
       expr_types[expr] = Primitives::TypeError();
       return;
     }
     expr_types[expr] = lhs_type->element_type;
   } else {
-    Neeilang::error(expr->bracket, "Expected indexable type. Got: " + lhs_type->name);
+    Neeilang::error(expr->bracket,
+                    "Expected indexable type. Got: " + lhs_type->name);
     expr_types[expr] = Primitives::TypeError();
   }
 }
@@ -519,7 +521,8 @@ void TypeChecker::visit(const SetIndex *expr) {
 
   if (lhs_type->arr_depth > 0) {
     if (idx_type != Primitives::Int()) {
-      Neeilang::error(expr->bracket, "Array index must be Int. Got: " + idx_type->name);
+      Neeilang::error(expr->bracket,
+                      "Array index must be Int. Got: " + idx_type->name);
       expr_types[expr] = Primitives::TypeError();
       return;
     }
@@ -534,7 +537,8 @@ void TypeChecker::visit(const SetIndex *expr) {
     }
     expr_types[expr] = lhs_type->element_type;
   } else {
-    Neeilang::error(expr->bracket, "Expected indexable type. Got: " + lhs_type->name);
+    Neeilang::error(expr->bracket,
+                    "Expected indexable type. Got: " + lhs_type->name);
     expr_types[expr] = Primitives::TypeError();
   }
 }

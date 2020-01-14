@@ -38,6 +38,12 @@ void Resolver::visit(const VarStmt *stmt) {
   if (decl_only_pass)
     return;
   declare(stmt->name);
+
+  // Array types
+  for (const Expr *dim : stmt->tp.dims) {
+    resolve(dim);
+  }
+
   if (stmt->expression) {
     resolve(stmt->expression);
   }

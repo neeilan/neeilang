@@ -5,6 +5,7 @@
 #include "parser.h"
 #include "stmt.h"
 #include "token.h"
+#include "type-parse.h"
 
 std::vector<Stmt *> Parser::parse() {
   std::vector<Stmt *> statements;
@@ -32,27 +33,27 @@ Stmt *Parser::declaration() {
   }
 }
 
-static std::string nest(const std::string &type_name, const int depth) {
-  return std::string(depth, '[') + type_name + std::string(depth, ']');
-}
+TypeParse Parser::parse_type(const std::string &msg) {
+  // var_type -> identifier ([ dimension ? ])*
 
-Token &Parser::type_token(const std::string &msg) {
-  // var_type -> identifier | [ var_type ]
-  // Types are named as "nesting_depth^type_name"
-  int array_depth = 0;
-  while (match({LEFT_BRACKET}))
-    array_depth++;
-  Token &type = consume(IDENTIFIER, msg);
-  type.lexeme = nest(type.lexeme, array_depth);
-  while (array_depth--)
+  TypeParse tp;
+  tp.name = consume(IDENTIFIER, msg);
+
+  while (match({LEFT_BRACKET})) {
+    tp.arr = true;
+    if (peek().type != RIGHT_BRACKET) {
+      tp.dims.push_back(expression());
+    }
     consume(RIGHT_BRACKET, "Expect matching ']'");
-  return type;
+  }
+
+  return tp;
 }
 
 Stmt *Parser::var_declaration() {
   Token name = consume(IDENTIFIER, "Expect variable name.");
   consume(COLON, "Expect ':' after name in variable declaration.");
-  Token type = type_token("Expect variable type.");
+  TypeParse tp = parse_type("Expect variable type.");
 
   // By default, initialize to nil
   // TODO : Handle nil initialization.
@@ -63,7 +64,7 @@ Stmt *Parser::var_declaration() {
     initializer = expression();
   }
   consume(SEMICOLON, "Expect ';' after variable declaration.");
-  return new VarStmt(name, type, initializer);
+  return new VarStmt(name, tp, initializer);
 }
 
 Stmt *Parser::class_declaration() {
@@ -88,7 +89,8 @@ Stmt *Parser::class_declaration() {
     if (peek_ahead().type == COLON) {
       VarStmt *stmt = static_cast<VarStmt *>(var_declaration());
       fields.push_back(stmt->name);
-      field_types.push_back(stmt->type);
+      // FIXME : Array types as fields
+      field_types.push_back(stmt->tp.name);
     } else {
       methods.push_back(func_statement("method"));
     }
@@ -236,21 +238,25 @@ Stmt *Parser::func_statement(std::string kind) {
       parameters.push_back(consume(IDENTIFIER, "Expect parameter name."));
 
       consume(COLON, "Expect ':' after parameter name.");
-      parameter_types.push_back(type_token("Expect parameter type after ':'"));
+      // FIXME: Array types as function args
+      parameter_types.push_back(
+          parse_type("Expect parameter type after ':'").name);
     } while (match({COMMA}));
   }
 
   consume(RIGHT_PAREN, "Expect ')' after parameters.");
 
   Token return_type;
-  ;
+
   if (outer_class && name.lexeme == "init") {
     return_type = Token(IDENTIFIER, *outer_class, "", -1);
     consume(LEFT_BRACE, "Expect '{' before init body. Note: Return type is not "
                         "declared for init methods");
   } else {
     consume(COLON, "Expect ':' after parameter list in function statement.");
-    return_type = type_token("Expect return type in " + kind + " statement");
+    // FIXME: Array types as function return
+    return_type =
+        parse_type("Expect return type in " + kind + " statement").name;
     consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
   }
 

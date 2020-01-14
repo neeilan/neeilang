@@ -8,6 +8,7 @@
 #include "expr.h"
 #include "stmt.h"
 #include "token.h"
+#include "type-parse.h"
 
 class ParseErr : std::runtime_error {
 public:
@@ -34,7 +35,7 @@ private:
   Token &peek();
   Token &peek_ahead();
   Token &previous();
-  Token &type_token(const std::string &msg);
+  TypeParse parse_type(const std::string &msg);
 
   Expr *assignment();
   Expr *logical_or();

@@ -6,6 +6,7 @@
 
 #include "expr.h"
 #include "token.h"
+#include "type-parse.h"
 #include "visitor.h"
 
 using std::string;
@@ -48,11 +49,12 @@ public:
 
 class VarStmt : public StmtCRTP<VarStmt> {
 public:
-  explicit VarStmt(const Token name, const Token type, const Expr *initializer)
-      : name(name), type(type), expression(initializer) {}
+  explicit VarStmt(const Token name, const TypeParse tp,
+                   const Expr *initializer)
+      : name(name), tp(tp), expression(initializer) {}
 
   const Token name;
-  const Token type;
+  const TypeParse tp;
   const Expr *expression = nullptr;
 };
 

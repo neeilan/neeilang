@@ -1,8 +1,9 @@
 fn main() : Int {
   var x : Int;
-  var y : [Int];
+  var y : Int[];
 
   y[1] = 33.1;
+
   %snippet "line 5"
   %snippet "Cannot store value of type Float as an element in array of Int"
 

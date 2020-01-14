@@ -1,8 +1,8 @@
+#include <iostream>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <sstream>
 
 #include "functype.h"
 #include "global-hoister.h"
@@ -23,12 +23,14 @@ static std::string element_type(const std::string &type) {
   return type.substr(depth, type.size() - 2 * depth);
 }
 
-static std::string array_typename(const std::string & type_name, int depth) {
-    std::ostringstream name;
-    for (int i = 0; i < depth; i++) name << "[";
-    name << type_name;
-    for (int i = 0; i < depth; i++) name << "]";
-    return name.str();
+static std::string array_typename(const std::string &type_name, int depth) {
+  std::ostringstream name;
+  for (int i = 0; i < depth; i++)
+    name << "[";
+  name << type_name;
+  for (int i = 0; i < depth; i++)
+    name << "]";
+  return name.str();
 }
 
 void GlobalHoister::declare(const std::string &type_name) {
@@ -186,18 +188,18 @@ void GlobalHoister::visit(const BlockStmt *stmt) {
 void GlobalHoister::visit(const VarStmt *stmt) {
   if (decl_only_pass)
     return;
-  const std::string type = stmt->type.lexeme;
+  const std::string type = stmt->tp.name.lexeme;
 
-    int depth = arr_depth(type);
-    if (depth > 0) {
-        for (int i = 1; i <= depth; i++) {
-            hoist_type(array_typename(element_type(type), depth));
-        }
+  int depth = arr_depth(type);
+  if (depth > 0) {
+    for (int i = 1; i <= depth; i++) {
+      hoist_type(array_typename(element_type(type), depth));
     }
+  }
 
   hoist_type(type);
   if (!typetab()->contains(type)) {
-    Neeilang::error(stmt->type, "Unknown type in variable declaration.");
+    Neeilang::error(stmt->tp.name, "Unknown type in variable declaration.");
   }
 }
 
