@@ -47,5 +47,7 @@ src/tags
 output
 out.bc
 
-# vim swap files
+# IDE / editor generated files
 *.swp
+.idea
+*.cbp
