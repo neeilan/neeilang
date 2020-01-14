@@ -525,14 +525,22 @@ void CodeGen::visit(const IfStmt *stmt) {
 
   builder->SetInsertPoint(br_then);
   emit(stmt->then_branch);
-  builder->CreateBr(merge);
+  // If this BB is already terminated (for example, via a
+  // return), do not terminate it again via a branch as it
+  // generates incorrect IR.
+  if (!builder->GetInsertBlock()->getTerminator()) {
+    builder->CreateBr(merge);
+  }
 
   func->getBasicBlockList().push_back(br_else);
   builder->SetInsertPoint(br_else);
-  if (stmt->else_branch)
+  if (stmt->else_branch) {
     emit(stmt->else_branch);
+  }
   // All BBs must be terminated (incl. fall-thru's) to pass verification.
-  builder->CreateBr(merge);
+  if (!builder->GetInsertBlock()->getTerminator()) {
+    builder->CreateBr(merge);
+  }
 
   func->getBasicBlockList().push_back(merge);
   builder->SetInsertPoint(merge);
