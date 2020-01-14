@@ -1,0 +1,24 @@
+fn main() : Int {
+  var i : Int = sumOfFirst(5);
+  print i;
+  print sumOfFirst2(6);
+  return 0;
+}
+
+fn sumOfFirst(n : Int) : Int {
+  var res : Int;
+  if (n == 0) { res = 0; }
+  if (n > 0) { res = n  + sumOfFirst(n-1); }
+  return res;
+}
+
+fn sumOfFirst2(n : Int) : Int {
+  if (n == 0) { return 0; }
+  if (n > 0) { return n  + sumOfFirst(n-1); }
+  return 0;
+}
+
+%output
+15
+21
+%output
