@@ -23,16 +23,6 @@ static std::string element_type(const std::string &type) {
   return type.substr(depth, type.size() - 2 * depth);
 }
 
-static std::string array_typename(const std::string &type_name, int depth) {
-  std::ostringstream name;
-  for (int i = 0; i < depth; i++)
-    name << "[";
-  name << type_name;
-  for (int i = 0; i < depth; i++)
-    name << "]";
-  return name.str();
-}
-
 void GlobalHoister::declare(const std::string &type_name) {
   typetab()->insert(type_name, std::make_shared<Type>(type_name));
 }
@@ -186,16 +176,14 @@ void GlobalHoister::visit(const BlockStmt *stmt) {
 }
 
 void GlobalHoister::visit(const VarStmt *stmt) {
-  if (decl_only_pass)
+  if (decl_only_pass) {
     return;
-  const std::string type = stmt->tp.name.lexeme;
-
-  int depth = arr_depth(type);
-  if (depth > 0) {
-    for (int i = 1; i <= depth; i++) {
-      hoist_type(array_typename(element_type(type), depth));
-    }
   }
+  if (stmt->tp.inferred) {
+    return;
+  }
+
+  const std::string type = stmt->tp.name.lexeme;
 
   hoist_type(type);
   if (!typetab()->contains(type)) {

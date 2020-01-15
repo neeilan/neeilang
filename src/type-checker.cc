@@ -30,25 +30,38 @@ void TypeChecker::visit(const BlockStmt *stmt) {
 
 void TypeChecker::visit(const VarStmt *stmt) {
   auto var_name = stmt->name.lexeme;
+  NLType var_type;
+
   if (types()->contains(var_name)) {
     Neeilang::error(stmt->name, "Variable cannot have the name of a type");
     return;
   }
 
-  auto var_type = types()->get(stmt->tp.name.lexeme);
-  if (!var_type) {
-    Neeilang::error(stmt->tp.name, "Unknown type");
-    return;
-  }
-
-  if (stmt->expression != nullptr) {
-    auto expr_type = check(stmt->expression);
-    if (expr_type != TypeError() && !expr_type->subclass_of(var_type.get())) {
-      std::ostringstream msg;
-      msg << "Illegal initialization of variable of type " << var_type->name
-          << " with expression of type " << expr_type->name;
-      Neeilang::error(stmt->tp.name, msg.str());
+  if (stmt->tp.inferred) {
+    if (!stmt->expression) {
+      Neeilang::error(stmt->name,
+                      "Variable type cannot be inferred without initializer");
       return;
+    } else {
+      auto inferred_type = check(stmt->expression);
+      var_type = inferred_type;
+    }
+  } else {
+    var_type = types()->get(stmt->tp.name.lexeme);
+    if (!var_type) {
+      Neeilang::error(stmt->tp.name, "Unknown type");
+      return;
+    }
+
+    if (stmt->expression) {
+      auto expr_type = check(stmt->expression);
+      if (expr_type != TypeError() && !expr_type->subclass_of(var_type.get())) {
+        std::ostringstream msg;
+        msg << "Illegal initialization of variable of type " << var_type->name
+            << " with expression of type " << expr_type->name;
+        Neeilang::error(stmt->tp.name, msg.str());
+        return;
+      }
     }
   }
 

@@ -1,0 +1,30 @@
+class SomeClass {
+  someField : Int;
+
+  init(f : Int) {
+    this.someField = f;
+    return this;
+  }
+
+  getField() : Int { return this.someField; }
+}
+
+fn main() : Int {
+  var myInt = 4;
+  var myStr = "Inferred string";
+  var myObj = SomeClass.init(33);
+
+  print myInt;
+  print myStr;
+  print myObj.getField();
+
+  return 0;
+}
+
+/*
+%output
+4
+Inferred string
+33
+%output
+*/

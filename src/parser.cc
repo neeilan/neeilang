@@ -52,16 +52,22 @@ TypeParse Parser::parse_type(const std::string &msg) {
 
 Stmt *Parser::var_declaration() {
   Token name = consume(IDENTIFIER, "Expect variable name.");
-  consume(COLON, "Expect ':' after name in variable declaration.");
-  TypeParse tp = parse_type("Expect variable type.");
-
-  // By default, initialize to nil
-  // TODO : Handle nil initialization.
-  // Expr * initializer = new StrLiteral("nil", true);
+  TypeParse tp;
   Expr *initializer = nullptr;
 
   if (match({EQUAL})) {
+    tp = InferredType();
     initializer = expression();
+  } else {
+    consume(COLON, "Expect ':' after name in variable declaration.");
+    tp = parse_type("Expect variable type.");
+
+    // By default, initialize to nil
+    // TODO : Handle nil initialization.
+    // Expr * initializer = new StrLiteral("nil", true);
+    if (match({EQUAL})) {
+      initializer = expression();
+    }
   }
   consume(SEMICOLON, "Expect ';' after variable declaration.");
   return new VarStmt(name, tp, initializer);
