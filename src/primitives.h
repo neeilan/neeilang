@@ -4,6 +4,7 @@
 #include "type.h"
 
 namespace Primitives {
+NLType Array(NLType elem_type, int dims);
 NLType Class();
 NLType String();
 NLType Int();

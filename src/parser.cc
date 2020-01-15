@@ -40,9 +40,11 @@ TypeParse Parser::parse_type(const std::string &msg) {
   tp.name = consume(IDENTIFIER, msg);
 
   while (match({LEFT_BRACKET})) {
-    tp.arr = true;
+    tp.num_dims++;
     if (peek().type != RIGHT_BRACKET) {
       tp.dims.push_back(expression());
+    } else {
+      tp.dims.push_back(TypeParse::EmptyArrayDim());
     }
     consume(RIGHT_BRACKET, "Expect matching ']'");
   }
@@ -70,6 +72,7 @@ Stmt *Parser::var_declaration() {
     }
   }
   consume(SEMICOLON, "Expect ';' after variable declaration.");
+
   return new VarStmt(name, tp, initializer);
 }
 

@@ -53,6 +53,10 @@ void TypeChecker::visit(const VarStmt *stmt) {
       return;
     }
 
+    if (stmt->tp.is_array()) {
+      var_type = Primitives::Array(var_type, stmt->tp.array_dims());
+    }
+
     if (stmt->expression) {
       auto expr_type = check(stmt->expression);
       if (expr_type != TypeError() && !expr_type->subclass_of(var_type.get())) {
@@ -497,6 +501,12 @@ bool TypeChecker::has_type_error(const std::vector<NLType> &types) {
   return false;
 }
 
+NLType next_contained_type(NLType t) {
+  assert(t->dims > 0 && "t is not a valid array Type");
+  return t->dims == 1 ? t->underlying_type
+      : Primitives::Array(t->underlying_type, t->dims - 1);
+}
+
 void TypeChecker::visit(const GetIndex *expr) {
   NLType lhs_type = check(&expr->callee);
   NLType idx_type = check(&expr->index);
@@ -506,7 +516,7 @@ void TypeChecker::visit(const GetIndex *expr) {
     return;
   }
 
-  if (lhs_type->arr_depth > 0) {
+  if (lhs_type->dims > 0) {
     // This is indeed an array...
     if (idx_type != Primitives::Int()) {
       Neeilang::error(expr->bracket,
@@ -514,7 +524,7 @@ void TypeChecker::visit(const GetIndex *expr) {
       expr_types[expr] = Primitives::TypeError();
       return;
     }
-    expr_types[expr] = lhs_type->element_type;
+    expr_types[expr] = next_contained_type(lhs_type);
   } else {
     Neeilang::error(expr->bracket,
                     "Expected indexable type. Got: " + lhs_type->name);
@@ -532,26 +542,28 @@ void TypeChecker::visit(const SetIndex *expr) {
     return;
   }
 
-  if (lhs_type->arr_depth > 0) {
+  if (lhs_type->dims > 0) {
     if (idx_type != Primitives::Int()) {
       Neeilang::error(expr->bracket,
                       "Array index must be Int. Got: " + idx_type->name);
       expr_types[expr] = Primitives::TypeError();
       return;
     }
-    NLType elem_type = lhs_type->element_type;
+    NLType elem_type = next_contained_type(lhs_type);
     if (!rhs_type->subclass_of(elem_type.get())) {
       std::ostringstream msg;
       msg << "Cannot store value of type " << rhs_type->name
-          << " as an element in array of " << elem_type->name;
+          << " as an element in " << lhs_type->name;
       Neeilang::error(expr->bracket, msg.str());
       expr_types[expr] = Primitives::TypeError();
       return;
     }
-    expr_types[expr] = lhs_type->element_type;
+    expr_types[expr] = next_contained_type(lhs_type);
   } else {
     Neeilang::error(expr->bracket,
                     "Expected indexable type. Got: " + lhs_type->name);
     expr_types[expr] = Primitives::TypeError();
   }
 }
+
+void TypeChecker::visit(const SentinelExpr *expr) {}

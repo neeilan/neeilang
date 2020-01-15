@@ -17,6 +17,7 @@ class Set;
 class GetIndex;
 class SetIndex;
 class This;
+class SentinelExpr;
 
 class Stmt;
 class ExprStmt;

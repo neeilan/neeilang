@@ -109,3 +109,4 @@ void CodeGen::visit(const Set *) {}
 void CodeGen::visit(const GetIndex *) {}
 void CodeGen::visit(const SetIndex *) {}
 void CodeGen::visit(const This *) {}
+void CodeGen::visit(const SentinelExpr *expr) {}

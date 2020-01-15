@@ -37,6 +37,7 @@ public:
   virtual T visit(const GetIndex *) = 0;
   virtual T visit(const SetIndex *) = 0;
   virtual T visit(const This *) = 0;
+  virtual T visit(const SentinelExpr *) = 0;
 };
 
 #define STMT_VISITOR_METHODS(T)                                                \
@@ -65,6 +66,7 @@ public:
   virtual T visit(const Set *);                                                \
   virtual T visit(const GetIndex *);                                           \
   virtual T visit(const SetIndex *);                                           \
+  virtual T visit(const SentinelExpr *);                                           \
   virtual T visit(const This *);
 
 #endif //_NL_VISITOR_H_

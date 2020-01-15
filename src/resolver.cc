@@ -6,6 +6,7 @@
 #include "resolver.h"
 #include "stmt.h"
 
+
 void Resolver::resolve_program(const std::vector<Stmt *> program) {
   decl_only_pass = true;
   resolve(program);
@@ -35,12 +36,12 @@ void Resolver::visit(const BlockStmt *stmt) {
 
 void Resolver::visit(const VarStmt *stmt) {
   // TODO: Semantically, should these be hoisted?
-  if (decl_only_pass)
-    return;
+  if (decl_only_pass) { return; }
+
   declare(stmt->name);
 
   // Array types
-  for (const Expr *dim : stmt->tp.dims) {
+  for (const Expr * dim : stmt->tp.dims) {
     resolve(dim);
   }
 
@@ -212,9 +213,10 @@ void Resolver::visit(const ReturnStmt *stmt) {
     Neeilang::error(stmt->keyword, "Cannot return from top-level code.");
   }
 
+  /* FIXME: Make 'return this' implicit in initializer.
   if (current_function == INITIALIZER && stmt->value) {
     Neeilang::error(stmt->keyword, "Cannot return a value from initializer.");
-  }
+  }*/
 
   if (stmt->value) {
     resolve(stmt->value);
@@ -265,3 +267,4 @@ void Resolver::visit(const SetIndex *expr) {}
 void Resolver::visit(const BoolLiteral *expr) {}
 void Resolver::visit(const NumLiteral *expr) {}
 void Resolver::visit(const StrLiteral *expr) {}
+void Resolver::visit(const SentinelExpr *expr) {}

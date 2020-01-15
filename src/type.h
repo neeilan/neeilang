@@ -17,6 +17,10 @@ public:
   Type(std::string name) : name(name) {}
 
   bool superclass_of(const Type *other) const {
+    if (dims > 0) {
+      return other->dims == dims && underlying_type->superclass_of(other->underlying_type.get());
+    }
+
     const Type *super = other;
     while (super != nullptr && super != this) {
       super = super->supertype.get();
@@ -46,6 +50,8 @@ public:
     return -1;
   }
 
+  bool is_array_type() { return dims > 0; }
+
   bool has_field(const std::string &name);
   Field get_field(const std::string &name);
   int field_idx(const std::string &name);
@@ -56,8 +62,8 @@ public:
   std::shared_ptr<Type> supertype;
   std::vector<Field> fields;
   std::vector<std::shared_ptr<FuncType>> methods;
-  int arr_depth = 0;
-  std::shared_ptr<Type> element_type = nullptr;
+  int dims = 0;
+  std::shared_ptr<Type> underlying_type = nullptr;
   std::shared_ptr<FuncType> functype = nullptr;
 };
 

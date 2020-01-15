@@ -221,3 +221,5 @@ std::string AstPrinter::parenthesize(std::string name, const Expr *expr1,
                                      const Expr *expr2) {
   return "(" + name + " " + print(expr1) + " " + print(expr2) + ")";
 }
+
+std::string AstPrinter::visit(const SentinelExpr *expr) { return "<SentinelExpr>"; }

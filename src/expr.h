@@ -178,4 +178,8 @@ public:
   const Expr &value;
 };
 
+class SentinelExpr : public ExprCRTP<SentinelExpr> {
+  // TODO: Add an ID field for unique'ing.
+};
+
 #endif

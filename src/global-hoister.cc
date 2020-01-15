@@ -11,17 +11,6 @@
 #include "symtab.h"
 #include "type.h"
 
-static int arr_depth(const std::string &type) {
-  int depth = 0;
-  while (type[depth] == '[')
-    depth++;
-  return depth;
-}
-
-static std::string element_type(const std::string &type) {
-  int depth = arr_depth(type);
-  return type.substr(depth, type.size() - 2 * depth);
-}
 
 void GlobalHoister::declare(const std::string &type_name) {
   typetab()->insert(type_name, std::make_shared<Type>(type_name));
@@ -109,13 +98,7 @@ void GlobalHoister::hoist_type(const std::string &type) {
   if (typetab()->contains(type))
     return;
 
-  // This could be an array.
-  if (typetab()->contains(element_type(type))) {
-    declare(type);
-    auto arr_type = typetab()->get(type);
-    arr_type->element_type = typetab()->get(element_type(type));
-    arr_type->arr_depth = arr_depth(type);
-  }
+  // This could be an array type.
 }
 
 void GlobalHoister::visit(const FuncStmt *stmt) {

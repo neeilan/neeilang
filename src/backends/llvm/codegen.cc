@@ -238,6 +238,9 @@ void CodeGen::visit(const VarStmt *stmt) {
   NLType nl_type = sm.current().typetab->get(varname);
   llvm::Type *ll_type = tb.to_llvm(nl_type);
 
+  assert(builder->GetInsertBlock() &&
+         builder->GetInsertBlock()->getParent() &&
+  "No enclosing function (global var?)");
   Function *fn = builder->GetInsertBlock()->getParent();
   Value *init = nullptr;
   if (stmt->expression) {
@@ -246,7 +249,6 @@ void CodeGen::visit(const VarStmt *stmt) {
     init = emit_default_val(ctx, nl_type);
     assert(init != nullptr && "Could not retrieve default value for type.");
   }
-
   AllocaInst *alloca = entry_block_alloca(fn, varname, ll_type);
   // Bitcast to match variable type.
   builder->CreateStore(builder->CreateBitCast(init, ll_type), alloca);
@@ -649,3 +651,5 @@ void CodeGen::visit(const ReturnStmt *stmt) {
 void CodeGen::visit(const GetIndex *expr) {}
 
 void CodeGen::visit(const SetIndex *expr) {}
+
+void CodeGen::visit(const SentinelExpr *expr) {}

@@ -51,7 +51,7 @@ void Neeilang::run(const std::string &source) {
   // std::cout << printer.print(program);
 
   Resolver resolver;
-  resolver.resolve(program);
+  resolver.resolve_program(program);
 
   if (had_error) {
     return;
