@@ -92,17 +92,17 @@ public:
 class FuncStmt : public StmtCRTP<FuncStmt> {
 public:
   explicit FuncStmt(Token name, std::vector<Token> parameters,
-                    std::vector<Token> parameter_types, Token return_type,
-                    std::vector<Stmt *> body)
+                    std::vector<TypeParse> parameter_types,
+                    TypeParse return_type, std::vector<Stmt *> body)
       : name(name), parameters(parameters), parameter_types(parameter_types),
         return_type(return_type), body(body) {}
 
-  bool is_void() const { return return_type.lexeme == "Void"; }
+  bool is_void() const { return return_type.name.lexeme == "Void"; }
 
   const Token name;
   const std::vector<Token> parameters;
-  const std::vector<Token> parameter_types;
-  const Token return_type;
+  const std::vector<TypeParse> parameter_types;
+  const TypeParse return_type;
   const std::vector<Stmt *> body;
 };
 

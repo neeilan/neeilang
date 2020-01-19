@@ -114,7 +114,7 @@ void GlobalHoister::visit(const FuncStmt *stmt) {
   }
 
   const std::string fn_name = stmt->name.lexeme;
-  const std::string return_type_name = stmt->return_type.lexeme;
+  const std::string return_type_name = stmt->return_type.name.lexeme;
   hoist_type(return_type_name);
 
   std::shared_ptr<FuncType> functype = std::make_shared<FuncType>();
@@ -122,21 +122,29 @@ void GlobalHoister::visit(const FuncStmt *stmt) {
 
   bool had_error = false;
 
-  if (!typetab()->contains(stmt->return_type.lexeme)) {
-    Neeilang::error(stmt->return_type,
-                    "Unknown return type " + stmt->return_type.lexeme);
+  if (!typetab()->contains(stmt->return_type.name.lexeme)) {
+    Neeilang::error(stmt->return_type.name,
+                    "Unknown return type " + stmt->return_type.name.lexeme);
     had_error = true;
   } else {
-    functype->return_type = typetab()->get(stmt->return_type.lexeme);
+    functype->return_type = typetab()->get(stmt->return_type.name.lexeme);
+    if (stmt->return_type.is_array()) {
+      functype->return_type = Primitives::Array(functype->return_type,
+                                                stmt->return_type.array_dims());
+    }
   }
 
-  for (Token param_type : stmt->parameter_types) {
-    hoist_type(param_type.lexeme);
-    if (!typetab()->contains(param_type.lexeme)) {
-      Neeilang::error(param_type, "Unknown parameter type");
+  for (TypeParse param_tp : stmt->parameter_types) {
+    hoist_type(param_tp.name.lexeme);
+    if (!typetab()->contains(param_tp.name.lexeme)) {
+      Neeilang::error(param_tp.name, "Unknown parameter type");
       had_error = true;
     } else {
-      functype->arg_types.push_back(typetab()->get(param_type.lexeme));
+      NLType param_type = typetab()->get(param_tp.name.lexeme);
+      if (param_tp.is_array()) {
+        param_type = Primitives::Array(param_type, param_tp.array_dims());
+      }
+      functype->arg_types.push_back(param_type);
     }
   }
 

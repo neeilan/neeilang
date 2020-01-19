@@ -119,12 +119,12 @@ std::string AstPrinter::visit(const WhileStmt *stmt) {
 std::string AstPrinter::visit(const FuncStmt *stmt) {
   ostringstream out;
   out << "<Function name='" << stmt->name.lexeme << "'  returns='"
-      << stmt->return_type.lexeme << "'"
+      << stmt->return_type.name.lexeme << "'"
       << "  args=( ";
 
   for (int i = 0; i < stmt->parameters.size(); i++) {
-    OUT << stmt->parameters[i].lexeme << ":" << stmt->parameter_types[i].lexeme
-        << " ";
+    OUT << stmt->parameters[i].lexeme << ":"
+        << stmt->parameter_types[i].name.lexeme << " ";
   }
   out << ") Body=" << std::endl;
 

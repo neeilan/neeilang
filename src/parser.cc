@@ -228,7 +228,7 @@ Stmt *Parser::func_statement(std::string kind) {
   consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
 
   std::vector<Token> parameters;
-  std::vector<Token> parameter_types;
+  std::vector<TypeParse> parameter_types;
 
   if (!check(RIGHT_PAREN)) {
     do {
@@ -239,25 +239,21 @@ Stmt *Parser::func_statement(std::string kind) {
       parameters.push_back(consume(IDENTIFIER, "Expect parameter name."));
 
       consume(COLON, "Expect ':' after parameter name.");
-      // FIXME: Array types as function args
-      parameter_types.push_back(
-          parse_type("Expect parameter type after ':'").name);
+      parameter_types.push_back(parse_type("Expect parameter type after ':'"));
     } while (match({COMMA}));
   }
 
   consume(RIGHT_PAREN, "Expect ')' after parameters.");
 
-  Token return_type;
+  TypeParse return_type;
 
   if (outer_class && name.lexeme == "init") {
-    return_type = Token(IDENTIFIER, *outer_class, "", -1);
+    return_type.name = Token(IDENTIFIER, *outer_class, "", -1);
     consume(LEFT_BRACE, "Expect '{' before init body. Note: Return type is not "
                         "declared for init methods");
   } else {
     consume(COLON, "Expect ':' after parameter list in function statement.");
-    // FIXME: Array types as function return
-    return_type =
-        parse_type("Expect return type in " + kind + " statement").name;
+    return_type = parse_type("Expect return type in " + kind + " statement");
     consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
   }
 

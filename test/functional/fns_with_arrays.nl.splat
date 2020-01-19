@@ -1,0 +1,29 @@
+fn createArray() : Int[5] {
+  var arr : Int[5];
+
+  arr[0] = 5;
+  arr[1] = 6;
+  arr[2] = 7;
+  arr[3] = -2;
+  arr[4] = 0;
+
+  return arr;
+}
+
+fn sumOfElems(list : Int[5]) : Int {
+  var sum = 0;
+  for (var i = 0; i < 5; i = i+1) {
+    sum = sum + list[i];
+  }
+  return sum;
+}
+
+fn main() : Int {
+  print sumOfElems( createArray() );
+
+  %output
+  16
+  %output
+
+  return 0;
+}
