@@ -57,6 +57,8 @@ private:
   std::shared_ptr<NamedValueTable> named_vals;
   NLType encl_class = nullptr;
   bool globals_only_pass = true; // Only codegen global classes and functions
+  Value *emit_array_init(NLType nl_type, const std::vector<const Expr *> dims);
+  Value *emit_num_elems(const std::vector<const Expr *> dims);
 
   Value *codegen(Expr *expr);
   void enter_scope();

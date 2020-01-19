@@ -1,6 +1,7 @@
 #include <cassert>
 #include <vector>
 
+#include "arrays.h"
 #include "type-builder.h"
 
 #include "backends/llvm/object.h"
@@ -12,6 +13,10 @@
 llvm::Type *TypeBuilder::to_llvm(NLType t) {
   if (ll_types.find(t) != ll_types.end()) {
     return ll_types[t];
+  }
+
+  if (t->is_array_type()) {
+    return array_type(t);
   }
 
   // We don't support function type fields/variables (yet?)
@@ -45,6 +50,27 @@ llvm::Type *TypeBuilder::to_llvm(NLType t) {
 
   opaque_struct->setBody(field_types);
 
+  return ll_types[t];
+}
+
+llvm::Type *TypeBuilder::array_type(NLType t) {
+  std::vector<llvm::Type *> field_types;
+
+  NLType elem_type = Arrays::next_enclosed_type(t);
+
+  // Header
+  for (auto hdr_field_ty : object_header(ctx)) {
+    field_types.push_back(hdr_field_ty);
+  }
+
+  // 'size'
+  field_types.push_back(llvm::IntegerType::getInt32Ty(ctx));
+
+  // 'elements'
+  field_types.push_back(llvm::PointerType::get(to_llvm(elem_type), 0));
+
+  llvm::Type *struct_type = llvm::StructType::create(ctx, field_types, t->name);
+  ll_types.insert({t, llvm::PointerType::getUnqual(struct_type)});
   return ll_types[t];
 }
 

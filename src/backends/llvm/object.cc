@@ -5,10 +5,14 @@
 int NL_OBJ_GC_BYTE_IDX = 0;
 int NL_OBJ_VT_IDX = 1;
 
+int NL_ARR_SIZE_IDX = 2;
+int NL_ARR_ELEMS_IDX = 3;
+
 std::vector<llvm::Type *> object_header(llvm::LLVMContext &ctx) {
-  return {llvm::Type::getInt8Ty(ctx), // GC byte
-          // VTable ptr - this is essentially a void *, but
-          // we'll bitcast this when codegen'ing method calls.
+  return {llvm::Type::getInt8Ty(
+              ctx), // GC byte
+                    // VTable ptr - this is essentially a void *, but
+                    // we'll bitcast this when codegen'ing method calls.
           llvm::PointerType::getUnqual(llvm::Type::getInt64PtrTy(ctx))};
 }
 

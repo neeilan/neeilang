@@ -10,16 +10,16 @@ class SentinelExpr;
 
 struct TypeParse {
   Token name;
-  unsigned num_dims = 0;
   std::vector<const Expr *> dims;
   bool inferred = false;
 
   bool is_array() const { return dims.size() > 0; }
-  unsigned array_dims () const { return dims.size(); }
+  unsigned array_dims() const { return dims.size(); }
 
-  static const Expr * EmptyArrayDim();
+  static const Expr *EmptyArrayDim();
+
 private:
-  static const SentinelExpr * empty_dim_sentinel;
+  static const SentinelExpr *empty_dim_sentinel;
 };
 
 TypeParse InferredType();

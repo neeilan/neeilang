@@ -1,0 +1,29 @@
+fn main() : Int {
+  var myArr : Int[3];
+  myArr[0] = 33;
+  myArr[1] = 34;
+  myArr[2] = 35;
+
+  print myArr[0];
+  print myArr[1];
+  print myArr[2];
+
+
+  myArr[0] = 35;
+  myArr[2] = 33;
+
+  print myArr[0];
+  print myArr[1];
+  print myArr[2];
+
+  return 0;
+}
+
+%output
+33
+34
+35
+35
+34
+33
+%output

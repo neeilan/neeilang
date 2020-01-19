@@ -40,12 +40,14 @@ TypeParse Parser::parse_type(const std::string &msg) {
   tp.name = consume(IDENTIFIER, msg);
 
   while (match({LEFT_BRACKET})) {
-    tp.num_dims++;
+    tp.dims.push_back(expression());
+
+    /* Requiring explicit values for dims for now.
     if (peek().type != RIGHT_BRACKET) {
       tp.dims.push_back(expression());
     } else {
       tp.dims.push_back(TypeParse::EmptyArrayDim());
-    }
+    }*/
     consume(RIGHT_BRACKET, "Expect matching ']'");
   }
 

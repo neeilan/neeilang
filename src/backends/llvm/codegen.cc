@@ -5,6 +5,7 @@
 
 #include "codegen.h"
 
+#include "arrays.h"
 #include "expr.h"
 #include "object.h"
 #include "primitives.h"
@@ -75,7 +76,6 @@ void CodeGen::emit(const Stmt *stmt) { stmt->accept(this); }
 Value *CodeGen::emit(const Expr *expr) {
   expr->accept(this);
   Value *val = expr_values[expr];
-  expr_values.erase(expr);
   return val;
 }
 
@@ -232,22 +232,78 @@ static Value *emit_default_val(llvm::LLVMContext &ctx, NLType t) {
   return nullptr;
 }
 
+Value *CodeGen::emit_num_elems(const std::vector<const Expr *> dims) {
+  if (dims.empty()) {
+    return get_int32(0);
+  }
+  Value *total_elems = get_int32(1);
+  // TODO: check that each dim is > 0.
+  for (const Expr *expr : dims) {
+    Value *val = emit(expr);
+    total_elems = builder->CreateMul(total_elems, val, "arr_size_mul");
+  }
+  return total_elems;
+}
+
+Value *CodeGen::emit_array_init(NLType nl_type,
+                                const std::vector<const Expr *> dims) {
+  llvm::Type *hdr_type =
+      llvm::cast<llvm::PointerType>(tb.to_llvm(nl_type))->getElementType();
+  Constant *alloc_size = ConstantExpr::getSizeOf(hdr_type);
+
+  // Allocate the array header struct
+  llvm::Instruction *malloc_hdr = CallInst::CreateMalloc(
+      builder->GetInsertBlock(), llvm::Type::getInt64Ty(ctx), hdr_type,
+      alloc_size, nullptr, nullptr, "arr_init_malloc");
+  builder->Insert(malloc_hdr);
+
+  Value *array_size = emit_num_elems(dims);
+
+  // Allocate the elements
+  llvm::Type *inner_elem_type = tb.to_llvm(Arrays::next_enclosed_type(nl_type));
+  alloc_size = ConstantExpr::getSizeOf(inner_elem_type);
+  llvm::Instruction *malloc_elems = CallInst::CreateMalloc(
+      builder->GetInsertBlock(), llvm::Type::getInt64Ty(ctx), inner_elem_type,
+      alloc_size, array_size, nullptr, "arr_elems_malloc");
+  builder->Insert(malloc_elems);
+
+  // Set elems ptr
+  Value *arr_elems_ptr = builder->CreateGEP(
+      malloc_hdr, {get_int32(0), get_int32(NL_ARR_ELEMS_IDX)});
+
+  builder->CreateStore(
+      builder->CreateBitCast(malloc_elems,
+                             llvm::PointerType::get(inner_elem_type, 0)),
+      arr_elems_ptr, "store_arr_size");
+
+  // Set array size
+  Value *arr_size_ptr = builder->CreateGEP(
+      malloc_hdr, {get_int32(0), get_int32(NL_ARR_SIZE_IDX)});
+  assert(arr_size_ptr && "Size pointer in array header cannot be retrieved");
+
+  builder->CreateStore(array_size, arr_size_ptr, "store_arr_size");
+
+  return malloc_hdr;
+}
+
 void CodeGen::visit(const VarStmt *stmt) {
   // TODO: Handle global variables.
   const std::string varname = stmt->name.lexeme;
   NLType nl_type = sm.current().typetab->get(varname);
   llvm::Type *ll_type = tb.to_llvm(nl_type);
 
-  assert(builder->GetInsertBlock() &&
-         builder->GetInsertBlock()->getParent() &&
-  "No enclosing function (global var?)");
+  assert(builder->GetInsertBlock() && builder->GetInsertBlock()->getParent() &&
+         "No enclosing function (global var?)");
   Function *fn = builder->GetInsertBlock()->getParent();
   Value *init = nullptr;
   if (stmt->expression) {
     init = emit(stmt->expression);
   } else {
     init = emit_default_val(ctx, nl_type);
-    assert(init != nullptr && "Could not retrieve default value for type.");
+    if (!init) {
+      init = nl_type->is_array_type() ? emit_array_init(nl_type, stmt->tp.dims)
+                                      : llvm::UndefValue::get(ll_type);
+    }
   }
   AllocaInst *alloca = entry_block_alloca(fn, varname, ll_type);
   // Bitcast to match variable type.
@@ -648,8 +704,40 @@ void CodeGen::visit(const ReturnStmt *stmt) {
   }
 }
 
-void CodeGen::visit(const GetIndex *expr) {}
+void CodeGen::visit(const GetIndex *expr) {
+  Value *callee = emit(&expr->callee);
+  Value *index = emit(&expr->index);
 
-void CodeGen::visit(const SetIndex *expr) {}
+  std::vector<Value *> elems_field_idx = {get_int32(0),
+                                          get_int32(NL_ARR_ELEMS_IDX)};
+  llvm::Value *elems =
+      builder->CreateLoad(builder->CreateGEP(callee, elems_field_idx));
 
-void CodeGen::visit(const SentinelExpr *expr) {}
+  std::vector<Value *> elem_idx = {index};
+  auto elem = builder->CreateGEP(elems, elem_idx);
+
+  NLType callee_nltype = Arrays::next_enclosed_type(expr_types[&expr->callee]);
+  llvm::Type *callee_lltype = tb.to_llvm(callee_nltype);
+
+  expr_values[expr] = builder->CreateLoad(callee_lltype, elem, "array_deref");
+}
+
+void CodeGen::visit(const SetIndex *expr) {
+  Value *callee = emit(&expr->callee);
+  Value *index = emit(&expr->index);
+  Value *val = emit(&expr->value);
+
+  std::vector<Value *> elems_field_idx = {get_int32(0),
+                                          get_int32(NL_ARR_ELEMS_IDX)};
+  llvm::Value *elems =
+      builder->CreateLoad(builder->CreateGEP(callee, elems_field_idx));
+
+  std::vector<Value *> elem_idx = {index};
+  auto elem = builder->CreateGEP(elems, elem_idx);
+
+  expr_values[expr] = builder->CreateStore(val, elem, "array_store");
+}
+
+void CodeGen::visit(const SentinelExpr *expr) {
+  // noop
+}

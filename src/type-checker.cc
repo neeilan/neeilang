@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include "arrays.h"
 #include "neeilang.h"
 #include "primitives.h"
 #include "type-checker.h"
@@ -54,6 +55,13 @@ void TypeChecker::visit(const VarStmt *stmt) {
     }
 
     if (stmt->tp.is_array()) {
+      for (const Expr *expr : stmt->tp.dims) {
+        auto dim_type = check(expr);
+        if (dim_type != Primitives::Int()) {
+          Neeilang::error(stmt->tp.name, "Array dimensions must be Int. Got " +
+                                             dim_type->name);
+        }
+      }
       var_type = Primitives::Array(var_type, stmt->tp.array_dims());
     }
 
@@ -501,12 +509,6 @@ bool TypeChecker::has_type_error(const std::vector<NLType> &types) {
   return false;
 }
 
-NLType next_contained_type(NLType t) {
-  assert(t->dims > 0 && "t is not a valid array Type");
-  return t->dims == 1 ? t->underlying_type
-      : Primitives::Array(t->underlying_type, t->dims - 1);
-}
-
 void TypeChecker::visit(const GetIndex *expr) {
   NLType lhs_type = check(&expr->callee);
   NLType idx_type = check(&expr->index);
@@ -524,7 +526,7 @@ void TypeChecker::visit(const GetIndex *expr) {
       expr_types[expr] = Primitives::TypeError();
       return;
     }
-    expr_types[expr] = next_contained_type(lhs_type);
+    expr_types[expr] = Arrays::next_enclosed_type(lhs_type);
   } else {
     Neeilang::error(expr->bracket,
                     "Expected indexable type. Got: " + lhs_type->name);
@@ -549,7 +551,7 @@ void TypeChecker::visit(const SetIndex *expr) {
       expr_types[expr] = Primitives::TypeError();
       return;
     }
-    NLType elem_type = next_contained_type(lhs_type);
+    NLType elem_type = Arrays::next_enclosed_type(lhs_type);
     if (!rhs_type->subclass_of(elem_type.get())) {
       std::ostringstream msg;
       msg << "Cannot store value of type " << rhs_type->name
@@ -558,7 +560,7 @@ void TypeChecker::visit(const SetIndex *expr) {
       expr_types[expr] = Primitives::TypeError();
       return;
     }
-    expr_types[expr] = next_contained_type(lhs_type);
+    expr_types[expr] = Arrays::next_enclosed_type(lhs_type);
   } else {
     Neeilang::error(expr->bracket,
                     "Expected indexable type. Got: " + lhs_type->name);
