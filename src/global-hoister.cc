@@ -11,7 +11,6 @@
 #include "symtab.h"
 #include "type.h"
 
-
 void GlobalHoister::declare(const std::string &type_name) {
   typetab()->insert(type_name, std::make_shared<Type>(type_name));
 }
@@ -74,15 +73,21 @@ void GlobalHoister::visit(const ClassStmt *cls) {
   // Fields
   for (int i = 0; i < cls->fields.size(); i++) {
     std::string field_name = cls->fields[i].lexeme;
-    std::string field_type_name = cls->field_types[i].lexeme;
+    std::string field_type_name = cls->field_types[i].name.lexeme;
 
     if (!typetab()->contains(field_type_name)) {
-      Neeilang::error(cls->field_types[i], "Unknown field type");
+      Neeilang::error(cls->field_types[i].name, "Unknown type in field");
       return;
     }
 
-    cls_type->fields.push_back(
-        Field{field_name, typetab()->get(field_type_name)});
+    NLType field_type = typetab()->get(field_type_name);
+
+    TypeParse field_tp = cls->field_types[i];
+    if (field_tp.is_array()) {
+      field_type = Primitives::Array(field_type, field_tp.array_dims());
+    }
+
+    cls_type->fields.push_back(Field{field_name, field_type});
   }
 
   // Methods

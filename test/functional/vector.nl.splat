@@ -1,0 +1,62 @@
+class SimpleVector {
+  arr : Int[2];
+  size : Int;
+  capacity : Int;
+
+  init() {
+    var arrInit : Int[2];
+    this.arr = arrInit;
+    this.size = 0;
+    this.capacity = 2;
+    return this;
+  }
+
+  push(e : Int) : Void {
+    if (this.size == this.capacity) {
+      this.capacity = this.capacity *  2;
+      var new_arr : Int[ this.capacity ];
+      for (var i = 0; i < this.size; i = i+1) {
+        new_arr[i] = this.arr[i];
+      }
+      this.arr = new_arr;
+    }
+
+    this.arr[this.size] = e;
+    this.size = this.size + 1;
+    return;
+  }
+
+  get(i : Int) : Int {
+    return this.arr[i];
+  }
+}
+
+
+fn main() : Int {
+  var vec = SimpleVector.init();
+
+  var vec_size = 10;
+
+  for (var i = 0; i < vec_size; i = i + 1) {
+    vec.push(i * 2);
+  }
+
+  for (var i = 0; i < vec_size; i = i + 1) {
+    print vec.get(i);
+  }
+  
+  return 0;
+}
+
+%output
+0
+2
+4
+6
+8
+10
+12
+14
+16
+18
+%output

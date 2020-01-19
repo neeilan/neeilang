@@ -61,7 +61,8 @@ std::string AstPrinter::visit(const ClassStmt *stmt) {
   OUT << "fields: " << std::endl;
   nest++;
   for (int i = 0; i < stmt->fields.size(); i++) {
-    OUT << stmt->fields[i].lexeme << " type : " << stmt->field_types[i].lexeme;
+    OUT << stmt->fields[i].lexeme
+        << " type : " << stmt->field_types[i].name.lexeme;
     out << " ";
   }
   nest--;
@@ -222,4 +223,6 @@ std::string AstPrinter::parenthesize(std::string name, const Expr *expr1,
   return "(" + name + " " + print(expr1) + " " + print(expr2) + ")";
 }
 
-std::string AstPrinter::visit(const SentinelExpr *expr) { return "<SentinelExpr>"; }
+std::string AstPrinter::visit(const SentinelExpr *expr) {
+  return "<SentinelExpr>";
+}

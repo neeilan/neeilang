@@ -118,7 +118,7 @@ public:
 class ClassStmt : public StmtCRTP<ClassStmt> {
 public:
   explicit ClassStmt(Token name, Token *superclass, std::vector<Token> fields,
-                     std::vector<Token> field_types,
+                     std::vector<TypeParse> field_types,
                      std::vector<Stmt *> methods)
       : name(name), superclass(superclass), fields(fields),
         field_types(field_types), methods(methods) {}
@@ -126,7 +126,7 @@ public:
   const Token name;
   const Token *superclass = nullptr;
   const std::vector<Token> fields;
-  const std::vector<Token> field_types;
+  const std::vector<TypeParse> field_types;
   const std::vector<Stmt *> methods;
 };
 

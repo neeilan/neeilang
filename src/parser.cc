@@ -34,20 +34,11 @@ Stmt *Parser::declaration() {
 }
 
 TypeParse Parser::parse_type(const std::string &msg) {
-  // var_type -> identifier ([ dimension ? ])*
-
   TypeParse tp;
   tp.name = consume(IDENTIFIER, msg);
 
   while (match({LEFT_BRACKET})) {
     tp.dims.push_back(expression());
-
-    /* Requiring explicit values for dims for now.
-    if (peek().type != RIGHT_BRACKET) {
-      tp.dims.push_back(expression());
-    } else {
-      tp.dims.push_back(TypeParse::EmptyArrayDim());
-    }*/
     consume(RIGHT_BRACKET, "Expect matching ']'");
   }
 
@@ -93,15 +84,14 @@ Stmt *Parser::class_declaration() {
   consume(LEFT_BRACE, "Expect '{' before class body.");
 
   std::vector<Token> fields;
-  std::vector<Token> field_types;
+  std::vector<TypeParse> field_types;
   std::vector<Stmt *> methods;
 
   while (!check(RIGHT_BRACE) && !at_end()) {
     if (peek_ahead().type == COLON) {
       VarStmt *stmt = static_cast<VarStmt *>(var_declaration());
       fields.push_back(stmt->name);
-      // FIXME : Array types as fields
-      field_types.push_back(stmt->tp.name);
+      field_types.push_back(stmt->tp);
     } else {
       methods.push_back(func_statement("method"));
     }
