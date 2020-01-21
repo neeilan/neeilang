@@ -22,7 +22,7 @@
 # LIBCXX_INCLUDE_DIRS:
 #     The include directory for libc++, if it exists.
 ################################################################################
-set(LLVM_PATH "/Users/neeilanselvalingam/Desktop/llvm/")
+set(LLVM_PATH "" CACHE STRING "Path to LLVM install root")
 option(FIND_LLVM_VERBOSE_CONFIG on)
 
 function(set_llvm_variable variable flags)
