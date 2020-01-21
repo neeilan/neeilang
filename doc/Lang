@@ -38,7 +38,7 @@ fn main() : Int {
 }                              
 ```
 
-Because NL is a strongly-typed language, the types of parameters 
+NL is a statically-typed language, and the types of parameters 
 and return values must be explicitly declared:
 
 ```
@@ -109,20 +109,22 @@ Polymorphism
 The type system supports polymorphic variable assignment, function 
 argument passing, and function returns. Consider the following (legal) code:
 ```
-class Super { flag : Bool; }
-class Sub < Super {}
+class Super { flag : Bool; init() { return this; } }
+class Sub < Super { init() { return this; } }
 
 fn returnsSuper(superArg : Super) : Super {
-  var superLocal : Super = Sub()
+  var superLocal : Super = Super.init();
   
   if (superArg.flag) {
     return superLocal;
   } else {
-     return Sub();
+     return Sub.init();
   }
 }
 
-returnsSuper( Sub() );
+// In main(): 
+returnsSuper( Super.init() );
+returnsSuper( Sub.init() );
 ```
 
 NeeiLang also performs dynamic single-dispatch in method calls.
