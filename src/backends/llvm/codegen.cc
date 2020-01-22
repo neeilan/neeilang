@@ -398,8 +398,15 @@ void CodeGen::visit(const Call *expr) {
         builder->CreateBitCast(last_deref_obj, ll_fn_type->params()[0]));
   }
 
-  for (const Expr *arg : expr->args) {
-    args.push_back(emit(arg));
+  NLType nltype = expr_types[&expr->callee];
+  assert(nltype->is_function_type() && "Callee is not a function");
+  std::vector<NLType> arg_types = nltype->functype->arg_types;
+
+  for (int i = 0; i < expr->args.size(); i++) {
+    const Expr *arg = expr->args[i];
+    llvm::Type *ll_type = tb.to_llvm(arg_types[i]);
+    llvm::Value *arg_val = builder->CreateBitCast(emit(arg), ll_type);
+    args.push_back(arg_val);
   }
 
   // Cannot attach a name ("calltmp") to void values, so no name here.
@@ -688,7 +695,10 @@ void CodeGen::visit(const FuncStmt *stmt) {
     named_vals->insert(arg.getName(), alloca);
   }
 
+  auto prev_encl_fn = encl_fn;
+  encl_fn = func;
   emit(stmt->body);
+  encl_fn = prev_encl_fn;
   /* TODO: Here check that there is a return in all predecessors */
   exit_scope();
 
@@ -697,7 +707,9 @@ void CodeGen::visit(const FuncStmt *stmt) {
 
 void CodeGen::visit(const ReturnStmt *stmt) {
   if (stmt->value) {
-    Value *val = emit(stmt->value);
+    // Bitcast to allow polymorphism in return type
+    llvm::Value *val =
+        builder->CreateBitCast(emit(stmt->value), encl_fn->getReturnType());
     builder->CreateRet(val);
   } else {
     builder->CreateRetVoid();

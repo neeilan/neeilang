@@ -3,23 +3,55 @@
 struct FuncType;
 
 bool Type::has_field(const std::string &name) {
-  for (auto field : fields) {
-    if (field.name == name)
-      return true;
+  if (supertype && supertype->has_field(name)) {
+    return true;
   }
+
+  for (auto field : fields) {
+    if (field.name == name) {
+      return true;
+    }
+  }
+
   return false;
 }
 
 Field Type::get_field(const std::string &name) {
+  if (supertype && supertype->has_field(name)) {
+    return supertype->get_field(name);
+  }
+
   assert(has_field(name));
-  return fields[field_idx(name)];
+
+  for (auto field : fields) {
+    if (field.name == name) {
+      return field;
+    }
+  }
+
+  // Unreachable
+  return Field();
+}
+
+int Type::num_fields() {
+  int offset = supertype ? supertype->num_fields() : 0;
+  return offset + fields.size();
 }
 
 int Type::field_idx(const std::string &name) {
+
   assert(has_field(name));
+
+  if (supertype && supertype->has_field(name)) {
+    return supertype->field_idx(name);
+  }
+
+  int offset = supertype ? supertype->num_fields() : 0;
+
   for (int i = 0; i < fields.size(); i++) {
-    if (fields[i].name == name)
-      return i;
+    if (fields[i].name == name) {
+      return offset + i;
+    }
   }
   return -1; // Unreachable
 }

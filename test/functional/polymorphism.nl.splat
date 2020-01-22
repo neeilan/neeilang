@@ -1,0 +1,39 @@
+class SuperClass {
+  flag : Bool;
+  init() { return this; }
+  sound() : Void { print "super"; return;  }
+}
+
+class SubClass < SuperClass {
+  init() { return this; }
+  sound()  : Void { print "sub"; return; }
+}
+
+fn returnsSuper(superArg : SuperClass) : SuperClass {
+  var superLocal : SuperClass = SuperClass.init();
+  
+  if (superArg.flag) {
+    return superLocal;
+  } else {
+     return SubClass.init();
+  }
+}
+
+
+fn main() : Int {
+  var sup  = SuperClass.init();
+  var sub  = SubClass.init();
+
+  sup.flag = true;
+  sub.flag = false;
+
+  returnsSuper( sup ).sound();
+  returnsSuper( sub ).sound();
+
+  return 0;
+}
+
+%output
+super
+sub
+%output

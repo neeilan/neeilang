@@ -373,6 +373,7 @@ void TypeChecker::visit(const Get *expr) {
   auto field_name = expr->name.lexeme;
   if (!callee_type->has_field(field_name) &&
       !callee_type->has_method(field_name)) {
+
     std::ostringstream msg;
     msg << "Type " << callee_type->name << " does not have field or method '"
         << field_name << "'";
@@ -404,6 +405,7 @@ void TypeChecker::visit(const Set *expr) {
 
   auto field_name = expr->name.lexeme;
   if (!callee_type->has_field(field_name)) {
+
     std::ostringstream msg;
     msg << "Type " << callee_type->name << " does not have field '"
         << field_name << "'";

@@ -18,7 +18,8 @@ public:
 
   bool superclass_of(const Type *other) const {
     if (dims > 0) {
-      return other->dims == dims && underlying_type->superclass_of(other->underlying_type.get());
+      return other->dims == dims &&
+             underlying_type->superclass_of(other->underlying_type.get());
     }
 
     const Type *super = other;
@@ -35,6 +36,8 @@ public:
   bool is_function_type() { return functype != nullptr; }
 
   int num_methods() { return get_methods().size(); }
+
+  int num_fields();
 
   std::vector<std::shared_ptr<FuncType>> get_methods();
 
@@ -59,7 +62,7 @@ public:
   std::shared_ptr<FuncType> get_method(const std::string &name);
 
   std::string name;
-  std::shared_ptr<Type> supertype;
+  std::shared_ptr<Type> supertype = nullptr;
   std::vector<Field> fields;
   std::vector<std::shared_ptr<FuncType>> methods;
   int dims = 0;
