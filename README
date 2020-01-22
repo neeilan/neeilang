@@ -32,7 +32,7 @@ Implementation Progress:
 +--------------------+--------+
 
 Usage      : www.github.com/neeilan/neeilang/tree/master/doc/Usage
-Language   : www.github.com/neeilan/neeilang/tree/master/doc/Lang
+Language   : www.github.com/neeilan/neeilang/tree/master/doc/Lang.md
 Impl notes : www.github.com/neeilan/neeilang/tree/master/doc/Impl
 
 Note that this project is intended to be an academic exercise and 

@@ -1,29 +1,28 @@
 NeeiLang Language Overview
 ==========================
 
-Reserved Keywords
+### Reserved Keywords
 
   true   false   lambda   else   if 
   for    while   super    this   fn 
   class  print   var
 
 
-Introduction
+### Introduction
 
 Every valid construct in NL is either a statement or an expression.
 Each expression evaluates to a NL value, which has a type. There 
 are six primitive types:
 
-+-------------------------------------------------------------+
 |  Type  | Description                                        |
-|--------|----------------------------------------------------+
+|--------|-----------------------------------------------------
 | Int    | Signed integer >= 32 bits wide                     |
 | Float  | 'At-least' single-precision FP number              |
 | Bool   | Boolean type - true or false                       |
 | String | Character sequence - each char is >= 8 bits wide   |
 | Array  | An array of type T and size s is indicated as T[s] |
 | Void   | Indicates no return value in function signatures   |
-+-------------------------------------------------------------+
+
 
 A NL program is a sequence of function and/or class statements.
 
@@ -66,7 +65,7 @@ var age = 5;  // Inferred as Int
 ```
 
 
-Classes & Objects
+### Classes & Objects
 
 In addition to primitive types, programmers can also define their own 
 types via classes. A class consists of zero or more fields and/or
@@ -104,7 +103,7 @@ class Cat < Animal {
 ```
 
 
-Polymorphism
+### Polymorphism
 
 The type system supports polymorphic variable assignment, function 
 argument passing, and function returns. Consider the following (legal) code:
@@ -134,10 +133,16 @@ a.makeSound(); // prints 'meeeow!'
 ```
 
 
-Control Flow
+### Control Flow
 
 if/else and loop syntax is almost identical to other C-like languages.
 ```
+if (getBool() && getAnotherBool()) {
+  doThing();
+} else {
+  doOtherThing();
+}
+
 while (i < 5) {
   if (i == 0) { print "zero!";}
   else { print i; }
@@ -149,7 +154,7 @@ for (var i = 1; i <= 5; i = i+1) {
 ```
 
 
-Print statement
+### Print statement
 
 To print a few primitive types (most notably Strings) to stdout, the
 print statement may be used.
@@ -160,7 +165,7 @@ print "hello";
 ```
 
 
-Comments
+### Comments
 
 C++ style single and multi-line comments are supported.
 ```
@@ -172,7 +177,7 @@ comments
 ```
 
 
-Type semantics
+### Type semantics
 
 Types in NL can be widely divided into numeric and non-numeric types.
 Numeric types are the primitive `Int`, `Float`, and  `Bool` types.
@@ -186,15 +191,16 @@ so user-defined value-types do not exist in NL. Unreachable objects are
 reclaimed by the garbage collector.
 
 
-More examples
+### More examples
 
 There is an extensive test-suite, annotated with expected outputs 
 using splat [1], in the tests/ directory [2]. If you find the above 
 examples too trivial, the test programs may be more interesting.
 
 
-Resources  
+### Resources  
   
 [1] https://github.com/neeilan/splat
+
 [2] https://github.com/neeilan/neeilang/tree/master/test
   
