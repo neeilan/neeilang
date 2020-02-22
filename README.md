@@ -29,9 +29,9 @@ Implementation Progress:
 | POSIX bindings     |        |
 | Standard library   |        |
 
-Usage      : www.github.com/neeilan/neeilang/tree/master/doc/Usage.md
-Language   : www.github.com/neeilan/neeilang/tree/master/doc/Lang.md
-Impl notes : www.github.com/neeilan/neeilang/tree/master/doc/Impl.md
+- Usage      : www.github.com/neeilan/neeilang/tree/master/doc/Usage.md
+- Language   : www.github.com/neeilan/neeilang/tree/master/doc/Lang.md
+- Impl notes : www.github.com/neeilan/neeilang/tree/master/doc/Impl.md
 
 Note that this project is intended to be an academic exercise and 
 not a production-grade language toolchain.
