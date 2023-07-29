@@ -18,8 +18,8 @@ private:
   std::vector<Token> tokens;
   static const std::map<std::string, TokenType> keywords;
 
-  int start = 0;
-  int current = 0;
+  size_t start = 0;
+  size_t current = 0;
   int line = 1;
 
   bool is_at_end();

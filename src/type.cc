@@ -48,7 +48,7 @@ int Type::field_idx(const std::string &name) {
 
   int offset = supertype ? supertype->num_fields() : 0;
 
-  for (int i = 0; i < fields.size(); i++) {
+  for (size_t i = 0; i < fields.size(); i++) {
     if (fields[i].name == name) {
       return offset + i;
     }
@@ -86,7 +86,7 @@ std::vector<std::shared_ptr<FuncType>> Type::get_methods() {
 
   for (std::shared_ptr<FuncType> m : methods) {
     bool overridden = false;
-    for (int i = 0; i < all_methods.size(); i++) {
+    for (size_t i = 0; i < all_methods.size(); i++) {
       if (m->name == all_methods[i]->name) {
         overridden = true;
         all_methods[i] = m;

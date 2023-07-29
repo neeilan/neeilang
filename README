@@ -37,3 +37,18 @@ Impl notes : www.github.com/neeilan/neeilang/tree/master/doc/Impl
 
 Note that this project is intended to be an academic exercise and 
 not a production-grade language toolchain.
+
+Building - LLVM backend
+-----------------------
+The LLVM backend is programmed against LLVM 9.0.0 API. Since common
+package manger repositories only offer newer versions, you'll need to
+build from source:
+* Download the LLVM 9.0.0 source code from https://releases.llvm.org/
+* Extract and build locally (it's a CMake project)
+* symlink `/usr/bin/llvm-config-9` to `bin/llvm-config` so that CMake
+  can locate LLVM 9 libraries and headers
+* In the neeilang source dir, run `cmake`, then `make`
+
+Building - x86-64 backend
+-------------------------
+* In the neeilang source dir, run `cmake -DTARGET_X86=ON`, then `make`

@@ -71,7 +71,7 @@ void GlobalHoister::visit(const ClassStmt *cls) {
   }
 
   // Fields
-  for (int i = 0; i < cls->fields.size(); i++) {
+  for (size_t i = 0; i < cls->fields.size(); i++) {
     std::string field_name = cls->fields[i].lexeme;
     std::string field_type_name = cls->field_types[i].name.lexeme;
 

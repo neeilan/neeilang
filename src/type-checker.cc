@@ -143,7 +143,7 @@ void TypeChecker::visit(const FuncStmt *stmt) {
   assert(enclosing_fn && "FuncType not found for function");
 
   sm.enter();
-  for (int i = 0; i < stmt->parameters.size(); i++) {
+  for (size_t i = 0; i < stmt->parameters.size(); i++) {
     auto argname = stmt->parameters[i].lexeme;
     symbols()->insert(argname, Symbol{argname, enclosing_fn->arg_types[i]});
   }

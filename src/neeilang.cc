@@ -6,8 +6,6 @@
 #include <vector>
 
 #include "ast-printer.h"
-#include "backends/llvm/codegen.h"
-#include "backends/x86-64/codegen.h"
 #include "global-hoister.h"
 #include "neeilang.h"
 #include "parser.h"
@@ -17,6 +15,12 @@
 #include "scope-manager.h"
 #include "token.h"
 #include "type-checker.h"
+
+#ifdef TARGET_X86
+#include "backends/x86-64/codegen.h"
+#else
+#include "backends/llvm/codegen.h"
+#endif
 
 bool Neeilang::had_error = false;
 
@@ -81,16 +85,21 @@ void Neeilang::run(const std::string &source) {
   }
 
   std::cout << ";CODEGEN" << std::endl;
+
+#ifdef TARGET_X86
+  X86_64::CodeGen codegen;
+  codegen.generate(program);
+  codegen.dump();
+#else
   CodeGen codegen(scope_manager, type_checker.get_expr_types());
   codegen.generate(program);
 
-  if (!had_error) {
+  if (!had_error)
+  {
     codegen.print();
     codegen.write_bitcode();
   }
-
-  X86_64::CodeGen x64cg;
-  // x64cg.generate(program);
+#endif
 }
 
 void Neeilang::error(int line, const std::string &message) {

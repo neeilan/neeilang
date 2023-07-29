@@ -45,7 +45,7 @@ public:
     auto m = get_method(name);
     auto methods = get_methods();
 
-    for (int i = 0; i < methods.size(); i++) {
+    for (size_t i = 0; i < methods.size(); i++) {
       if (methods[i] == m)
         return i;
     }

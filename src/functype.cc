@@ -9,7 +9,7 @@ bool FuncType::accepts_args(std::vector<NLType> &supplied_types) {
     return false;
   }
 
-  for (int i = 0; i < arg_types.size(); i++) {
+  for (size_t i = 0; i < arg_types.size(); i++) {
     NLType arg_type = arg_types[i];
     NLType supplied_type = supplied_types[i];
     if (!supplied_type->subclass_of(arg_type.get())) {

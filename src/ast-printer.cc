@@ -60,7 +60,7 @@ std::string AstPrinter::visit(const ClassStmt *stmt) {
   nest++;
   OUT << "fields: " << std::endl;
   nest++;
-  for (int i = 0; i < stmt->fields.size(); i++) {
+  for (size_t i = 0; i < stmt->fields.size(); i++) {
     OUT << stmt->fields[i].lexeme
         << " type : " << stmt->field_types[i].name.lexeme;
     out << " ";
@@ -71,7 +71,7 @@ std::string AstPrinter::visit(const ClassStmt *stmt) {
   OUT << "methods: " << std::endl;
 
   nest++;
-  for (int i = 0; i < stmt->methods.size(); i++) {
+  for (size_t i = 0; i < stmt->methods.size(); i++) {
     OUT << print(stmt->methods[i]);
   }
   nest--;
@@ -122,7 +122,7 @@ std::string AstPrinter::visit(const FuncStmt *stmt) {
       << stmt->return_type.name.lexeme << "'"
       << "  args=( ";
 
-  for (int i = 0; i < stmt->parameters.size(); i++) {
+  for (size_t i = 0; i < stmt->parameters.size(); i++) {
     OUT << stmt->parameters[i].lexeme << ":"
         << stmt->parameter_types[i].name.lexeme << " ";
   }

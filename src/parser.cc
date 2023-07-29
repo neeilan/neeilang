@@ -13,7 +13,7 @@ std::vector<Stmt *> Parser::parse() {
   while (!at_end()) {
     try {
       statements.push_back(declaration());
-    } catch (ParseErr) {
+    } catch (ParseErr&) {
       synchronize();
     }
   }
