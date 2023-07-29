@@ -24,7 +24,7 @@ private:
 
 public:
   void analyze_program(const std::vector<Stmt *> &program);
-  STMT_VISITOR_METHODS(void)
+  OVERRIDE_STMT_VISITOR_FNS(void)
 };
 
 } // namespace NL

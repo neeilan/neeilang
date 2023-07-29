@@ -5,7 +5,7 @@
 
 #include "visitable.h"
 
-template <class T = void> class StmtVisitor {
+template <typename T = void> class StmtVisitor {
 public:
   virtual ~StmtVisitor() = default;
   virtual T visit(const BlockStmt *) = 0;
@@ -19,7 +19,7 @@ public:
   virtual T visit(const ReturnStmt *) = 0;
 };
 
-template <class T = void> class ExprVisitor {
+template <typename T = void> class ExprVisitor {
 public:
   virtual ~ExprVisitor() = default;
   virtual T visit(const Unary *) = 0;
@@ -40,33 +40,33 @@ public:
   virtual T visit(const SentinelExpr *) = 0;
 };
 
-#define STMT_VISITOR_METHODS(T)                                                \
-  virtual T visit(const BlockStmt *);                                          \
-  virtual T visit(const ExprStmt *);                                           \
-  virtual T visit(const PrintStmt *);                                          \
-  virtual T visit(const VarStmt *);                                            \
-  virtual T visit(const ClassStmt *);                                          \
-  virtual T visit(const IfStmt *);                                             \
-  virtual T visit(const WhileStmt *);                                          \
-  virtual T visit(const FuncStmt *);                                           \
-  virtual T visit(const ReturnStmt *);
+#define OVERRIDE_STMT_VISITOR_FNS(T)           \
+  virtual T visit(const BlockStmt *) override; \
+  virtual T visit(const ExprStmt *) override;  \
+  virtual T visit(const PrintStmt *) override; \
+  virtual T visit(const VarStmt *) override;   \
+  virtual T visit(const ClassStmt *) override; \
+  virtual T visit(const IfStmt *) override;    \
+  virtual T visit(const WhileStmt *) override; \
+  virtual T visit(const FuncStmt *) override;  \
+  virtual T visit(const ReturnStmt *) override;
 
-#define EXPR_VISITOR_METHODS(T)                                                \
-  virtual T visit(const Unary *);                                              \
-  virtual T visit(const Binary *);                                             \
-  virtual T visit(const Grouping *);                                           \
-  virtual T visit(const StrLiteral *);                                         \
-  virtual T visit(const NumLiteral *);                                         \
-  virtual T visit(const BoolLiteral *);                                        \
-  virtual T visit(const Variable *);                                           \
-  virtual T visit(const Assignment *);                                         \
-  virtual T visit(const Logical *);                                            \
-  virtual T visit(const Call *);                                               \
-  virtual T visit(const Get *);                                                \
-  virtual T visit(const Set *);                                                \
-  virtual T visit(const GetIndex *);                                           \
-  virtual T visit(const SetIndex *);                                           \
-  virtual T visit(const SentinelExpr *);                                           \
-  virtual T visit(const This *);
+#define OVERRIDE_EXPR_VISITOR_FNS(T)              \
+  virtual T visit(const Unary *) override;        \
+  virtual T visit(const Binary *) override;       \
+  virtual T visit(const Grouping *) override;     \
+  virtual T visit(const StrLiteral *) override;   \
+  virtual T visit(const NumLiteral *) override;   \
+  virtual T visit(const BoolLiteral *) override;  \
+  virtual T visit(const Variable *) override;     \
+  virtual T visit(const Assignment *) override;   \
+  virtual T visit(const Logical *) override;      \
+  virtual T visit(const Call *) override;         \
+  virtual T visit(const Get *) override;          \
+  virtual T visit(const Set *) override;          \
+  virtual T visit(const GetIndex *) override;     \
+  virtual T visit(const SetIndex *) override;     \
+  virtual T visit(const SentinelExpr *) override; \
+  virtual T visit(const This *) override;
 
 #endif //_NL_VISITOR_H_

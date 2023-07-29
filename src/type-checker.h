@@ -21,8 +21,8 @@ public:
   void check(const Stmt *stmt);
   NLType check(const Expr *expr);
 
-  EXPR_VISITOR_METHODS(void)
-  STMT_VISITOR_METHODS(void)
+  OVERRIDE_EXPR_VISITOR_FNS(void)
+  OVERRIDE_STMT_VISITOR_FNS(void)
 
   bool match(const NLType type, const std::vector<NLType> &types);
   bool match(const Expr *expr, const std::vector<NLType> &types);

@@ -30,7 +30,7 @@ public:
 
   void hoist_program(const std::vector<Stmt *> statements);
 
-  STMT_VISITOR_METHODS(void)
+  OVERRIDE_STMT_VISITOR_FNS(void)
 
 private:
   ScopeManager sm;

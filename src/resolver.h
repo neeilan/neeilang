@@ -44,8 +44,8 @@ public:
   FunctionType current_function = NOT_IN_FN;
   bool decl_only_pass = true;
 
-  EXPR_VISITOR_METHODS(void)
-  STMT_VISITOR_METHODS(void)
+  OVERRIDE_EXPR_VISITOR_FNS(void)
+  OVERRIDE_STMT_VISITOR_FNS(void)
 
   void begin_scope();
   void end_scope();

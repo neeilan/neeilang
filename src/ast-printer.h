@@ -15,8 +15,8 @@ public:
   std::string print(const Expr *expr) { return expr->accept(this); }
   std::string print(const Stmt *stmt) { return stmt->accept(this); }
 
-  EXPR_VISITOR_METHODS(std::string)
-  STMT_VISITOR_METHODS(std::string)
+  OVERRIDE_EXPR_VISITOR_FNS(std::string)
+  OVERRIDE_STMT_VISITOR_FNS(std::string)
 
   std::string parenthesize(std::string, const Expr *);
   std::string parenthesize(std::string, const Expr *, const Expr *);

@@ -18,8 +18,8 @@ public:
   virtual void generate(const std::vector<Stmt *> &program);
   void dump() const;
 
-  EXPR_VISITOR_METHODS(void)
-  STMT_VISITOR_METHODS(void)
+  OVERRIDE_EXPR_VISITOR_FNS(void)
+  OVERRIDE_STMT_VISITOR_FNS(void)
 private:
   void emit(const std::vector<Stmt *> &stmts);
   void emit(const Stmt *stmt);
