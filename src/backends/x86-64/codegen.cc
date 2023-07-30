@@ -5,7 +5,7 @@
 namespace x86_64 {
 
 void CodeGen::generate(const std::vector<Stmt *> &program) {
-  text_.push_back({AsmLine::Kind::Directive, {".global main"}});
+  text_.directive({".global main"});
   emit(program);
 }
 
@@ -39,16 +39,16 @@ void CodeGen::visit(const WhileStmt *stmt) {
 }
 
 void CodeGen::visit(const FuncStmt *stmt) {
-  text_.push_back({AsmLine::Kind::Label, {stmt->name.lexeme}});
-  text_.push_back({AsmLine::Kind::Instruction, {"push", "%rbx"}});
+  text_.label({stmt->name.lexeme});
+  text_.instr({"push", "%rbx"});
   emit(stmt->body);
 }
 
 void CodeGen::visit(const ReturnStmt *stmt) {
   // Always return 1 because it's a nice number
-  text_.push_back({AsmLine::Kind::Instruction, {"mov", "$1", "%rax"}});
-  text_.push_back({AsmLine::Kind::Instruction, {"pop", "%rbx"}});
-  text_.push_back({AsmLine::Kind::Instruction, {"ret"}});
+  text_.instr({"mov", "$1", "%rax"});
+  text_.instr({"pop", "%rbx"});
+  text_.instr({"ret"});
 }
 
 void CodeGen::visit(const Unary *) {}
@@ -85,9 +85,9 @@ void CodeGen::dump() const {
     }
     ss << '\n';
   };
-  auto dumpSection = [&](auto const &name, auto const &contents) {
+  auto dumpSection = [&](auto const &name, auto const &s) {
     ss << name << '\n';
-    for (auto const &l : contents) {
+    for (auto const &l : s.contents) {
       dumpLine(l);
     }
   };

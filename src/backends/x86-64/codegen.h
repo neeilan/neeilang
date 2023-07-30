@@ -46,6 +46,23 @@ struct AsmLine {
   bool isLabel() const { return kind == Kind::Label; }
 };
 
+struct Section {
+  void instr(std::vector<std::string> &&v) {
+    push(AsmLine::Kind::Instruction, std::move(v));
+  }
+  void label(std::vector<std::string> &&v) {
+    push(AsmLine::Kind::Label, std::move(v));
+  }
+  void directive(std::vector<std::string> &&v) {
+    push(AsmLine::Kind::Directive, std::move(v));
+  }
+  void push(AsmLine::Kind kind, std::vector<std::string> &&v) {
+    contents.push_back({kind, std::move(v)});
+  }
+
+  std::vector<AsmLine> contents;
+};
+
 class CodeGen : public AbstractCodegen,
                 public ExprVisitor<>,
                 public StmtVisitor<> {
@@ -61,9 +78,9 @@ private:
   void emit(const Stmt *stmt);
   void emit(const Expr *expr);
 
-  std::vector<AsmLine> rodata_;
-  std::vector<AsmLine> data_;
-  std::vector<AsmLine> text_;
+  Section rodata_;
+  Section data_;
+  Section text_;
 
   // struct Stats { uint32_t memReads, memWrites, regReads, regWrites; };
   // Stats stats_;
