@@ -3,7 +3,7 @@
 #include "backends/llvm/codegen.h"
 #include "backends/llvm/libc.h"
 
-static llvm::Constant *printfPtr;
+static llvm::FunctionCallee printfCallee;
 
 void CodeGen::init_libc() {
   // printf
@@ -14,10 +14,10 @@ void CodeGen::init_libc() {
   llvm::FunctionType *printfType =
       llvm::FunctionType::get(builder->getInt32Ty(), args, true);
 
-  llvm::Constant *printfFunc =
+  llvm::FunctionCallee printfFunc =
       module->getOrInsertFunction("printf", printfType);
 
-  printfPtr = printfFunc;
+  printfCallee = printfFunc;
 }
 
 void CodeGen::call_printf(llvm::Value *value, NLType t) {
@@ -26,5 +26,5 @@ void CodeGen::call_printf(llvm::Value *value, NLType t) {
   std::vector<llvm::Value *> values;
   values.push_back(formatStr);
   values.push_back(value);
-  builder->CreateCall(printfPtr, values);
+  builder->CreateCall(printfCallee, values);
 }

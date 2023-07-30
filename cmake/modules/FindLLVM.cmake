@@ -1,5 +1,5 @@
 ################################################################################
-# Finds LLVM and clang libraries, headers and required flags using llvm-config-9.
+# Finds LLVM and clang libraries, headers and required flags using llvm-config.
 # Sets:
 # LLVM_ROOT:
 #      The root LLVM directory.
@@ -33,7 +33,7 @@ function(set_llvm_variable variable flags)
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
   if(result_code)
-      message(FATAL_ERROR "Failed to execute llvm-config-9 ${flags}, result code: ${result_code}")
+      message(FATAL_ERROR "Failed to execute llvm-config ${flags}, result code: ${result_code}")
   else()
       string(REPLACE "\n" ";" output ${output})
       separate_arguments(output)
@@ -47,13 +47,14 @@ endfunction()
 message(STATUS "LLVM_PATH is ${LLVM_PATH}")
 
 find_program(LLVM_CONFIG
-    NAMES llvm-config-9
-    HINTS "${LLVM_PATH}/build/bin" "${LLVM_PATH}"
-    DOC "Path to llvm-config-9 tool")
+    NAMES llvm-config
+    NO_SYSTEM_ENVIRONMENT_PATH # LLVM 9 is pretty old - we want the binary built from source
+    HINTS "${LLVM_PATH}/bin" `"${LLVM_PATH}"
+    DOC "Path to llvm-config tool")
 if (LLVM_CONFIG)
-  message(STATUS "Found llvm-config-9 at ${LLVM_CONFIG}")
+  message(STATUS "Found llvm-config at ${LLVM_CONFIG}")
 else()
-  message(FATAL_ERROR "Could not find llvm-config-9")
+  message(FATAL_ERROR "Could not find llvm-config")
 endif()
 
 set_llvm_variable(ROOT "--src-root")
@@ -63,7 +64,8 @@ set_llvm_variable(INCLUDE_DIRS "--includedir")
 set_llvm_variable(LIBRARY_DIRS "--libdir")
 set_llvm_variable(CXX_FLAGS "--cxxflags")
 set_llvm_variable(LD_FLAGS "--ldflags")
-set_llvm_variable(LIBS "--libs;--system-libs")
+set_llvm_variable(LIBS "--libs")
+set_llvm_variable(SYSTEM_LIBS "--system-libs")
 
 set(CLANG_ROOT "${LLVM_ROOT}/tools/clang")
 set(CLANG_INCLUDE_DIRS

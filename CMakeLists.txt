@@ -44,7 +44,7 @@ else()
   find_package(LLVM REQUIRED)
   include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
   link_directories(${LLVM_LIBRARY_DIRS})
-  link_libraries(${LLVM_LIBS})
+  link_libraries(${LLVM_LIBS} ${LLVM_SYSTEM_LIBS})
   set(CMAKE_EXE_LINKER_FLAGS ${LLVM_LD_FLAGS_STRING})
 endif()
 

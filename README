@@ -44,11 +44,18 @@ The LLVM backend is programmed against LLVM 9.0.0 API. Since common
 package manger repositories only offer newer versions, you'll need to
 build from source:
 * Download the LLVM 9.0.0 source code from https://releases.llvm.org/
-* Extract and build locally (it's a CMake project)
-* symlink `/usr/bin/llvm-config-9` to `bin/llvm-config` so that CMake
-  can locate LLVM 9 libraries and headers
-* In the neeilang source dir, run `cmake`, then `make`
+* Extract and build locally (it's a CMake project, so `cmake .` + `make`)
+* In the neeilang dir, run cmake while setting the LLVM_PATH variable.
+  For me, this looks like `cmake -DLLVM_PATH=~/personal/llvm9 .`, then `make`.
+* Examples under `test/functional` are ok to play with. `nl_compile_and_run.sh`
+  will have neeilang emit the LLVM IR and execute using lli, like so:
+  ```
+  $ ./nl_compile_and_run.sh test/functional/funcs_with_args.nl.splat
+  hi
+  hi
+  hi
+  ```
 
 Building - x86-64 backend
 -------------------------
-* In the neeilang source dir, run `cmake -DTARGET_X86=ON`, then `make`
+* Run `cmake -DTARGET_X86=ON .`, then `make`

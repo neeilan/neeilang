@@ -402,7 +402,7 @@ void CodeGen::visit(const Call *expr) {
   assert(nltype->is_function_type() && "Callee is not a function");
   std::vector<NLType> arg_types = nltype->functype->arg_types;
 
-  for (int i = 0; i < expr->args.size(); i++) {
+  for (size_t i = 0; i < expr->args.size(); i++) {
     const Expr *arg = expr->args[i];
     llvm::Type *ll_type = tb.to_llvm(arg_types[i]);
     llvm::Value *arg_val = builder->CreateBitCast(emit(arg), ll_type);
