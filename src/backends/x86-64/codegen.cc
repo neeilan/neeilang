@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "primitives.h"
+
 namespace x86_64 {
 
 void CodeGen::generate(const std::vector<Stmt *> &program) {
@@ -45,8 +47,11 @@ void CodeGen::visit(const FuncStmt *stmt) {
 }
 
 void CodeGen::visit(const ReturnStmt *stmt) {
-  // Always return 1 because it's a nice number
-  text_.instr({"mov", "$1", "%rax"});
+  if (stmt->value) {
+    emit(stmt->value);
+  }
+
+  text_.instr({"mov", valueRefs_.get(stmt->value), "%rax"});
   text_.instr({"pop", "%rbx"});
   text_.instr({"ret"});
 }
@@ -55,7 +60,19 @@ void CodeGen::visit(const Unary *) {}
 void CodeGen::visit(const Binary *) {}
 void CodeGen::visit(const Grouping *expr) { emit(&expr->expression); }
 void CodeGen::visit(const StrLiteral *) {}
-void CodeGen::visit(const NumLiteral *) {}
+
+void CodeGen::visit(const NumLiteral *expr) {
+  auto const exprType = exprTypes_.find(expr);
+  assert(exprType != exprTypes_.end());
+  if (exprType->second == Primitives::Float()) {
+    std::cerr << "[Float Literal]" << std::endl;
+  } else if (exprType->second == Primitives::Int()) {
+    // e.g. 5 becomes $5
+    valueRefs_.assign(expr, "$" + expr->value);
+  }
+  
+}
+
 void CodeGen::visit(const BoolLiteral *) {}
 void CodeGen::visit(const Variable *) {}
 void CodeGen::visit(const Assignment *) {}

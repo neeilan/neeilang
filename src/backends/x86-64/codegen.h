@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "expr-types.h"
 #include "backends/abstract-codegen.h"
 #include "visitor.h"
 
@@ -23,17 +24,30 @@ namespace x86_64 {
 // A naive implementation of register allocation which falls
 // back to storing values on the stack.
 class ValueRefTracker {
+public:
   using ValueRef = std::string;
   using Register = std::string;
 
   // Assign the expression to a value holder
   // on the machine.
-  ValueRef assign(const Expr*);
+  // ValueRef assign(const Expr*);
+
+  void assign(const Expr *expr, const std::string &immediate) {
+    exprToRef_[expr] = immediate;
+  }
+
+  ValueRef get(const Expr *expr) {
+    auto it = exprToRef_.find(expr);
+    assert(it != exprToRef_.end() && "ValueRef requested for unknown expr");
+    return it->second;
+  }
 
   // Ensure no expressions use the register,
   // spilling them to memory if necessary.
-  void freeRegister(const Register&);
+  // void freeRegister(const Register&);
 
+private:
+  std::unordered_map<const Expr*, std::string> exprToRef_;
   std::unordered_map<const Expr*, Register> exprToRegister_;
   std::unordered_map<Register, const Expr*> registerToExpr_;
   uint8_t stackOffset;
@@ -67,7 +81,7 @@ class CodeGen : public AbstractCodegen,
                 public ExprVisitor<>,
                 public StmtVisitor<> {
 public:
-  CodeGen() {}
+  CodeGen(const ExprTypes &exprTypes) : exprTypes_(exprTypes) {}
   virtual void generate(const std::vector<Stmt *> &program);
   void dump() const;
 
@@ -77,6 +91,10 @@ private:
   void emit(const std::vector<Stmt *> &stmts);
   void emit(const Stmt *stmt);
   void emit(const Expr *expr);
+
+  ValueRefTracker valueRefs_;
+
+  const ExprTypes &exprTypes_;
 
   Section rodata_;
   Section data_;

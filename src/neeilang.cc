@@ -85,7 +85,7 @@ void Neeilang::run(const std::string &source) {
   }
 
 #ifdef TARGET_X86
-  x86_64::CodeGen codegen;
+  x86_64::CodeGen codegen(type_checker.get_expr_types());
   codegen.generate(program);
   codegen.dump();
 #else

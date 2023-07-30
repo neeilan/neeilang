@@ -1,6 +1,7 @@
 #ifndef _NL_EXPR_TYPES_H_
 #define _NL_EXPR_TYPES_H_
 
+#include <map>
 #include <memory>
 
 #include "expr.h"
