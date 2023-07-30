@@ -31,7 +31,12 @@ public:
 
   // Assign the expression to a value holder
   // on the machine.
-  ValueRef assign(const Expr* expr) {
+  ValueRef makeAssignable(const Expr* expr) {
+    // Is it already assignable?
+    auto it = exprToRegister_.find(expr);
+    if (it != exprToRegister_.end()) {
+      return it->second;
+    }
     if (!unusedGpRegs_.empty()) {
       auto const it = unusedGpRegs_.begin();
       auto const reg = *it;
@@ -62,7 +67,17 @@ public:
 
   // Ensure no expressions use the register,
   // spilling them to memory if necessary.
-  // void freeRegister(const Register&);
+  // void regObtain(const Register&);
+
+  void regFree(const Register& reg) {
+    auto it = registerToExpr_.find(reg);
+    if (it == registerToExpr_.end()) { return; }
+    auto expr = it->second;
+    registerToExpr_.erase(it);
+    exprToRef_.erase(expr);
+    exprToRegister_.erase(expr);
+    unusedGpRegs_.insert(reg);
+  }
 
 private:
   std::unordered_set<Register> unusedGpRegs_ { "%r10", "%r11" };

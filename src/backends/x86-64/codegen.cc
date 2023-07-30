@@ -71,25 +71,35 @@ void CodeGen::visit(const Binary *expr) {
   auto const right = valueRefs_.get(&expr->right);
 
   std::cerr << "[BinaryOp - L/R refs found: L=" << left << " R=" << right << "]" << std::endl;
-  // We can't add into a literal, so we need an 'assignable' value ref
-  // probably want a function like ValueRef ensureAssignable(valueRef)
-  auto const rightAssignable = valueRefs_.assign(&expr->right);
-  std::cerr << "[rightAssignable=" << rightAssignable << "]" << std::endl;
-  valueRefs_.regOverwrite(&expr->right, rightAssignable);
-  text_.instr({"mov", right, rightAssignable });
+  // We can't add into a literal, so we need an 'assignable' dest
+  auto const dest = valueRefs_.makeAssignable(&expr->left);
+  std::cerr << "[dest=" << dest << "]" << std::endl;
+  valueRefs_.regOverwrite(&expr->left, dest);
+  if (left != dest) {
+    text_.instr({"mov", left, dest });
+  }
 
   switch (expr->op.type) {
   // For the following instructions, we know both operands are Ints or Floats
   // (since we don't handle String concat with '+' yet).
   case PLUS: {
   // add src, dest
-  text_.instr({"add", left, rightAssignable });
-  valueRefs_.regOverwrite(expr, rightAssignable);
-  break;
+    text_.instr({"add", right, dest });
+    valueRefs_.regOverwrite(expr, dest);
+    valueRefs_.regFree(right); // No longer need right
+    break;
   }
   case MINUS: {
-    text_.instr({"sub", left, rightAssignable });
-    valueRefs_.regOverwrite(expr, rightAssignable);
+    text_.instr({"sub", right, dest });
+    valueRefs_.regOverwrite(expr, dest);
+    valueRefs_.regFree(right); // No longer need right
+    break;
+  }
+  case STAR: {
+    text_.instr({"imul", right, dest });
+    valueRefs_.regOverwrite(expr, dest);
+    valueRefs_.regFree(right); // No longer need right
+    break;
   }
   default: { std::cerr << "[Unimplemented BinaryOp]" << std::endl; }
   }
