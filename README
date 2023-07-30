@@ -47,10 +47,10 @@ build from source:
 * Extract and build locally (it's a CMake project, so `cmake .` + `make`)
 * In the neeilang dir, run cmake while setting the LLVM_PATH variable.
   For me, this looks like `cmake -DLLVM_PATH=~/personal/llvm9 .`, then `make`.
-* Examples under `test/functional` are ok to play with. `nl_compile_and_run.sh`
+* Examples under `test/functional` are ok to play with. `nl_llvm.sh`
   will have neeilang emit the LLVM IR and execute using lli, like so:
   ```
-  $ ./nl_compile_and_run.sh test/functional/funcs_with_args.nl.splat
+  $ ./nl_llvm.sh test/functional/funcs_with_args.nl.splat
   hi
   hi
   hi
@@ -59,3 +59,4 @@ build from source:
 Building - x86-64 backend
 -------------------------
 * Run `cmake -DTARGET_X86=ON .`, then `make`
+* When this backend is complete, you can use `nl_x86.sh` just like `nl_llvm.sh`

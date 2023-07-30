@@ -84,10 +84,8 @@ void Neeilang::run(const std::string &source) {
     return; // Compilation halted due to type errors.
   }
 
-  std::cout << ";CODEGEN" << std::endl;
-
 #ifdef TARGET_X86
-  X86_64::CodeGen codegen;
+  x86_64::CodeGen codegen;
   codegen.generate(program);
   codegen.dump();
 #else
