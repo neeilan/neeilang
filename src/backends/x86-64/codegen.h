@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "expr-types.h"
 #include "backends/abstract-codegen.h"
@@ -30,7 +31,23 @@ public:
 
   // Assign the expression to a value holder
   // on the machine.
-  // ValueRef assign(const Expr*);
+  ValueRef assign(const Expr* expr) {
+    if (!unusedGpRegs_.empty()) {
+      auto const it = unusedGpRegs_.begin();
+      auto const reg = *it;
+      exprToRegister_[expr] = reg;
+      registerToExpr_[reg] = expr;
+      unusedGpRegs_.erase(it);
+      return reg;
+    }
+    assert(false && "No GP regs to assign");
+  }
+
+  void regOverwrite(const Expr *expr, const Register &reg) {
+      exprToRef_[expr] = reg;
+      exprToRegister_[expr] = reg;
+      registerToExpr_[reg] = expr;
+  }
 
   void assign(const Expr *expr, const std::string &immediate) {
     exprToRef_[expr] = immediate;
@@ -42,11 +59,13 @@ public:
     return it->second;
   }
 
+
   // Ensure no expressions use the register,
   // spilling them to memory if necessary.
   // void freeRegister(const Register&);
 
 private:
+  std::unordered_set<Register> unusedGpRegs_ { "%r10", "%r11" };
   std::unordered_map<const Expr*, std::string> exprToRef_;
   std::unordered_map<const Expr*, Register> exprToRegister_;
   std::unordered_map<Register, const Expr*> registerToExpr_;

@@ -30,7 +30,7 @@ public:
 
   std::shared_ptr<TypeTable> types() { return sm.current().typetab; }
   std::shared_ptr<SymbolTable> symbols() { return sm.current().symtab; }
-  std::map<const Expr *, NLType> get_expr_types() { return expr_types; }
+  std::map<const Expr *, NLType>& get_expr_types() { return expr_types; }
 
   ScopeManager &sm;
 

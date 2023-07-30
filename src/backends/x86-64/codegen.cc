@@ -47,6 +47,7 @@ void CodeGen::visit(const FuncStmt *stmt) {
 }
 
 void CodeGen::visit(const ReturnStmt *stmt) {
+  std::cerr << "[ReturnStmt]" << std::endl;
   if (stmt->value) {
     emit(stmt->value);
   }
@@ -57,13 +58,50 @@ void CodeGen::visit(const ReturnStmt *stmt) {
 }
 
 void CodeGen::visit(const Unary *) {}
-void CodeGen::visit(const Binary *) {}
+
+void CodeGen::visit(const Binary *expr) {
+  std::cerr << "[BinaryOp]" << std::endl;
+  // TODO(neeilan): For short-circuiting, wait to emit right
+  // TODO(neeilan): Explore passing left register to accumulate
+  emit(&expr->left);
+  emit(&expr->right);
+  std::cerr << "[BinaryOp - L/R emitted]" << std::endl;
+
+  auto const left = valueRefs_.get(&expr->left);
+  auto const right = valueRefs_.get(&expr->right);
+
+  std::cerr << "[BinaryOp - L/R refs found: L=" << left << " R=" << right << "]" << std::endl;
+  // We can't add into a literal, so we need an 'assignable' value ref
+  // probably want a function like ValueRef ensureAssignable(valueRef)
+  auto const rightAssignable = valueRefs_.assign(&expr->right);
+  std::cerr << "[rightAssignable=" << rightAssignable << "]" << std::endl;
+  valueRefs_.regOverwrite(&expr->right, rightAssignable);
+  text_.instr({"mov", right, rightAssignable });
+
+  switch (expr->op.type) {
+  // For the following instructions, we know both operands are Ints or Floats
+  // (since we don't handle String concat with '+' yet).
+  case PLUS: {
+  // add src, dest
+  text_.instr({"add", left, rightAssignable });
+  valueRefs_.regOverwrite(expr, rightAssignable);
+  break;
+  }
+  case MINUS: {
+    text_.instr({"sub", left, rightAssignable });
+    valueRefs_.regOverwrite(expr, rightAssignable);
+  }
+  default: { std::cerr << "[Unimplemented BinaryOp]" << std::endl; }
+  }
+}
+
 void CodeGen::visit(const Grouping *expr) { emit(&expr->expression); }
 void CodeGen::visit(const StrLiteral *) {}
 
 void CodeGen::visit(const NumLiteral *expr) {
+  std::cerr << "[NumLiteral]" << std::endl;
   auto const exprType = exprTypes_.find(expr);
-  assert(exprType != exprTypes_.end());
+  if(exprType == exprTypes_.end()) { std::cerr << "[Unknown ExprType]" << std::endl; return; }
   if (exprType->second == Primitives::Float()) {
     std::cerr << "[Float Literal]" << std::endl;
   } else if (exprType->second == Primitives::Int()) {
