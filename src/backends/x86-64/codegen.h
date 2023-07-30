@@ -40,7 +40,7 @@ class ValueRefTracker {
 };
 
 struct AsmLine {
-  enum class Kind { Label, Instruction };
+  enum class Kind { Label, Instruction, Directive };
   Kind kind;
   std::vector<std::string> values;
   bool isLabel() const { return kind == Kind::Label; }

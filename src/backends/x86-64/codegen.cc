@@ -5,6 +5,7 @@
 namespace x86_64 {
 
 void CodeGen::generate(const std::vector<Stmt *> &program) {
+  text_.push_back({AsmLine::Kind::Directive, {".global main"}});
   emit(program);
 }
 
@@ -17,14 +18,38 @@ void CodeGen::emit(const Stmt *stmt) { stmt->accept(this); }
 void CodeGen::emit(const Expr *expr) { expr->accept(this); }
 
 void CodeGen::visit(const ExprStmt *stmt) { emit(stmt->expression); }
-void CodeGen::visit(const BlockStmt *) {}
-void CodeGen::visit(const PrintStmt *) {}
-void CodeGen::visit(const VarStmt *) {}
-void CodeGen::visit(const ClassStmt *) {}
-void CodeGen::visit(const IfStmt *) {}
-void CodeGen::visit(const WhileStmt *) {}
-void CodeGen::visit(const FuncStmt *) {}
-void CodeGen::visit(const ReturnStmt *) {}
+void CodeGen::visit(const BlockStmt *stmt) {
+  std::cerr << "[BlockStmt]" << std::endl;
+  emit(stmt->block_contents);
+}
+void CodeGen::visit(const PrintStmt *stmt) {
+  std::cerr << "[PrintStmt]" << std::endl;
+}
+void CodeGen::visit(const VarStmt *stmt) {
+  std::cerr << "[VarStmt]" << std::endl;
+}
+void CodeGen::visit(const ClassStmt *stmt) {
+  std::cerr << "[ClassStmt]" << std::endl;
+}
+void CodeGen::visit(const IfStmt *stmt) {
+  std::cerr << "[IfStmt]" << std::endl;
+}
+void CodeGen::visit(const WhileStmt *stmt) {
+  std::cerr << "[WhileStmt]" << std::endl;
+}
+
+void CodeGen::visit(const FuncStmt *stmt) {
+  text_.push_back({AsmLine::Kind::Label, {stmt->name.lexeme}});
+  text_.push_back({AsmLine::Kind::Instruction, {"push", "%rbx"}});
+  emit(stmt->body);
+}
+
+void CodeGen::visit(const ReturnStmt *stmt) {
+  // Always return 1 because it's a nice number
+  text_.push_back({AsmLine::Kind::Instruction, {"mov", "$1", "%rax"}});
+  text_.push_back({AsmLine::Kind::Instruction, {"pop", "%rbx"}});
+  text_.push_back({AsmLine::Kind::Instruction, {"ret"}});
+}
 
 void CodeGen::visit(const Unary *) {}
 void CodeGen::visit(const Binary *) {}
@@ -51,12 +76,12 @@ void CodeGen::dump() const {
       ss << line[0] << ":\n";
       return;
     }
-    ss << line[0];
+    ss << ' ' << line[0];
     for (size_t i = 1; i < line.size() - 1; ++i) {
-      ss << line[i] << ", ";
+      ss << ' ' << line[i] << ", ";
     }
     if (line.size() > 1) {
-      ss << line.back();
+      ss << ' ' << line.back();
     }
     ss << '\n';
   };
@@ -66,7 +91,7 @@ void CodeGen::dump() const {
       dumpLine(l);
     }
   };
-  dumpSection(".rodata", rodata_);
+  dumpSection(".section .rodata", rodata_);
   dumpSection(".data", data_);
   dumpSection(".text", text_);
   std::cout << ss.str();

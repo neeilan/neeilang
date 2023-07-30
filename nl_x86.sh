@@ -1,5 +1,5 @@
 # /usr/bin/sh
-bin/neeilang "$1" &> output.s
+bin/neeilang "$1" 1> output.s 2> nl_stderr.txt
 if [ $? -eq 0 ]; then
   gcc -o a.out output.s
   if [ $? -eq 0 ]; then
@@ -8,6 +8,6 @@ if [ $? -eq 0 ]; then
     echo "GCC: Assembler/Linker failure"
   fi
 else
-  cat output.s
+  cat nl_stderr.txt
   echo "NL: Compilation failure"
 fi

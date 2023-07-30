@@ -53,3 +53,9 @@ out.bc
 *.cbp
 
 .vscode
+
+# NL toolchain outputs
+a.out
+nl_stderr.txt
+output.s
+output.ll
