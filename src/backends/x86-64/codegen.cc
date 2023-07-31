@@ -7,6 +7,8 @@
 namespace x86_64 {
 
 void CodeGen::generate(const std::vector<Stmt *> &program) {
+  // Setup format strings for printf
+  rodata_.directive({"format_printf_int: .asciz \"%d\\n\""});
   text_.directive({".global main"});
   emit(program);
 }
@@ -25,7 +27,19 @@ void CodeGen::visit(const BlockStmt *stmt) {
   emit(stmt->block_contents);
 }
 void CodeGen::visit(const PrintStmt *stmt) {
-  std::cerr << "[PrintStmt]" << std::endl;
+  std::cerr << "[PrintStmt]" << stmt->expression << std::endl;
+  if (!stmt->expression) {
+    return;
+  }
+  emit(stmt->expression);
+
+  // %rdi and %rsi hold first two integer/pointer function params
+  // per x86-64 System V calling convention
+  auto const src = valueRefs_.get(stmt->expression);
+  text_.instr({"lea", "format_printf_int(%rip)", "%rdi"});
+  text_.instr({"mov", src, "%rsi"});
+  text_.instr({"call", "printf"});
+  valueRefs_.regFree(src); // what if print(x) - we need to know when to free
 }
 void CodeGen::visit(const VarStmt *stmt) {
   std::cerr << "[VarStmt]" << std::endl;
@@ -107,7 +121,12 @@ void CodeGen::visit(const Binary *expr) {
   }
 }
 
-void CodeGen::visit(const Grouping *expr) { emit(&expr->expression); }
+void CodeGen::visit(const Grouping *expr) {
+  auto const *e = &expr->expression;
+  emit(e);
+  valueRefs_.overwrite(expr, valueRefs_.get(e));
+}
+
 void CodeGen::visit(const StrLiteral *) {}
 
 void CodeGen::visit(const NumLiteral *expr) {

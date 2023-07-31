@@ -51,8 +51,8 @@ void Neeilang::run(const std::string &source) {
     return;
   }
 
-  // AstPrinter printer;
-  // std::cout << printer.print(program);
+  AstPrinter printer;
+  std::cerr << printer.print(program);
 
   Resolver resolver;
   resolver.resolve_program(program);

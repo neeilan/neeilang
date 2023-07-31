@@ -48,6 +48,11 @@ public:
     assert(false && "No GP regs to assign");
   }
 
+  void overwrite(const Expr* expr, const ValueRef& v) {
+    if (v[0] == '%') { regOverwrite(expr, v); return; }
+    exprToRef_[expr] = v;
+  }
+
   void regOverwrite(const Expr *expr, const Register &reg) {
       exprToRef_[expr] = reg;
       exprToRegister_[expr] = reg;
