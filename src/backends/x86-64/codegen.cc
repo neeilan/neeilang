@@ -79,26 +79,28 @@ void CodeGen::visit(const Binary *expr) {
     text_.instr({"mov", left, dest });
   }
 
+  auto binaryOpEmit = [&](auto const &opcode){
+    // We use `right` as the first operand because
+    // sub behaves as dest-=right
+    text_.instr({ opcode, right, dest });
+    valueRefs_.regOverwrite(expr, dest);
+    // Can resuse `right` as dest is the accumulator
+    valueRefs_.regFree(right);
+  };
+
   switch (expr->op.type) {
   // For the following instructions, we know both operands are Ints or Floats
   // (since we don't handle String concat with '+' yet).
   case PLUS: {
-  // add src, dest
-    text_.instr({"add", right, dest });
-    valueRefs_.regOverwrite(expr, dest);
-    valueRefs_.regFree(right); // No longer need right
+    binaryOpEmit("add");
     break;
   }
   case MINUS: {
-    text_.instr({"sub", right, dest });
-    valueRefs_.regOverwrite(expr, dest);
-    valueRefs_.regFree(right); // No longer need right
+    binaryOpEmit("sub");
     break;
   }
   case STAR: {
-    text_.instr({"imul", right, dest });
-    valueRefs_.regOverwrite(expr, dest);
-    valueRefs_.regFree(right); // No longer need right
+    binaryOpEmit("imul");
     break;
   }
   default: { std::cerr << "[Unimplemented BinaryOp]" << std::endl; }
