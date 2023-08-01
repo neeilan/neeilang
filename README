@@ -55,8 +55,22 @@ build from source:
   hi
   hi
   ```
+  TLDR: Something like `cmake -DLLVM_PATH=~/personal/llvm9 .` + `make`
 
 Building - x86-64 backend
 -------------------------
 * Run `cmake -DTARGET_X86=ON .`, then `make`
-* When this backend is complete, you can use `nl_x86.sh` just like `nl_llvm.sh`
+* When this backend is complete, you can use `nl_x86.sh` just like `nl_llvm.sh`.
+  At the moment, some tests may pass based on what has been implemented on x86.
+  ```
+  $ ./nl_x86.sh test/functional/expr_precedence.nl.splat
+  17
+  ```
+
+Running functional tests
+------------------------
+* Run `cmake -DTEST_DEPS=ON .` to set up the project with splat, which we use
+  to run tests under test/functional. You can run individual tests by running
+  `./bin/splat ./run/nl_llvm.sh <path_to_test>`, or you can perform all the
+  tests by running `./run_functional_tests.sh`
+* You can learn more about splat at https://github.com/neeilan/splat

@@ -16,6 +16,9 @@ include_directories(${COMMON_INCLUDES})
 file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cc)
 list(REMOVE_ITEM SRC_FILES ${PROJECT_SOURCE_DIR}/cli.cc)
 
+set(CMAKE_MODULE_PATH
+${CMAKE_MODULE_PATH}
+"${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
 
 if(TARGET_X86)
   ###############################
@@ -37,10 +40,6 @@ else()
   ###############################
   # LLVM libraries
   ###############################
-  set(CMAKE_MODULE_PATH
-          ${CMAKE_MODULE_PATH}
-          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
-
   find_package(LLVM REQUIRED)
   include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
   link_directories(${LLVM_LIBRARY_DIRS})
@@ -54,3 +53,7 @@ endif()
 add_library(neeilang_lib ${SRC_FILES})
 add_executable(neeilang ${PROJECT_SOURCE_DIR}/src/cli.cc)
 target_link_libraries(neeilang neeilang_lib)
+
+if (TEST_DEPS)
+find_package(Splat REQUIRED)
+endif()
