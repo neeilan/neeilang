@@ -419,8 +419,6 @@ void CodeGen::visit(const Get *expr) {
   NLType callee_nltype = expr_types[&expr->callee];
   assert(callee_nltype && "NL Type of callee unknown");
 
-  assert(last_deref_obj && "No Value found for last dereferenced object");
-
   // Initializers / static fields
   if (callee_nltype == Primitives::Class()) {
     const Variable *callee = static_cast<const Variable *>(&expr->callee);

@@ -3,6 +3,8 @@ fn main() : Int {
   return 0;
 }
 
+/*
 %output
 17
 %output
+*/

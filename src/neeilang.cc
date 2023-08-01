@@ -51,8 +51,8 @@ void Neeilang::run(const std::string &source) {
     return;
   }
 
-  AstPrinter printer;
-  std::cerr << printer.print(program);
+  // AstPrinter printer;
+  // std::cerr << printer.print(program);
 
   Resolver resolver;
   resolver.resolve_program(program);
@@ -94,7 +94,7 @@ void Neeilang::run(const std::string &source) {
 
   if (!had_error)
   {
-    codegen.print();
+    // codegen.print();
     codegen.write_bitcode();
   }
 #endif

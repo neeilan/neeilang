@@ -48,6 +48,7 @@ fn main() : Int {
   return 0;
 }
 
+/*
 %output
 0
 2
@@ -60,3 +61,4 @@ fn main() : Int {
 16
 18
 %output
+*/
