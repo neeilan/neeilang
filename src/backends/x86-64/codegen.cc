@@ -28,14 +28,27 @@ void CodeGen::visit(const BlockStmt *stmt) {
 }
 void CodeGen::visit(const PrintStmt *stmt) {
   std::cerr << "[PrintStmt]" << stmt->expression << std::endl;
-  if (!stmt->expression) {
+  auto const* e = stmt->expression;
+  if (!e) {
     return;
   }
-  emit(stmt->expression);
+  emit(e);
+
+  auto const exprType = exprTypes_.find(e);
+  if (exprType->second == Primitives::String()) {
+    // TODO(neeilan): Does this let us print a variable that's a string?
+    // Need memory references to be rip-relative to produce position independent executables
+    // i.e we want the assembler to emit a RIP-relative relocation rather than an absolute
+    // R_X86_64_32, since gcc invokes the linker in PIE mode by default.
+    // Same for printf format strings below.
+    text_.instr({"lea", valueRefs_.get(e) + "(%rip)", "%rdi"});
+    text_.instr({"call", "puts"});
+    return;
+  }
 
   // %rdi and %rsi hold first two integer/pointer function params
   // per x86-64 System V calling convention
-  auto const src = valueRefs_.get(stmt->expression);
+  auto const src = valueRefs_.get(e);
   text_.instr({"lea", "format_printf_int(%rip)", "%rdi"});
   text_.instr({"mov", src, "%rsi"});
   text_.instr({"call", "printf"});
@@ -127,7 +140,12 @@ void CodeGen::visit(const Grouping *expr) {
   valueRefs_.overwrite(expr, valueRefs_.get(e));
 }
 
-void CodeGen::visit(const StrLiteral *) {}
+void CodeGen::visit(const StrLiteral *expr) {
+  static uint16_t strLiteralId = 1;
+  auto const label = std::string("_str_literal_") + std::to_string(strLiteralId++);
+  rodata_.directive({label + ": .asciz \"" + expr->value + "\""});
+  valueRefs_.assign(expr, label);
+}
 
 void CodeGen::visit(const NumLiteral *expr) {
   std::cerr << "[NumLiteral]" << std::endl;

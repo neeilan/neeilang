@@ -1,0 +1,10 @@
+fn main() : Int {
+    print "Hello World!";
+    return 0;
+}
+
+/*
+%output
+Hello World!
+%output
+*/
