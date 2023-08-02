@@ -85,7 +85,7 @@ public:
   }
 
 private:
-  std::unordered_set<Register> unusedGpRegs_ { "%r10", "%r11" };
+  std::unordered_set<Register> unusedGpRegs_ { "%r10", "%r11" , "%r12"};
   std::unordered_map<const Expr*, std::string> exprToRef_;
   std::unordered_map<const Expr*, Register> exprToRegister_;
   std::unordered_map<Register, const Expr*> registerToExpr_;

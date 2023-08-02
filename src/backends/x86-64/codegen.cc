@@ -61,7 +61,32 @@ void CodeGen::visit(const ClassStmt *stmt) {
   std::cerr << "[ClassStmt]" << std::endl;
 }
 void CodeGen::visit(const IfStmt *stmt) {
-  std::cerr << "[IfStmt]" << std::endl;
+  static uint16_t id = 1;
+  emit(stmt->condition);
+  const auto ref = valueRefs_.get(stmt->condition);
+  // TODO: Is is fine if cond is memory and not register?
+  auto const cond = valueRefs_.makeAssignable(stmt->condition);
+  if (ref != cond) {
+    text_.instr({"mov", ref, cond });
+  }
+
+  auto elseLabel = std::string("_post_if_") + std::to_string(id++);
+  auto postElseLabel = std::string("_post_else_") + std::to_string(id);
+  // cond AND cond
+  // If result is 0, set zero flag to 1
+  // i.e. if cond is false, set ZF to 1
+  text_.instr({"test", cond, cond });
+  // je = jump if ZF=1 (i.e cond is 0)
+  text_.instr({"je", elseLabel});
+  emit(stmt->then_branch);
+  if (stmt->else_branch) {
+    text_.instr({"jmp", postElseLabel});
+  }
+  text_.label({elseLabel});
+  if (stmt->else_branch) {
+    emit(stmt->else_branch);
+    text_.label({postElseLabel});
+  }
 }
 void CodeGen::visit(const WhileStmt *stmt) {
   std::cerr << "[WhileStmt]" << std::endl;
@@ -160,10 +185,44 @@ void CodeGen::visit(const NumLiteral *expr) {
   
 }
 
-void CodeGen::visit(const BoolLiteral *) {}
+void CodeGen::visit(const BoolLiteral *expr) {
+  const auto immediate = expr->value ? "$1" : "$0";
+  valueRefs_.assign(expr, immediate);
+}
+
 void CodeGen::visit(const Variable *) {}
 void CodeGen::visit(const Assignment *) {}
-void CodeGen::visit(const Logical *) {}
+
+void CodeGen::visit(const Logical *expr) {
+  emit(&expr->left);
+  emit(&expr->right);
+
+  auto const left = valueRefs_.get(&expr->left);
+  auto const right = valueRefs_.get(&expr->right);
+  auto const dest = valueRefs_.makeAssignable(&expr->left);
+
+  auto binaryOpEmit = [&](auto const &opcode) {
+    text_.instr({opcode, right, dest});
+    valueRefs_.regOverwrite(expr, dest);
+    // Can resuse `right` as dest is the accumulator
+    valueRefs_.regFree(right);
+  };
+
+  switch (expr->op.type) {
+    case AND: {
+    binaryOpEmit("and");
+    return;
+    }
+    case OR: {
+    binaryOpEmit("or");
+    return;
+    }
+    default: {
+    return;
+    }
+  }
+}
+
 void CodeGen::visit(const Call *) {}
 void CodeGen::visit(const Get *) {}
 void CodeGen::visit(const Set *) {}
