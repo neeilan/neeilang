@@ -109,7 +109,21 @@ void CodeGen::visit(const ReturnStmt *stmt) {
   text_.instr({"ret"});
 }
 
-void CodeGen::visit(const Unary *) {}
+void CodeGen::visit(const Unary *expr) {
+  auto const exprType = exprTypes_.find(&expr->right);
+  if (exprType->second == Primitives::Float()) {
+    // Unimplemented
+    return;
+  }
+  emit(&expr->right);
+  auto const r = valueRefs_.get(&expr->right);
+  auto const dest = valueRefs_.makeAssignable(&expr->right);
+  if (r != dest) {
+    text_.instr({"mov", r, dest });
+  }
+  text_.instr({"neg", dest});
+  valueRefs_.assign(expr, dest);
+}
 
 void CodeGen::visit(const Binary *expr) {
   std::cerr << "[BinaryOp]" << std::endl;
