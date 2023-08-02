@@ -1,0 +1,19 @@
+/*
+The x86 backend must uniquely label string literals (if
+more than one per file) for this test to pass.
+*/
+
+fn main() : Int {
+    print "Good";
+    print "Morning";
+    print "World";
+    return 0;
+}
+
+/*
+%output
+Good
+Morning
+World
+%output
+*/
