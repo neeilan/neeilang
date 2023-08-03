@@ -9,6 +9,7 @@ namespace x86_64 {
 void CodeGen::generate(const std::vector<Stmt *> &program) {
   // Setup format strings for printf
   rodata_.directive({"format_printf_int: .asciz \"%d\\n\""});
+  rodata_.directive({"format_printf_float: .asciz \"%f\\n\""});
   text_.directive({".global main"});
   emit(program);
 }
@@ -21,7 +22,10 @@ void CodeGen::emit(const std::vector<Stmt *> &stmts) {
 void CodeGen::emit(const Stmt *stmt) { stmt->accept(this); }
 void CodeGen::emit(const Expr *expr) { expr->accept(this); }
 
-void CodeGen::visit(const ExprStmt *stmt) { emit(stmt->expression); }
+void CodeGen::visit(const ExprStmt *stmt) {
+  std::cerr << "[ExprStmt]" << std::endl;
+  emit(stmt->expression);
+}
 void CodeGen::visit(const BlockStmt *stmt) {
   std::cerr << "[BlockStmt]" << std::endl;
   emit(stmt->block_contents);
@@ -43,6 +47,14 @@ void CodeGen::visit(const PrintStmt *stmt) {
     // Same for printf format strings below.
     text_.instr({"lea", valueRefs_.get(e) + "(%rip)", "%rdi"});
     text_.instr({"call", "puts"});
+    return;
+  }
+
+  if (exprType->second == Primitives::Float()) {
+    text_.instr({"lea", "format_printf_float(%rip)", "%rdi"});
+    // TODO: Assumes the float is a literal, which isn't always true
+    text_.instr({"movsd", valueRefs_.get(e) + "(%rip)", "%xmm0"});
+    text_.instr({"call", "printf"});
     return;
   }
 
@@ -190,8 +202,12 @@ void CodeGen::visit(const NumLiteral *expr) {
   std::cerr << "[NumLiteral]" << std::endl;
   auto const exprType = exprTypes_.find(expr);
   if(exprType == exprTypes_.end()) { std::cerr << "[Unknown ExprType]" << std::endl; return; }
+  // TODO: How do negative literals work here?
   if (exprType->second == Primitives::Float()) {
-    std::cerr << "[Float Literal]" << std::endl;
+    static uint16_t id = 1;
+    auto const label = std::string("_float_literal_") + std::to_string(id++);
+    rodata_.directive({label + ": .double " + expr->value});
+    valueRefs_.assign(expr, label);
   } else if (exprType->second == Primitives::Int()) {
     // e.g. 5 becomes $5
     valueRefs_.assign(expr, "$" + expr->value);
