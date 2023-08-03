@@ -8,6 +8,7 @@
 #include <unordered_set>
 
 #include "expr-types.h"
+#include "scope-manager.h"
 #include "backends/abstract-codegen.h"
 #include "visitor.h"
 
@@ -120,7 +121,7 @@ class CodeGen : public AbstractCodegen,
                 public ExprVisitor<>,
                 public StmtVisitor<> {
 public:
-  CodeGen(const ExprTypes &exprTypes) : exprTypes_(exprTypes) {}
+  CodeGen(const ExprTypes &exprTypes, ScopeManager &sm) : exprTypes_(exprTypes), sm_(sm) {}
   virtual void generate(const std::vector<Stmt *> &program);
   void dump() const;
 
@@ -131,9 +132,14 @@ private:
   void emit(const Stmt *stmt);
   void emit(const Expr *expr);
 
+  void enterScope() { sm_.enter(); namedVals = std::make_shared<CactusTable<std::string, ValueRefTracker::ValueRef>>(namedVals); };
+  void exitScope() { sm_.exit(); assert(namedVals && "Only scope on stack!"); namedVals = namedVals->parent; };
+  std::shared_ptr<CactusTable<std::string, ValueRefTracker::ValueRef>> namedVals;
+
   ValueRefTracker valueRefs_;
 
   const ExprTypes &exprTypes_;
+  ScopeManager &sm_;
 
   Section rodata_;
   Section data_;

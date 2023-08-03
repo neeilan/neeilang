@@ -20,16 +20,16 @@ public:
   explicit CactusTable(std::shared_ptr<CactusTable<K, V>> parent)
       : parent(parent) {}
 
-  void insert(K k, V v) { mappings[k] = v; }
+  void insert(K const& k, V const& v) { mappings[k] = v; }
 
-  bool contains(K k) const {
+  bool contains(K const& k) const {
     if (!parent) {
       return mappings.count(k) > 0;
     }
     return mappings.count(k) > 0 || parent->contains(k);
   }
 
-  V get(K k) {
+  V get(K const& k) {
     if (mappings.count(k) > 0 || !parent) {
       return mappings[k];
     }

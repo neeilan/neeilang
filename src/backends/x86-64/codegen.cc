@@ -7,6 +7,7 @@
 namespace x86_64 {
 
 void CodeGen::generate(const std::vector<Stmt *> &program) {
+  sm_.reset();
   // Setup format strings for printf
   rodata_.directive({"format_printf_int: .asciz \"%d\\n\""});
   rodata_.directive({"format_printf_float: .asciz \"%f\\n\""});
@@ -27,8 +28,9 @@ void CodeGen::visit(const ExprStmt *stmt) {
   emit(stmt->expression);
 }
 void CodeGen::visit(const BlockStmt *stmt) {
-  std::cerr << "[BlockStmt]" << std::endl;
+  enterScope();
   emit(stmt->block_contents);
+  exitScope();
 }
 void CodeGen::visit(const PrintStmt *stmt) {
   std::cerr << "[PrintStmt]" << stmt->expression << std::endl;
@@ -66,12 +68,45 @@ void CodeGen::visit(const PrintStmt *stmt) {
   text_.instr({"call", "printf"});
   valueRefs_.regFree(src); // what if print(x) - we need to know when to free
 }
+
 void CodeGen::visit(const VarStmt *stmt) {
   std::cerr << "[VarStmt]" << std::endl;
+  auto const &varName = stmt->name.lexeme;
+  auto const nlType = sm_.current().typetab->get(varName);
+
+  if (stmt->expression) {
+    emit(stmt->expression);
+  } else {
+    // Need to pick a default value - 9 for fun
+    // TODO: Pick reasonable defaults, based on type.
+    valueRefs_.assign(stmt->expression, "$9");
+  }
+
+  // *** TODO: THIS IS A HACK to prototype a single int variable on the stack ***
+  // Within a function, the position on the stack and width should be
+  // predetermined in an earlier pass. For globals, space should be reserved in .data
+  // and addressed relative to %rip
+  auto const val = valueRefs_.get(stmt->expression);
+  text_.instr({ "mov", "%rsp", "%rbp"}); // temporarily
+  text_.instr({ "subq", "$64", "%rsp"}); // temporarily - var sits between bp and sp
+  // dest is the memory location of this variable on the stack
+  // to start off with, assume only one int64 variable, first thing on the stack
+  auto const dest = "-8(%rbp)";
+  // 8 bytes so use q suffix
+  text_.instr({ "movq", val, dest});
+  text_.instr({ "addq", "$64", "%rsp"}); // temporarily - var sits between bp and sp
+  namedVals->insert(varName, dest);
+
 }
+
 void CodeGen::visit(const ClassStmt *stmt) {
-  std::cerr << "[ClassStmt]" << std::endl;
+  enterScope();
+  for (const Stmt *method : stmt->methods) {
+    emit(method);
+  }
+  exitScope();
 }
+
 void CodeGen::visit(const IfStmt *stmt) {
   static uint16_t id = 1;
   emit(stmt->condition);
@@ -105,9 +140,11 @@ void CodeGen::visit(const WhileStmt *stmt) {
 }
 
 void CodeGen::visit(const FuncStmt *stmt) {
+  enterScope();
   text_.label({stmt->name.lexeme});
   text_.instr({"push", "%rbx"});
   emit(stmt->body);
+  exitScope();
 }
 
 void CodeGen::visit(const ReturnStmt *stmt) {
@@ -139,7 +176,6 @@ void CodeGen::visit(const Unary *expr) {
 
 void CodeGen::visit(const Binary *expr) {
   std::cerr << "[BinaryOp]" << std::endl;
-  // TODO(neeilan): For short-circuiting, wait to emit right
   // TODO(neeilan): Explore passing left register to accumulate
   emit(&expr->left);
   emit(&expr->right);
@@ -220,10 +256,15 @@ void CodeGen::visit(const BoolLiteral *expr) {
   valueRefs_.assign(expr, immediate);
 }
 
-void CodeGen::visit(const Variable *) {}
+void CodeGen::visit(const Variable *expr) {
+  auto const &varName = expr->name.lexeme;
+  valueRefs_.assign(expr, namedVals->get(varName));
+
+}
 void CodeGen::visit(const Assignment *) {}
 
 void CodeGen::visit(const Logical *expr) {
+  // TODO(neeilan): For short-circuiting, wait to emit right
   emit(&expr->left);
   emit(&expr->right);
 
