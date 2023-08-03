@@ -33,7 +33,7 @@ std::string AstPrinter::visit(const BlockStmt *stmt) {
 }
 
 std::string AstPrinter::visit(const ExprStmt *stmt) {
-  return std::string(nest, ' ') + print(stmt->expression);
+  return std::string(nest, ' ') + "<Expr " + print(stmt->expression) + ">";
 }
 
 std::string AstPrinter::visit(const PrintStmt *stmt) {
