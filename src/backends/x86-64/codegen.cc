@@ -231,6 +231,26 @@ void CodeGen::visit(const Binary *expr) {
     binaryOpEmit("imul");
     break;
   }
+  case SLASH: {
+    auto destl = (dest[0] == '%' ? dest+"d" : dest);
+    text_.instr({"xor", "%rax", "%rax" });
+    text_.instr({"movl", destl, "%eax" });
+    text_.instr({"movl", right, "%ecx" });
+    text_.instr({"cltd" }); // sign-extends eax into edx:eax
+    text_.instr({"idivq", "%rcx" });
+    text_.instr({"movq", "%rax", dest });
+    valueRefs_.regOverwrite(expr, dest);
+    valueRefs_.regFree(right);
+    break;
+  }
+  case GREATER:
+  case GREATER_EQUAL:
+  case LESS:
+  case LESS_EQUAL:
+  case EQUAL_EQUAL:
+  case BANG_EQUAL: {
+    // break;
+  }
   default: { std::cerr << "[Unimplemented BinaryOp]" << std::endl; }
   }
 }
