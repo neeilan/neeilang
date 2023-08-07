@@ -8,6 +8,10 @@ fn main() : Int {
     var d : Int = 6;
     print c;
     print d;
+    print a;
+    print b;
+    a = c;
+    b = d;
   }
   print a;
   print b;
@@ -22,5 +26,7 @@ fn main() : Int {
 6
 0
 2
+4
+6
 %output
 */

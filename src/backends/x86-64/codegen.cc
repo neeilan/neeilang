@@ -28,6 +28,9 @@ void CodeGen::emit(const Expr *expr) { expr->accept(this); }
 void CodeGen::visit(const ExprStmt *stmt) {
   std::cerr << "[ExprStmt]" << std::endl;
   emit(stmt->expression);
+  // Clear all registers, unless we're using a preallocation scheme,
+  // which we're current not.
+  valueRefs_.resetRegisters();
 }
 void CodeGen::visit(const BlockStmt *stmt) {
   enterScope();
@@ -280,7 +283,20 @@ void CodeGen::visit(const Variable *expr) {
   valueRefs_.assign(expr, namedVals->get(varName));
 
 }
-void CodeGen::visit(const Assignment *) {}
+void CodeGen::visit(const Assignment *expr) {
+  emit(&expr->value);
+  // Move into reg because x86 doesn't support memory-to-memory `mov`s
+  auto const [srcReg, mustRestore] = valueRefs_.acquireRegister(&expr->value);
+  text_.instr({"mov", valueRefs_.get(&expr->value), srcReg});
+  auto const dest = namedVals->get(expr->name.lexeme);
+  text_.instr({"mov", srcReg, dest});
+  if (mustRestore) {
+    text_.instr({"pop", srcReg});
+  } else {
+    valueRefs_.regFree(srcReg);
+  }
+  valueRefs_.assign(expr, dest);
+}
 
 void CodeGen::visit(const Logical *expr) {
   // TODO(neeilan): For short-circuiting, wait to emit right

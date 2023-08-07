@@ -71,9 +71,24 @@ public:
     return it->second;
   }
 
-  std::pair<std::string, bool> toRegister() {
+  std::pair<std::string, bool> acquireRegister(const Expr* expr) {
     // TODO: returns register. and whether it need to be restored from stack. Needed because we can't to stuff like memory-to-memory `mov`s
-    return {"", false};
+    // Is it already assignable?
+    auto it = exprToRegister_.find(expr);
+    if (it != exprToRegister_.end()) {
+      return {it->second, false};
+    }
+    if (!unusedGpRegs_.empty()) {
+      auto const it = unusedGpRegs_.begin();
+      auto const reg = *it;
+      exprToRegister_[expr] = reg;
+      registerToExpr_[reg] = expr;
+      unusedGpRegs_.erase(it);
+      return {reg, false};
+    }
+    assert(false && "No GP regs to assign");
+    // Push some other register to the stack
+    return {"", true};
   }
 
   // Ensure no expressions use the register,
@@ -88,6 +103,15 @@ public:
     exprToRef_.erase(expr);
     exprToRegister_.erase(expr);
     unusedGpRegs_.insert(reg);
+  }
+
+  void resetRegisters() {
+    for (auto const & [reg, _] : registerToExpr_) {
+      unusedGpRegs_.insert(reg);
+    }
+    for (auto const & reg : unusedGpRegs_) {
+      regFree(reg);
+    }
   }
 
 private:
