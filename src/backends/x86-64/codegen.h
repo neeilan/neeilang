@@ -10,6 +10,7 @@
 #include "expr-types.h"
 #include "scope-manager.h"
 #include "backends/abstract-codegen.h"
+#include "stackframe.h"
 #include "visitor.h"
 
 namespace x86_64 {
@@ -70,6 +71,10 @@ public:
     return it->second;
   }
 
+  std::pair<std::string, bool> toRegister() {
+    // TODO: returns register. and whether it need to be restored from stack. Needed because we can't to stuff like memory-to-memory `mov`s
+    return {"", false};
+  }
 
   // Ensure no expressions use the register,
   // spilling them to memory if necessary.
@@ -121,7 +126,9 @@ class CodeGen : public AbstractCodegen,
                 public ExprVisitor<>,
                 public StmtVisitor<> {
 public:
-  CodeGen(const ExprTypes &exprTypes, ScopeManager &sm) : exprTypes_(exprTypes), sm_(sm) {}
+  CodeGen(const ExprTypes &exprTypes, ScopeManager &sm) : exprTypes_(exprTypes), sm_(sm)
+  , stackFrames_(StackFrameSizer(sm))
+  {}
   virtual void generate(const std::vector<Stmt *> &program);
   void dump() const;
 
@@ -140,6 +147,9 @@ private:
 
   const ExprTypes &exprTypes_;
   ScopeManager &sm_;
+
+  StackFrameSizer stackFrames_;
+  const FuncStmt * enclosingFunc = nullptr;
 
   Section rodata_;
   Section data_;

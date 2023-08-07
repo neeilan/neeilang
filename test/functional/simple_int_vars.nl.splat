@@ -1,0 +1,26 @@
+fn main() : Int {
+  var a : Int;
+  var b : Int = 2;
+  print a;
+  print b;
+  {
+    var c : Int = 4;
+    var d : Int = 6;
+    print c;
+    print d;
+  }
+  print a;
+  print b;
+  return 0;
+}
+
+/*
+%output
+0
+2
+4
+6
+0
+2
+%output
+*/

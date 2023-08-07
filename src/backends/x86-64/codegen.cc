@@ -8,8 +8,10 @@ namespace x86_64 {
 
 void CodeGen::generate(const std::vector<Stmt *> &program) {
   sm_.reset();
+  stackFrames_.init(program);
+  sm_.reset();
   // Setup format strings for printf
-  rodata_.directive({"format_printf_int: .asciz \"%d\\n\""});
+  rodata_.directive({"format_printf_int: .asciz \"%ld\\n\""});
   rodata_.directive({"format_printf_float: .asciz \"%f\\n\""});
   text_.directive({".global main"});
   emit(program);
@@ -32,41 +34,47 @@ void CodeGen::visit(const BlockStmt *stmt) {
   emit(stmt->block_contents);
   exitScope();
 }
+
 void CodeGen::visit(const PrintStmt *stmt) {
-  std::cerr << "[PrintStmt]" << stmt->expression << std::endl;
-  auto const* e = stmt->expression;
+  std::cerr << "[PrintStmt]" << std::endl;
+  auto const *e = stmt->expression;
   if (!e) {
     return;
   }
   emit(e);
 
+  // Align the stack if necessary
+  auto const stackLocals = stackFrames_.bases[enclosingFunc];
+  if (stackLocals.totalSize % 16) {
+    text_.instr({"push", "%rbx"});
+  }
+
   auto const exprType = exprTypes_.find(e);
   if (exprType->second == Primitives::String()) {
     // TODO(neeilan): Does this let us print a variable that's a string?
-    // Need memory references to be rip-relative to produce position independent executables
-    // i.e we want the assembler to emit a RIP-relative relocation rather than an absolute
-    // R_X86_64_32, since gcc invokes the linker in PIE mode by default.
-    // Same for printf format strings below.
+    // Need memory references to be rip-relative to produce position independent
+    // executables i.e we want the assembler to emit a RIP-relative relocation
+    // rather than an absolute R_X86_64_32, since gcc invokes the linker in PIE
+    // mode by default. Same for printf format strings below.
     text_.instr({"lea", valueRefs_.get(e) + "(%rip)", "%rdi"});
     text_.instr({"call", "puts"});
-    return;
-  }
-
-  if (exprType->second == Primitives::Float()) {
+  } else if (exprType->second == Primitives::Float()) {
     text_.instr({"lea", "format_printf_float(%rip)", "%rdi"});
     // TODO: Assumes the float is a literal, which isn't always true
     text_.instr({"movsd", valueRefs_.get(e) + "(%rip)", "%xmm0"});
     text_.instr({"call", "printf"});
-    return;
+  } else {
+    // %rdi and %rsi hold first two integer/pointer function params
+    // per x86-64 System V calling convention
+    auto const src = valueRefs_.get(e);
+    text_.instr({"lea", "format_printf_int(%rip)", "%rdi"});
+    text_.instr({"mov", src, "%rsi"});
+    text_.instr({"call", "printf"});
+    valueRefs_.regFree(src);  // what if print(x) - we need to know when to free
   }
-
-  // %rdi and %rsi hold first two integer/pointer function params
-  // per x86-64 System V calling convention
-  auto const src = valueRefs_.get(e);
-  text_.instr({"lea", "format_printf_int(%rip)", "%rdi"});
-  text_.instr({"mov", src, "%rsi"});
-  text_.instr({"call", "printf"});
-  valueRefs_.regFree(src); // what if print(x) - we need to know when to free
+  if (stackLocals.totalSize % 16) {
+    text_.instr({"pop", "%rbx"});
+  }
 }
 
 void CodeGen::visit(const VarStmt *stmt) {
@@ -77,24 +85,23 @@ void CodeGen::visit(const VarStmt *stmt) {
   if (stmt->expression) {
     emit(stmt->expression);
   } else {
-    // Need to pick a default value - 9 for fun
     // TODO: Pick reasonable defaults, based on type.
-    valueRefs_.assign(stmt->expression, "$9");
+    valueRefs_.assign(stmt->expression, "$0");
   }
 
-  // *** TODO: THIS IS A HACK to prototype a single int variable on the stack ***
-  // Within a function, the position on the stack and width should be
-  // predetermined in an earlier pass. For globals, space should be reserved in .data
-  // and addressed relative to %rip
+  valueRefs_.regFree(valueRefs_.get(stmt->expression));
+
+  // For globals, space should be reserved in .data and addressed relative to %rip
+  auto const bpOffset = stackFrames_.bases[enclosingFunc].bpOffsetOf(stmt);
+  assert(bpOffset.has_value());
+
   auto const val = valueRefs_.get(stmt->expression);
-  text_.instr({ "mov", "%rsp", "%rbp"}); // temporarily
-  text_.instr({ "subq", "$64", "%rsp"}); // temporarily - var sits between bp and sp
+
   // dest is the memory location of this variable on the stack
   // to start off with, assume only one int64 variable, first thing on the stack
-  auto const dest = "-8(%rbp)";
+  auto const dest = (*bpOffset ? (std::string("-") + std::to_string(*bpOffset)) : std::string{}) + "(%rbp)";
   // 8 bytes so use q suffix
   text_.instr({ "movq", val, dest});
-  text_.instr({ "addq", "$64", "%rsp"}); // temporarily - var sits between bp and sp
   namedVals->insert(varName, dest);
 
 }
@@ -141,9 +148,20 @@ void CodeGen::visit(const WhileStmt *stmt) {
 
 void CodeGen::visit(const FuncStmt *stmt) {
   enterScope();
+  auto *oldEnclosingFunc = enclosingFunc;
+  enclosingFunc = stmt;
   text_.label({stmt->name.lexeme});
-  text_.instr({"push", "%rbx"});
+  text_.instr({"pushq", "%rbp"});
+
+// In x86 and x86-64 assembly, the stack pointer %rsp points to the next empty slot on the stack, not to a valid value. It always points to the memory location that will be used for the next push operation.
+
+  // Also, values 'grow' towards lower addresses
+  auto const stackLocalsBase = stackFrames_.bases[stmt];
+  text_.instr({ "movq", "%rsp", "%rbp"});
+  text_.instr({ "subq", "$" + std::to_string(stackLocalsBase.totalSize), "%rsp"}); // temporarily - var sits between bp and sp
+
   emit(stmt->body);
+  enclosingFunc = oldEnclosingFunc;
   exitScope();
 }
 
@@ -154,7 +172,8 @@ void CodeGen::visit(const ReturnStmt *stmt) {
   }
 
   text_.instr({"mov", valueRefs_.get(stmt->value), "%rax"});
-  text_.instr({"pop", "%rbx"});
+  text_.instr({"mov", "%rbp", "%rsp"});
+  text_.instr({"popq", "%rbp"});
   text_.instr({"ret"});
 }
 
@@ -294,7 +313,9 @@ void CodeGen::visit(const Logical *expr) {
   }
 }
 
-void CodeGen::visit(const Call *) {}
+void CodeGen::visit(const Call *) {
+  // TODO: Need to align the stack
+}
 void CodeGen::visit(const Get *) {}
 void CodeGen::visit(const Set *) {}
 void CodeGen::visit(const GetIndex *) {}
