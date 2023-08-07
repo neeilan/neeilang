@@ -26,7 +26,6 @@ void CodeGen::emit(const Stmt *stmt) { stmt->accept(this); }
 void CodeGen::emit(const Expr *expr) { expr->accept(this); }
 
 void CodeGen::visit(const ExprStmt *stmt) {
-  std::cerr << "[ExprStmt]" << std::endl;
   emit(stmt->expression);
   // Clear all registers, unless we're using a preallocation scheme,
   // which we're current not.
@@ -39,7 +38,6 @@ void CodeGen::visit(const BlockStmt *stmt) {
 }
 
 void CodeGen::visit(const PrintStmt *stmt) {
-  std::cerr << "[PrintStmt]" << std::endl;
   auto const *e = stmt->expression;
   if (!e) {
     return;
@@ -81,7 +79,6 @@ void CodeGen::visit(const PrintStmt *stmt) {
 }
 
 void CodeGen::visit(const VarStmt *stmt) {
-  std::cerr << "[VarStmt]" << std::endl;
   auto const &varName = stmt->name.lexeme;
   auto const nlType = sm_.current().typetab->get(varName);
 
@@ -169,7 +166,6 @@ void CodeGen::visit(const FuncStmt *stmt) {
 }
 
 void CodeGen::visit(const ReturnStmt *stmt) {
-  std::cerr << "[ReturnStmt]" << std::endl;
   if (stmt->value) {
     emit(stmt->value);
   }
@@ -197,19 +193,15 @@ void CodeGen::visit(const Unary *expr) {
 }
 
 void CodeGen::visit(const Binary *expr) {
-  std::cerr << "[BinaryOp]" << std::endl;
   // TODO(neeilan): Explore passing left register to accumulate
   emit(&expr->left);
   emit(&expr->right);
-  std::cerr << "[BinaryOp - L/R emitted]" << std::endl;
 
   auto const left = valueRefs_.get(&expr->left);
   auto const right = valueRefs_.get(&expr->right);
 
-  std::cerr << "[BinaryOp - L/R refs found: L=" << left << " R=" << right << "]" << std::endl;
   // We can't add into a literal, so we need an 'assignable' dest
   auto const dest = valueRefs_.makeAssignable(&expr->left);
-  std::cerr << "[dest=" << dest << "]" << std::endl;
   valueRefs_.regOverwrite(&expr->left, dest);
   if (left != dest) {
     text_.instr({"mov", left, dest });
@@ -257,7 +249,6 @@ void CodeGen::visit(const StrLiteral *expr) {
 }
 
 void CodeGen::visit(const NumLiteral *expr) {
-  std::cerr << "[NumLiteral]" << std::endl;
   auto const exprType = exprTypes_.find(expr);
   if(exprType == exprTypes_.end()) { std::cerr << "[Unknown ExprType]" << std::endl; return; }
   // TODO: How do negative literals work here?
