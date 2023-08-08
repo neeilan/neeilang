@@ -94,14 +94,23 @@ void CodeGen::visit(const VarStmt *stmt) {
   auto const bpOffset = stackFrames_.bases[enclosingFunc].bpOffsetOf(stmt);
   assert(bpOffset.has_value());
 
-  auto const val = valueRefs_.get(stmt->expression);
+  auto val = valueRefs_.get(stmt->expression);
   valueRefs_.regFree(valueRefs_.get(stmt->expression));
 
   // dest is the memory location of this variable on the stack
   // to start off with, assume only one int64 variable, first thing on the stack
   auto const dest = (*bpOffset ? (std::string("-") + std::to_string(*bpOffset)) : std::string{}) + "(%rbp)";
   // 8 bytes so use q suffix
+  bool mustRestoreVal = false;
+  if (val[0] != '%' && dest[0] != '%' && val[0] != '$') {
+    auto [valReg, mustRestore] = valueRefs_.acquireRegister(stmt->expression);
+    text_.instr({"mov", val, valReg});
+    val = valReg; mustRestoreVal = mustRestore;
+  }
   text_.instr({ "movq", val, dest});
+  if (mustRestoreVal) {
+    text_.instr({"pop", val});
+  }
   namedVals->insert(varName, dest);
 }
 
@@ -142,8 +151,36 @@ void CodeGen::visit(const IfStmt *stmt) {
   }
   text_.label({postIfStmtLabel});
 }
+
 void CodeGen::visit(const WhileStmt *stmt) {
-  std::cerr << "[WhileStmt]" << std::endl;
+  static uint16_t id = 1;
+  auto const checkCondLabel =
+      std::string("__loop_check_") + std::to_string(id);
+  auto const postLoopLabel = std::string("__post_loop_") + std::to_string(id++);
+
+  text_.label({checkCondLabel});
+  emit(stmt->condition);
+  auto cond = valueRefs_.get(stmt->condition);
+  bool mustRestoreCond = false;
+  if (cond[0] != '%') {
+    auto const [condReg, mustRestore] =
+        valueRefs_.acquireRegister(stmt->condition);
+    text_.instr({"mov", cond, condReg});
+    cond = condReg;
+    mustRestoreCond = mustRestore;
+  }
+  text_.instr({"test", cond, cond});
+  text_.instr({"je", postLoopLabel});
+  if (stmt->body) {
+    emit(stmt->body);
+  }
+  text_.instr({"jmp", checkCondLabel});
+  text_.label({postLoopLabel});
+  if (mustRestoreCond) {
+    text_.instr({"pop", cond});
+  } else {
+    valueRefs_.regFree(cond);
+  }
 }
 
 void CodeGen::visit(const FuncStmt *stmt) {
@@ -153,12 +190,14 @@ void CodeGen::visit(const FuncStmt *stmt) {
   text_.label({stmt->name.lexeme});
   text_.instr({"pushq", "%rbp"});
 
-// In x86 and x86-64 assembly, the stack pointer %rsp points to the next empty slot on the stack, not to a valid value. It always points to the memory location that will be used for the next push operation.
-
-  // Also, values 'grow' towards lower addresses
+  // In x86 and x86-64 assembly, the stack pointer %rsp points to the next empty
+  // slot on the stack, not to a valid value. It always points to the memory
+  // location that will be used for the next push operation.
+  // Also, values 'grow' towards lower addresses.
   auto const stackLocalsBase = stackFrames_.bases[stmt];
-  text_.instr({ "movq", "%rsp", "%rbp"});
-  text_.instr({ "subq", "$" + std::to_string(stackLocalsBase.totalSize), "%rsp"}); // temporarily - var sits between bp and sp
+  text_.instr({"movq", "%rsp", "%rbp"});
+  text_.instr({"subq", "$" + std::to_string(stackLocalsBase.totalSize),
+               "%rsp"});  // locals sit between bp and sp
 
   emit(stmt->body);
   enclosingFunc = oldEnclosingFunc;
