@@ -434,19 +434,19 @@ void TypeChecker::visit(const Grouping *expr) {
 
 void TypeChecker::visit(const Logical *expr) {
   NLType lhs_type = check(&expr->left);
-  NLType rhs_type = check(&expr->left);
+  NLType rhs_type = check(&expr->right);
   if (has_type_error({lhs_type, rhs_type})) {
     expr_types[expr] = TypeError();
     return;
   }
 
-  if (!match(lhs_type, {Primitives::Int(), Primitives::Float()})) {
+  if (!match(lhs_type, {Primitives::Bool()})) {
     Neeilang::error(expr->op, "Left operand of logical operator must be Bool");
     expr_types[expr] = TypeError();
     return;
   }
 
-  if (!match(rhs_type, {Primitives::Int(), Primitives::Float()})) {
+  if (!match(rhs_type, {Primitives::Bool()})) {
     Neeilang::error(expr->op, "Right operand of logical operator must be Bool");
     expr_types[expr] = TypeError();
     return;
@@ -462,9 +462,16 @@ void TypeChecker::visit(const Unary *expr) {
     return;
   }
 
-  if (!match(rhs_type, {Primitives::Int(), Primitives::Float()})) {
+  if (expr->op.type == TokenType::MINUS &&
+      !match(rhs_type, {Primitives::Int(), Primitives::Float()})) {
     Neeilang::error(expr->op,
-                    "Right side of unary expression must be a number.");
+                    "Right side of unary expression [-] must be a number.");
+    expr_types[expr] = TypeError();
+    return;
+  } else if (expr->op.type == TokenType::BANG &&
+             !match(rhs_type, {Primitives::Bool()})) {
+    Neeilang::error(expr->op,
+                    "Right side of unary expression [!] must be a Bool.");
     expr_types[expr] = TypeError();
     return;
   }
