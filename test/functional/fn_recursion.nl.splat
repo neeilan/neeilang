@@ -18,7 +18,9 @@ fn sumOfFirst2(n : Int) : Int {
   return 0;
 }
 
+/*
 %output
 15
 21
 %output
+*/

@@ -89,13 +89,13 @@ void CodeGen::visit(const VarStmt *stmt) {
     valueRefs_.assign(stmt->expression, "$0");
   }
 
-  valueRefs_.regFree(valueRefs_.get(stmt->expression));
 
   // For globals, space should be reserved in .data and addressed relative to %rip
   auto const bpOffset = stackFrames_.bases[enclosingFunc].bpOffsetOf(stmt);
   assert(bpOffset.has_value());
 
   auto const val = valueRefs_.get(stmt->expression);
+  valueRefs_.regFree(valueRefs_.get(stmt->expression));
 
   // dest is the memory location of this variable on the stack
   // to start off with, assume only one int64 variable, first thing on the stack
@@ -103,7 +103,6 @@ void CodeGen::visit(const VarStmt *stmt) {
   // 8 bytes so use q suffix
   text_.instr({ "movq", val, dest});
   namedVals->insert(varName, dest);
-
 }
 
 void CodeGen::visit(const ClassStmt *stmt) {
@@ -122,25 +121,26 @@ void CodeGen::visit(const IfStmt *stmt) {
   auto const cond = valueRefs_.makeAssignable(stmt->condition);
   if (ref != cond) {
     text_.instr({"mov", ref, cond });
+    valueRefs_.regFree(ref); // TODO: Can we do this by reference-counting?
   }
 
-  auto elseLabel = std::string("_post_if_") + std::to_string(id++);
-  auto postElseLabel = std::string("_post_else_") + std::to_string(id);
+  auto elseLabel = std::string("__else_") + std::to_string(id++);
+  auto postIfStmtLabel = std::string("__post_ifstmt_") + std::to_string(id);
   // cond AND cond
-  // If result is 0, set zero flag to 1
-  // i.e. if cond is false, set ZF to 1
+  // cond & cond - set flags
+  // if cond is true - ZF = 0 ; jne jumps
+  // else            = ZF = 1 ;  je jumps
   text_.instr({"test", cond, cond });
   // je = jump if ZF=1 (i.e cond is 0)
-  text_.instr({"je", elseLabel});
+  text_.instr({"je", stmt->else_branch ? elseLabel : postIfStmtLabel});
+  valueRefs_.regFree(cond);
   emit(stmt->then_branch);
   if (stmt->else_branch) {
-    text_.instr({"jmp", postElseLabel});
-  }
-  text_.label({elseLabel});
-  if (stmt->else_branch) {
+    text_.instr({"jmp", postIfStmtLabel});
+    text_.label({elseLabel});
     emit(stmt->else_branch);
-    text_.label({postElseLabel});
   }
+  text_.label({postIfStmtLabel});
 }
 void CodeGen::visit(const WhileStmt *stmt) {
   std::cerr << "[WhileStmt]" << std::endl;
@@ -168,9 +168,9 @@ void CodeGen::visit(const FuncStmt *stmt) {
 void CodeGen::visit(const ReturnStmt *stmt) {
   if (stmt->value) {
     emit(stmt->value);
+    text_.instr({"mov", valueRefs_.get(stmt->value), "%rax"});
   }
 
-  text_.instr({"mov", valueRefs_.get(stmt->value), "%rax"});
   text_.instr({"mov", "%rbp", "%rsp"});
   text_.instr({"popq", "%rbp"});
   text_.instr({"ret"});
@@ -188,7 +188,12 @@ void CodeGen::visit(const Unary *expr) {
   if (r != dest) {
     text_.instr({"mov", r, dest });
   }
-  text_.instr({"neg", dest});
+
+  if (expr->op.type == TokenType::MINUS) {
+    text_.instr({"neg", dest});
+  } else { // BANG
+    text_.instr({"not", dest});
+  }
   valueRefs_.assign(expr, dest);
 }
 
@@ -205,6 +210,7 @@ void CodeGen::visit(const Binary *expr) {
   valueRefs_.regOverwrite(&expr->left, dest);
   if (left != dest) {
     text_.instr({"mov", left, dest });
+    valueRefs_.regFree(left);
   }
 
   auto binaryOpEmit = [&](auto const &opcode){
@@ -213,6 +219,14 @@ void CodeGen::visit(const Binary *expr) {
     text_.instr({ opcode, right, dest });
     valueRefs_.regOverwrite(expr, dest);
     // Can resuse `right` as dest is the accumulator
+    valueRefs_.regFree(right);
+  };
+
+  auto cmpOpEmit = [&](auto const &setByteOp){
+    auto destByte = dest[0] == '%' ? (dest+"b") : dest;
+    text_.instr({"cmp", right, dest });
+    text_.instr({setByteOp, destByte});
+    valueRefs_.regOverwrite(expr, dest);
     valueRefs_.regFree(right);
   };
 
@@ -243,13 +257,29 @@ void CodeGen::visit(const Binary *expr) {
     valueRefs_.regFree(right);
     break;
   }
-  case GREATER:
-  case GREATER_EQUAL:
-  case LESS:
-  case LESS_EQUAL:
-  case EQUAL_EQUAL:
+  case GREATER: {
+    cmpOpEmit("setg");
+    break;
+  }
+  case LESS: {
+    cmpOpEmit("setc");
+    break;
+  }
+  case GREATER_EQUAL: {
+    cmpOpEmit("setge");
+    break;
+  }
+  case LESS_EQUAL: {
+    cmpOpEmit("setle");
+    break;
+  }
+  case EQUAL_EQUAL: {
+    cmpOpEmit("sete");
+    break;
+  }
   case BANG_EQUAL: {
-    // break;
+    cmpOpEmit("setne");
+    break;
   }
   default: { std::cerr << "[Unimplemented BinaryOp]" << std::endl; }
   }
@@ -263,8 +293,17 @@ void CodeGen::visit(const Grouping *expr) {
 
 void CodeGen::visit(const StrLiteral *expr) {
   static uint16_t strLiteralId = 1;
-  auto const label = std::string("_str_literal_") + std::to_string(strLiteralId++);
+  // Reuse literals if possible
+  static std::unordered_map<std::string, std::string> literalToLabel;
+  auto it = literalToLabel.find(expr->value);
+  if (it != literalToLabel.end()) {
+    valueRefs_.assign(expr, it->second);
+    return;
+  }
+  auto const label =
+      std::string("__strlit_") + std::to_string(strLiteralId++);
   rodata_.directive({label + ": .asciz \"" + expr->value + "\""});
+  literalToLabel[expr->value] = label;
   valueRefs_.assign(expr, label);
 }
 
@@ -291,6 +330,24 @@ void CodeGen::visit(const BoolLiteral *expr) {
 
 void CodeGen::visit(const Variable *expr) {
   auto const &varName = expr->name.lexeme;
+  auto key = TypeTableUtil::fn_key(varName);
+  auto const nlType = sm_.current().typetab->get(key);
+  // Referring to a function?
+  if (nlType && nlType->is_function_type()) {
+    valueRefs_.assign(expr, varName);
+    return;
+  }
+
+  // Referring to a function parameter?
+  auto const& params = enclosingFunc->parameters;
+  static std::vector<std::string> argRegs = { "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9" };
+  for (size_t i = 0; i < params.size(); ++i) {
+    if (varName == params[i].lexeme) {
+      valueRefs_.assign(expr, argRegs[i]);
+      return;
+    }
+  }
+
   valueRefs_.assign(expr, namedVals->get(varName));
 
 }
@@ -318,7 +375,7 @@ void CodeGen::visit(const Logical *expr) {
   auto const right = valueRefs_.get(&expr->right);
   auto const dest = valueRefs_.makeAssignable(&expr->left);
 
-  auto binaryOpEmit = [&](auto const &opcode) {
+  auto logicalOpEmit = [&](auto const &opcode) {
     text_.instr({opcode, right, dest});
     valueRefs_.regOverwrite(expr, dest);
     // Can resuse `right` as dest is the accumulator
@@ -327,11 +384,11 @@ void CodeGen::visit(const Logical *expr) {
 
   switch (expr->op.type) {
     case AND: {
-    binaryOpEmit("and");
+    logicalOpEmit("and");
     return;
     }
     case OR: {
-    binaryOpEmit("or");
+    logicalOpEmit("or");
     return;
     }
     default: {
@@ -340,8 +397,51 @@ void CodeGen::visit(const Logical *expr) {
   }
 }
 
-void CodeGen::visit(const Call *) {
-  // TODO: Need to align the stack
+void CodeGen::visit(const Call *expr) {
+  // 3 cases:
+  // 1) Free function [implemented below]
+  // 2) Method
+  // 3) Constructor
+   emit(&expr->callee);
+   auto callee = valueRefs_.get(&expr->callee);
+
+  // Per System V ABI
+  static std::vector<std::string> argRegs = { "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9" };
+  assert(expr->args.size() <= argRegs.size() && "Not enough registers to pass args");
+
+  // Align the stack if necessary
+  auto const stackLocals = stackFrames_.bases[enclosingFunc];
+  if (stackLocals.totalSize % 16) {
+    text_.instr({"push", "%rbx"});
+  }
+
+  // Save scratch registers
+  for (size_t i = 0; i < expr->args.size(); ++i) {
+    text_.instr({"push", argRegs[i]});
+  }
+
+  for (size_t i = 0; i < expr->args.size(); i++) {
+    const Expr *arg = expr->args[i];
+    emit(arg);
+    auto const rArg = valueRefs_.get(arg);
+    text_.instr({"mov", rArg, argRegs[i]});
+    if (rArg != argRegs[i]) {
+      valueRefs_.regFree(rArg);
+    }
+  }
+
+  text_.instr({"call", callee});
+  valueRefs_.assign(expr, "%rax");
+
+  // Restore scratch registers
+  for (size_t i = 0; i < expr->args.size(); ++i) {
+    text_.instr({"pop", argRegs[i]});
+  }
+
+  if (stackLocals.totalSize % 16) {
+    text_.instr({"pop", "%rbx"});
+  }
+
 }
 void CodeGen::visit(const Get *) {}
 void CodeGen::visit(const Set *) {}
