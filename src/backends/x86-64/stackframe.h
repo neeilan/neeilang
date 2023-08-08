@@ -31,6 +31,7 @@ struct FrameBase {
     }
     return std::nullopt;
   }
+  // Return address is pushed 'after' the caller aligns the stack
   std::vector<std::pair<const VarStmt *, uint16_t>> sizes = {{nullptr, 8}};
   uint16_t totalSize = 8;
 };

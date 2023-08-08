@@ -61,8 +61,8 @@ public:
       registerToExpr_[reg] = expr;
   }
 
-  void assign(const Expr *expr, const std::string &immediate) {
-    exprToRef_[expr] = immediate;
+  void assign(const Expr *expr, const std::string &immediateOrLabel) {
+    exprToRef_[expr] = immediateOrLabel;
   }
 
   ValueRef get(const Expr *expr) {
