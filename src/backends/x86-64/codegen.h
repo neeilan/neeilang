@@ -167,6 +167,10 @@ private:
   void exitScope() { sm_.exit(); assert(namedVals && "Only scope on stack!"); namedVals = namedVals->parent; };
   std::shared_ptr<CactusTable<std::string, ValueRefTracker::ValueRef>> namedVals;
 
+
+
+  ValueRefTracker::ValueRef emitArrayInit(NLType nlType, const std::vector<const Expr *>& dims);
+
   ValueRefTracker valueRefs_;
 
   const ExprTypes &exprTypes_;

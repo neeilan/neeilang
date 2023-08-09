@@ -2,9 +2,47 @@
 
 #include <iostream>
 
+#include "arrays.h"
 #include "primitives.h"
 
 namespace x86_64 {
+
+ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
+                                const std::vector<const Expr *>& dims) {
+
+  auto innerType = Arrays::next_enclosed_type(nlType);
+  assert(innerType == Primitives::Int() && "Only Int arrays supported");
+  assert(dims.size() == 1);
+  // TODO: check that each dim is > 0.
+  emit(dims[0]);
+  text_.instr({"push", "%rdi"});
+  // rdi holds # of elems
+  text_.instr({"mov", valueRefs_.get(dims[0]), "%rdi"});
+  // rdi now holds # of elems * size per elem
+  text_.instr({"imul", "$8", "%rdi"});
+  // rdi now holds another 8 bytes of header
+  text_.instr({"add", "$8", "%rdi"});
+  // Align the stack if necessary
+  // TODO: Can we wrap this in an AlignedCall RAII?
+  auto const stackLocals = stackFrames_.bases[enclosingFunc];
+  // == 0 because we push rsi - can we track this with RAII or similar?
+  if (stackLocals.totalSize % 16 == 0) {
+    text_.instr({"push", "%rbx"});
+  }
+  // %rdi holds array size
+  text_.instr({"call", "malloc"});
+  if (stackLocals.totalSize % 16 == 0) {
+    text_.instr({"pop", "%rbx"});
+  }
+
+  // Restore %rdi
+  text_.instr({"pop", "%rdi"});
+  // %rax is a pointer to the malloc'd memory
+  // Array header { u32: size of each element, u32: number of elements }
+  text_.instr({"movl", "$8", "(%rax)"});
+  text_.instr({"movl", valueRefs_.get(dims[0]), "4(%rax)"});
+  return "%rax";
+}
 
 void CodeGen::generate(const std::vector<Stmt *> &program) {
   sm_.reset();
@@ -81,12 +119,15 @@ void CodeGen::visit(const PrintStmt *stmt) {
 void CodeGen::visit(const VarStmt *stmt) {
   auto const &varName = stmt->name.lexeme;
   auto const nlType = sm_.current().typetab->get(varName);
-
   if (stmt->expression) {
     emit(stmt->expression);
   } else {
-    // TODO: Pick reasonable defaults, based on type.
-    valueRefs_.assign(stmt->expression, "$0");
+    if (nlType->is_array_type()) {
+    valueRefs_.assign(stmt->expression, emitArrayInit(nlType, stmt->tp.dims));
+    } else {
+      // TODO: Pick reasonable defaults, based on type.
+      valueRefs_.assign(stmt->expression, "$0");
+    }
   }
 
 
@@ -484,8 +525,41 @@ void CodeGen::visit(const Call *expr) {
 }
 void CodeGen::visit(const Get *) {}
 void CodeGen::visit(const Set *) {}
-void CodeGen::visit(const GetIndex *) {}
-void CodeGen::visit(const SetIndex *) {}
+
+void CodeGen::visit(const GetIndex * expr) {
+  emit(&expr->callee);
+  emit(&expr->index);
+
+  // arr is array base - 8
+  auto const arr = valueRefs_.makeAssignable(&expr->callee);
+  text_.instr({"mov", valueRefs_.get(&expr->callee), arr});
+  auto const index = valueRefs_.makeAssignable(&expr->index);
+  text_.instr({"mov", valueRefs_.get(&expr->index), index});
+
+  auto const elem = std::string("8(") + arr + ", " + index + ", 8)";
+  valueRefs_.regFree(arr);
+  valueRefs_.regFree(index);
+  auto res = valueRefs_.makeAssignable(expr);
+  text_.instr({"movq",  elem, res});
+  valueRefs_.assign(expr, res);
+}
+
+void CodeGen::visit(const SetIndex *expr) {
+  emit(&expr->callee);
+  emit(&expr->index);
+  emit(&expr->value);
+
+  // arr is array base - 8
+  auto const arr = valueRefs_.makeAssignable(&expr->callee);
+  text_.instr({"mov", valueRefs_.get(&expr->callee), arr});
+  auto const index = valueRefs_.makeAssignable(&expr->index);
+  text_.instr({"mov", valueRefs_.get(&expr->index), index});
+
+  auto const elem = std::string("8(") + arr + ", " + index + ", 8)";
+  text_.instr({"movq", valueRefs_.get(&expr->value) , elem});
+  valueRefs_.assign(expr, elem);
+}
+
 void CodeGen::visit(const This *) {}
 void CodeGen::visit(const SentinelExpr *) {}
 
