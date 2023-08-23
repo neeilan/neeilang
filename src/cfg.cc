@@ -27,4 +27,4 @@ std::vector<std::shared_ptr<NL::BasicBlock>> NL::BasicBlock::successors() {
 
 bool NL::BasicBlock::is_void_func() { return _fn_entry && _is_void; }
 
-void NL::BasicBlock::set_returns(bool ret) { _returns = ret; };
+void NL::BasicBlock::set_returns(bool ret) { _returns = ret; }
