@@ -170,6 +170,7 @@ private:
 
 
   ValueRefTracker::ValueRef emitArrayInit(NLType nlType, const std::vector<const Expr *>& dims);
+  ValueRefTracker::ValueRef emitClassInit(NLType nlType);
 
   ValueRefTracker valueRefs_;
 
@@ -177,7 +178,10 @@ private:
   ScopeManager &sm_;
 
   StackFrameSizer stackFrames_;
-  const FuncStmt * enclosingFunc = nullptr;
+  const FuncStmt * enclosingFunc_ = nullptr;
+  NLType enclosingClass_ = nullptr;
+  ValueRefTracker::ValueRef lastDereferencedObj_;
+
 
   Section rodata_;
   Section data_;

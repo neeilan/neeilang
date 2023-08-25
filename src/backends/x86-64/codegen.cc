@@ -1,11 +1,22 @@
 #include "backends/x86-64/codegen.h"
 
 #include <iostream>
+#include <functional>
 
 #include "arrays.h"
 #include "primitives.h"
 
 namespace x86_64 {
+
+// TODO: Copied from LLVM backend - put in common utils
+static bool is_initializer(const std::string &fn) {
+  const std::string init("_init");
+  if (fn.length() >= init.length()) {
+    return (0 == fn.compare(fn.length() - init.length(), init.length(), init));
+  } else {
+    return false;
+  }
+}
 
 ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
                                 const std::vector<const Expr *>& dims) {
@@ -24,7 +35,7 @@ ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
   text_.instr({"add", "$8", "%rdi"});
   // Align the stack if necessary
   // TODO: Can we wrap this in an AlignedCall RAII?
-  auto const stackLocals = stackFrames_.bases[enclosingFunc];
+  auto const stackLocals = stackFrames_.bases[enclosingFunc_];
   // == 0 because we push rsi - can we track this with RAII or similar?
   if (stackLocals.totalSize % 16 == 0) {
     text_.instr({"push", "%rbx"});
@@ -41,6 +52,28 @@ ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
   // Array header { u32: size of each element, u32: number of elements }
   text_.instr({"movl", "$8", "(%rax)"});
   text_.instr({"movl", valueRefs_.get(dims[0]), "4(%rax)"});
+  return "%rax";
+}
+
+ValueRefTracker::ValueRef CodeGen::emitClassInit(NLType nlType) {
+  // Total sizes of members
+  // + vtable ptr
+  std::function<uint32_t(NLType)> sizeOfMembers = [&](NLType t) -> uint32_t {
+    if (!t) { return 0; }
+    return t->fields.size() * 8 + sizeOfMembers(t->supertype);  
+  };
+  // Total size is sizeOfMembers + 8 bytes for a vtable pointer
+  text_.instr({"mov", std::string("$")+std::to_string(sizeOfMembers(nlType)+8), "%rdi" });
+  text_.instr({"call", "malloc"});
+
+  // static std::unordered_map<NLType, std::string> vtableLabels;
+  // auto it = vtableLabels.find(t);
+  // if (it == vtableLabels.end()) {
+  //   // determine the vtable size
+  //   // emit the appropriate methods (if not already emitted)
+  // }
+  
+  // %rax is a pointer to the malloc'd memory
   return "%rax";
 }
 
@@ -83,7 +116,7 @@ void CodeGen::visit(const PrintStmt *stmt) {
   emit(e);
 
   // Align the stack if necessary
-  auto const stackLocals = stackFrames_.bases[enclosingFunc];
+  auto const stackLocals = stackFrames_.bases[enclosingFunc_];
   if (stackLocals.totalSize % 16) {
     text_.instr({"push", "%rbx"});
   }
@@ -132,7 +165,7 @@ void CodeGen::visit(const VarStmt *stmt) {
 
 
   // For globals, space should be reserved in .data and addressed relative to %rip
-  auto const bpOffset = stackFrames_.bases[enclosingFunc].bpOffsetOf(stmt);
+  auto const bpOffset = stackFrames_.bases[enclosingFunc_].bpOffsetOf(stmt);
   assert(bpOffset.has_value());
 
   auto val = valueRefs_.get(stmt->expression);
@@ -156,11 +189,13 @@ void CodeGen::visit(const VarStmt *stmt) {
 }
 
 void CodeGen::visit(const ClassStmt *stmt) {
+  enclosingClass_ = sm_.current().typetab->get(stmt->name.lexeme);;
   enterScope();
   for (const Stmt *method : stmt->methods) {
     emit(method);
   }
   exitScope();
+  enclosingClass_ = nullptr;
 }
 
 void CodeGen::visit(const IfStmt *stmt) {
@@ -226,9 +261,17 @@ void CodeGen::visit(const WhileStmt *stmt) {
 
 void CodeGen::visit(const FuncStmt *stmt) {
   enterScope();
-  auto *oldEnclosingFunc = enclosingFunc;
-  enclosingFunc = stmt;
-  text_.label({stmt->name.lexeme});
+  auto *oldenclosingFunc_ = enclosingFunc_;
+  enclosingFunc_ = stmt;
+  auto label = [&]() {
+    std::string name;
+    if (enclosingClass_) {
+      name += enclosingClass_->name;
+      name += "_";
+    }
+    return name + stmt->name.lexeme;
+  }();
+  text_.label({label});
   text_.instr({"pushq", "%rbp"});
 
   // In x86 and x86-64 assembly, the stack pointer %rsp points to the next empty
@@ -241,7 +284,7 @@ void CodeGen::visit(const FuncStmt *stmt) {
                "%rsp"});  // locals sit between bp and sp
 
   emit(stmt->body);
-  enclosingFunc = oldEnclosingFunc;
+  enclosingFunc_ = oldenclosingFunc_;
   exitScope();
 }
 
@@ -419,7 +462,7 @@ void CodeGen::visit(const Variable *expr) {
   }
 
   // Referring to a function parameter?
-  auto const& params = enclosingFunc->parameters;
+  auto const& params = enclosingFunc_->parameters;
   static std::vector<std::string> argRegs = { "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9" };
   for (size_t i = 0; i < params.size(); ++i) {
     if (varName == params[i].lexeme) {
@@ -485,18 +528,34 @@ void CodeGen::visit(const Call *expr) {
    emit(&expr->callee);
    auto callee = valueRefs_.get(&expr->callee);
 
+  // Constructors
+  // ------------
+  auto const isMethodCall = callee.find('_') != std::string::npos;
+  // If it's a constructor, we must first allocate the object.
+  if (is_initializer(callee)) {
+    auto const className = callee.substr(0, callee.find('_'));
+    auto const classType = sm_.current().typetab->get(className);
+    emitClassInit(classType);
+    // Pass `this` as first arg
+    text_.instr({"mov", "%rax", "%rdi"});
+  } else if (isMethodCall) {
+    // Pass `this` as first arg
+    text_.instr({"mov", lastDereferencedObj_, "%rdi"});
+  }
+
   // Per System V ABI
   static std::vector<std::string> argRegs = { "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9" };
-  assert(expr->args.size() <= argRegs.size() && "Not enough registers to pass args");
+  auto const numArgs = expr->args.size() + isMethodCall; // +1 for `this`
+  assert(numArgs <= argRegs.size() && "Not enough registers to pass args");
 
   // Align the stack if necessary
-  auto const stackLocals = stackFrames_.bases[enclosingFunc];
+  auto const stackLocals = stackFrames_.bases[enclosingFunc_];
   if (stackLocals.totalSize % 16) {
     text_.instr({"push", "%rbx"});
   }
 
   // Save scratch registers
-  for (size_t i = 0; i < expr->args.size(); ++i) {
+  for (size_t i = 0; i < numArgs; ++i) {
     text_.instr({"push", argRegs[i]});
   }
 
@@ -504,8 +563,10 @@ void CodeGen::visit(const Call *expr) {
     const Expr *arg = expr->args[i];
     emit(arg);
     auto const rArg = valueRefs_.get(arg);
-    text_.instr({"mov", rArg, argRegs[i]});
-    if (rArg != argRegs[i]) {
+    // If method call, first register is used for `this`
+    auto const targetReg = i + isMethodCall;
+    text_.instr({"mov", rArg, argRegs[targetReg]});
+    if (rArg != argRegs[targetReg]) {
       valueRefs_.regFree(rArg);
     }
   }
@@ -514,7 +575,7 @@ void CodeGen::visit(const Call *expr) {
   valueRefs_.assign(expr, "%rax");
 
   // Restore scratch registers
-  for (size_t i = 0; i < expr->args.size(); ++i) {
+  for (size_t i = 0; i < numArgs; ++i) {
     text_.instr({"pop", argRegs[i]});
   }
 
@@ -522,8 +583,34 @@ void CodeGen::visit(const Call *expr) {
     text_.instr({"pop", "%rbx"});
   }
 
+  // End of free function call
+
 }
-void CodeGen::visit(const Get *) {}
+void CodeGen::visit(const Get *expr) {
+  auto fieldName = expr->name.lexeme;
+  auto calleeType = exprTypes_.find(&expr->callee);
+  assert(calleeType != exprTypes_.end() && "NL Type of callee unknown");
+
+  // Initializers / static fields
+  if (calleeType->second == Primitives::Class()) {
+    const Variable *callee = static_cast<const Variable *>(&expr->callee);
+    const auto& className = callee->name.lexeme;
+    if (fieldName == "init") {
+      valueRefs_.assign(expr, className + "_init");
+    }
+    return;
+  }
+
+  // Emit the callee
+  emit(&expr->callee);
+  lastDereferencedObj_ = valueRefs_.get(&expr->callee);
+
+  // Methods
+  if (calleeType->second->has_method(fieldName)) {
+    valueRefs_.assign(expr, calleeType->second->name + "_" + fieldName);
+  }
+}
+
 void CodeGen::visit(const Set *) {}
 
 void CodeGen::visit(const GetIndex * expr) {
@@ -560,7 +647,11 @@ void CodeGen::visit(const SetIndex *expr) {
   valueRefs_.assign(expr, elem);
 }
 
-void CodeGen::visit(const This *) {}
+void CodeGen::visit(const This *expr) {
+  // For a method call, `this` is the first argument passed in %rdi
+  valueRefs_.assign(expr, "(%rdi)");
+}
+
 void CodeGen::visit(const SentinelExpr *) {}
 
 void CodeGen::dump() const {
