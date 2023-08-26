@@ -1,7 +1,8 @@
 fn main() : Int {
   var a : Animal = Animal.init("somename");
+  print "init done";
   print a.feet;
-  print a.pi;
+  //print a.pi;
 
   a.feet = 4;
   print a.feet;
@@ -9,25 +10,27 @@ fn main() : Int {
   a.feet = 2;
   print a.feet;
 
-  a.pi = 3.141592;
-  print a.pi;
+  //a.pi = 3.141592;
+  //print a.pi;
 
   return 0;
 }
 
 class Animal {
   feet : Int;
-  pi : Float;
+  //pi : Float;
 
   init(name : String) {
+    print(name);
     this.feet = 1;
-    this.pi = 0.0;
+    //this.pi = 0.0;
     return this;
   }
 }
 
 /*
 %output
+somename
 1
 0.000000
 4

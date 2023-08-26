@@ -478,10 +478,11 @@ void CodeGen::visit(const Variable *expr) {
 
   // Referring to a function parameter?
   auto const& params = enclosingFunc_->parameters;
+  auto hasImplicitThisArg = enclosingClass_ != nullptr;
   static std::vector<std::string> argRegs = { "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9" };
   for (size_t i = 0; i < params.size(); ++i) {
     if (varName == params[i].lexeme) {
-      valueRefs_.assign(expr, argRegs[i]);
+      valueRefs_.assign(expr, argRegs[i + hasImplicitThisArg]);
       return;
     }
   }
@@ -552,9 +553,13 @@ void CodeGen::visit(const Call *expr) {
     auto const classType = sm_.current().typetab->get(className);
     emitClassInit(classType);
     // Pass `this` as first arg
+    text_.instr({"push", "%rdi"});
+    // Preserve the allocated address in case `init` clobbers it
+    text_.instr({"push", "%rax"});
     text_.instr({"mov", "%rax", "%rdi"});
   } else if (isMethodCall) {
     // Pass `this` as first arg
+    text_.instr({"push", "%rdi"});
     text_.instr({"mov", lastDereferencedObj_, "%rdi"});
   }
 
@@ -565,12 +570,13 @@ void CodeGen::visit(const Call *expr) {
 
   // Align the stack if necessary
   auto const stackLocals = stackFrames_.bases[enclosingFunc_];
-  if (stackLocals.totalSize % 16) {
+  // We push/pop %rdi for method-like calls
+  if (stackLocals.totalSize % (16 - 8*isMethodCall)) {
     text_.instr({"push", "%rbx"});
   }
 
   // Save scratch registers
-  for (size_t i = 0; i < numArgs; ++i) {
+  for (size_t i = isMethodCall; i < numArgs; ++i) {
     text_.instr({"push", argRegs[i]});
   }
 
@@ -590,16 +596,20 @@ void CodeGen::visit(const Call *expr) {
   valueRefs_.assign(expr, "%rax");
 
   // Restore scratch registers
-  for (size_t i = 0; i < numArgs; ++i) {
+  for (size_t i = isMethodCall; i < numArgs; ++i) {
     text_.instr({"pop", argRegs[i]});
   }
 
-  if (stackLocals.totalSize % 16) {
+  if (stackLocals.totalSize % (16 - 8*isMethodCall)) {
     text_.instr({"pop", "%rbx"});
   }
 
-  // End of free function call
-
+  if (isMethodCall) {
+    if (is_initializer(callee)) {
+      text_.instr({"pop", "%rax"});
+    }
+    text_.instr({"pop", "%rdi"});
+  }
 }
 void CodeGen::visit(const Get *expr) {
   auto fieldName = expr->name.lexeme;
@@ -631,8 +641,8 @@ void CodeGen::visit(const Get *expr) {
   // Value is idx * 8 byte offset into the address of the last deref object
   valueRefs_.assign(&expr->callee, lastDereferencedObj_);
   text_.instr({"movq", lastDereferencedObj_, "%rax"});
-  // constexpr uint64_t fieldSize = 8;
 
+  // constexpr uint64_t fieldSize = 8;
   for (int i = 0; i < idx; i++) {
     text_.instr({"add", "$8", "%rax"});
   }
@@ -644,7 +654,31 @@ void CodeGen::visit(const Get *expr) {
   valueRefs_.assign(expr, res);
 }
 
-void CodeGen::visit(const Set *) {}
+void CodeGen::visit(const Set *expr) {
+  auto fieldName = expr->name.lexeme;
+  auto calleeType = exprTypes_.find(&expr->callee);
+  assert(calleeType != exprTypes_.end() && "NL Type of callee unknown");
+
+  // Emit the callee
+  emit(&expr->callee);
+  auto const calleeRef = valueRefs_.get(&expr->callee);
+
+  // Emit the value
+  emit(&expr->value);
+  auto const valueRef = valueRefs_.get(&expr->value);
+
+  auto idx = calleeType->second->field_idx(fieldName);
+  // Value is idx * 8 byte offset into the address of the last deref object
+  text_.instr({"movq", calleeRef, "%rax"});
+  for (int i = 0; i < idx; i++) {
+    text_.instr({"add", "$8", "%rax"});
+  }
+  auto const fieldAccess = "(%rax)";
+  text_.instr({"movq", valueRef, fieldAccess});
+
+  valueRefs_.regFree(calleeRef);
+  valueRefs_.regFree(valueRef);
+}
 
 void CodeGen::visit(const GetIndex * expr) {
   emit(&expr->callee);
@@ -682,7 +716,7 @@ void CodeGen::visit(const SetIndex *expr) {
 
 void CodeGen::visit(const This *expr) {
   // For a method call, `this` is the first argument passed in %rdi
-  valueRefs_.assign(expr, "(%rdi)");
+  valueRefs_.assign(expr, "%rdi");
 }
 
 void CodeGen::visit(const SentinelExpr *) {}
