@@ -1,0 +1,17 @@
+fn funcall(x : String) : Void {
+	print x;
+}
+
+fn main() : Int {
+	var x = "hii";
+	funcall(x);
+	funcall("hiii");
+	return 0;
+}
+
+/*
+%output
+hii
+hiii
+%output
+*/

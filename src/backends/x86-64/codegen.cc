@@ -123,12 +123,7 @@ void CodeGen::visit(const PrintStmt *stmt) {
 
   auto const exprType = exprTypes_.find(e);
   if (exprType->second == Primitives::String()) {
-    // TODO(neeilan): Does this let us print a variable that's a string?
-    // Need memory references to be rip-relative to produce position independent
-    // executables i.e we want the assembler to emit a RIP-relative relocation
-    // rather than an absolute R_X86_64_32, since gcc invokes the linker in PIE
-    // mode by default. Same for printf format strings below.
-    text_.instr({"lea", valueRefs_.get(e) + "(%rip)", "%rdi"});
+    text_.instr({"mov", valueRefs_.get(e), "%rdi"});
     text_.instr({"call", "puts"});
   } else if (exprType->second == Primitives::Float()) {
     text_.instr({"lea", "format_printf_float(%rip)", "%rdi"});
@@ -284,6 +279,14 @@ void CodeGen::visit(const FuncStmt *stmt) {
                "%rsp"});  // locals sit between bp and sp
 
   emit(stmt->body);
+  
+  // Void functions may not have return stmt
+  // TODO: Insert this in reachability stage!
+  if (text_.contents.back().values[0] != "ret") {
+    ReturnStmt tmp({}, nullptr);
+    emit(&tmp);
+  }
+
   enclosingFunc_ = oldenclosingFunc_;
   exitScope();
 }
@@ -427,7 +430,14 @@ void CodeGen::visit(const StrLiteral *expr) {
       std::string("__strlit_") + std::to_string(strLiteralId++);
   rodata_.directive({label + ": .asciz \"" + expr->value + "\""});
   literalToLabel[expr->value] = label;
-  valueRefs_.assign(expr, label);
+  // Need memory references to be rip-relative to produce position independent
+  // executables i.e we want the assembler to emit a RIP-relative relocation
+  // rather than an absolute R_X86_64_32, since gcc invokes the linker in PIE
+  // mode by default. Same for printf format strings below.
+  // e.g. `lea __strlit_1(%rip), %rsi`
+  auto const dest = valueRefs_.makeAssignable(expr);
+  text_.instr({"lea", label+"(%rip)", dest});
+  valueRefs_.assign(expr, dest);
 }
 
 void CodeGen::visit(const NumLiteral *expr) {
@@ -608,7 +618,25 @@ void CodeGen::visit(const Get *expr) {
   // Methods
   if (calleeType->second->has_method(fieldName)) {
     valueRefs_.assign(expr, calleeType->second->name + "_" + fieldName);
+    return;
   }
+
+  // Plain fields
+  auto idx = calleeType->second->field_idx(fieldName);
+  // Value is idx * 8 byte offset into the address of the last deref object
+  valueRefs_.assign(&expr->callee, lastDereferencedObj_);
+  text_.instr({"movq", lastDereferencedObj_, "%rax"});
+  // constexpr uint64_t fieldSize = 8;
+
+  for (int i = 0; i < idx; i++) {
+    text_.instr({"add", "$8", "%rax"});
+  }
+
+  auto const fieldAccess = "(%rax)";
+  valueRefs_.regFree(lastDereferencedObj_);
+  auto res = valueRefs_.makeAssignable(expr);
+  text_.instr({"movq",  fieldAccess, res});
+  valueRefs_.assign(expr, res);
 }
 
 void CodeGen::visit(const Set *) {}
