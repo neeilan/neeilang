@@ -123,8 +123,13 @@ void CodeGen::visit(const PrintStmt *stmt) {
 
   auto const exprType = exprTypes_.find(e);
   if (exprType->second == Primitives::String()) {
+    text_.instr({"push", "%rdi"});
+    if (stackLocals.totalSize % 16) { text_.instr({"push", "%rbx"}); }
     text_.instr({"mov", valueRefs_.get(e), "%rdi"});
     text_.instr({"call", "puts"});
+    // This sucks - the library should hide this stack-aligning stuff
+    if (stackLocals.totalSize % 16) { text_.instr({"pop", "%rbx"}); }
+    text_.instr({"pop", "%rdi"});
   } else if (exprType->second == Primitives::Float()) {
     text_.instr({"lea", "format_printf_float(%rip)", "%rdi"});
     // TODO: Assumes the float is a literal, which isn't always true
