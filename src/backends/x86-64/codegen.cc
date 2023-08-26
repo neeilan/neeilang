@@ -114,6 +114,7 @@ void CodeGen::visit(const PrintStmt *stmt) {
     return;
   }
   emit(e);
+  auto const exprRef = valueRefs_.get(e);
 
   // Align the stack if necessary
   auto const stackLocals = stackFrames_.bases[enclosingFunc_];
@@ -125,7 +126,7 @@ void CodeGen::visit(const PrintStmt *stmt) {
   if (exprType->second == Primitives::String()) {
     text_.instr({"push", "%rdi"});
     if (stackLocals.totalSize % 16) { text_.instr({"push", "%rbx"}); }
-    text_.instr({"mov", valueRefs_.get(e), "%rdi"});
+    text_.instr({"mov", exprRef, "%rdi"});
     text_.instr({"call", "puts"});
     // This sucks - the library should hide this stack-aligning stuff
     if (stackLocals.totalSize % 16) { text_.instr({"pop", "%rbx"}); }
@@ -133,20 +134,19 @@ void CodeGen::visit(const PrintStmt *stmt) {
   } else if (exprType->second == Primitives::Float()) {
     text_.instr({"lea", "format_printf_float(%rip)", "%rdi"});
     // TODO: Assumes the float is a literal, which isn't always true
-    text_.instr({"movsd", valueRefs_.get(e) + "(%rip)", "%xmm0"});
+    text_.instr({"movsd", exprRef + "(%rip)", "%xmm0"});
     text_.instr({"call", "printf"});
   } else {
     // %rdi and %rsi hold first two integer/pointer function params
     // per x86-64 System V calling convention
-    auto const src = valueRefs_.get(e);
     text_.instr({"lea", "format_printf_int(%rip)", "%rdi"});
-    text_.instr({"mov", src, "%rsi"});
+    text_.instr({"mov", exprRef, "%rsi"});
     text_.instr({"call", "printf"});
-    valueRefs_.regFree(src);  // what if print(x) - we need to know when to free
   }
   if (stackLocals.totalSize % 16) {
     text_.instr({"pop", "%rbx"});
   }
+  valueRefs_.regFree(exprRef);
 }
 
 void CodeGen::visit(const VarStmt *stmt) {
@@ -552,10 +552,10 @@ void CodeGen::visit(const Call *expr) {
     auto const className = callee.substr(0, callee.find('_'));
     auto const classType = sm_.current().typetab->get(className);
     emitClassInit(classType);
-    // Pass `this` as first arg
+    // Preserve the allocated address (rax) and rdi
     text_.instr({"push", "%rdi"});
-    // Preserve the allocated address in case `init` clobbers it
     text_.instr({"push", "%rax"});
+    // Pass `this` as first arg
     text_.instr({"mov", "%rax", "%rdi"});
   } else if (isMethodCall) {
     // Pass `this` as first arg
