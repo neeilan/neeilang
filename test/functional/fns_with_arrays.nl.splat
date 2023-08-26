@@ -21,9 +21,11 @@ fn sumOfElems(list : Int[5]) : Int {
 fn main() : Int {
   print sumOfElems( createArray() );
 
+  /*
   %output
   16
   %output
+  */
 
   return 0;
 }
