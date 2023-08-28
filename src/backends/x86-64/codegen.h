@@ -1,12 +1,14 @@
 #ifndef _NL_BACKENDS_X86_64_CODEGEN_H_
 #define _NL_BACKENDS_X86_64_CODEGEN_H_
 
+#include <iostream>
 #include <ostream>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
+#include "ast-printer.h"
 #include "expr-types.h"
 #include "scope-manager.h"
 #include "backends/abstract-codegen.h"
@@ -36,7 +38,7 @@ public:
   ValueRef makeAssignable(const Expr* expr) {
     // Is it already assignable?
     auto it = exprToRegister_.find(expr);
-    if (it != exprToRegister_.end()) {
+    if (it != exprToRegister_.end() && it->second != "%rax") {
       return it->second;
     }
     if (!unusedGpRegs_.empty()) {
@@ -67,7 +69,11 @@ public:
 
   ValueRef get(const Expr *expr) {
     auto it = exprToRef_.find(expr);
-    assert(it != exprToRef_.end() && "ValueRef requested for unknown expr");
+    if (it == exprToRef_.end()) {
+      AstPrinter ap;
+      std::cerr << "ValueRef requested for unknown expr [" << ap.print(expr) << "]" << std::endl;
+      exit(1);
+    }
     return it->second;
   }
 

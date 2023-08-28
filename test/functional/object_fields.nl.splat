@@ -30,7 +30,7 @@ class Animal {
 
 /*
 %output
-somename
+somename 
 1
 0.000000
 4

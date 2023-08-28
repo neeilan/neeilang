@@ -139,9 +139,23 @@ void CodeGen::visit(const PrintStmt *stmt) {
   } else {
     // %rdi and %rsi hold first two integer/pointer function params
     // per x86-64 System V calling convention
+    // Preserve/restore %rdi and %rsi *carefully*
+
+    // This is hacky - we want to use r14/r15 as GP, not just
+    // compiler scratch.
+    text_.instr({"push", "%r14"});
+    text_.instr({"push", "%r15"});
+    text_.instr({"mov", "%rdi", "%r14"});
+    text_.instr({"mov", "%rsi", "%r15"});
+
     text_.instr({"lea", "format_printf_int(%rip)", "%rdi"});
-    text_.instr({"mov", exprRef, "%rsi"});
+    text_.instr({"mov", (exprRef == "%rdi" ? "%r14" : exprRef), "%rsi"});
     text_.instr({"call", "printf"});
+
+    text_.instr({"mov", "%r14", "%rdi"});
+    text_.instr({"mov", "%r15", "%rsi"});
+    text_.instr({"pop", "%r15"});
+    text_.instr({"pop", "%r14"});
   }
   if (stackLocals.totalSize % 16) {
     text_.instr({"pop", "%rbx"});
@@ -331,18 +345,18 @@ void CodeGen::visit(const Unary *expr) {
 void CodeGen::visit(const Binary *expr) {
   // TODO(neeilan): Explore passing left register to accumulate
   emit(&expr->left);
-  emit(&expr->right);
-
   auto const left = valueRefs_.get(&expr->left);
-  auto const right = valueRefs_.get(&expr->right);
-
-  // We can't add into a literal, so we need an 'assignable' dest
   auto const dest = valueRefs_.makeAssignable(&expr->left);
-  valueRefs_.regOverwrite(&expr->left, dest);
+  // We can't add into a literal, so we need an 'assignable' dest
+  // Also, if (call) + (call) don't want to clobber %rax
   if (left != dest) {
+    valueRefs_.regOverwrite(&expr->left, dest);
     text_.instr({"mov", left, dest });
-    valueRefs_.regFree(left);
   }
+
+  emit(&expr->right);
+  auto const right = valueRefs_.get(&expr->right);
+  valueRefs_.regFree(left);
 
   auto binaryOpEmit = [&](auto const &opcode){
     // We use `right` as the first operand because
@@ -576,8 +590,13 @@ void CodeGen::visit(const Call *expr) {
   }
 
   // Save scratch registers
+  uint16_t numPushed = 0;
   for (size_t i = isMethodCall; i < numArgs; ++i) {
     text_.instr({"push", argRegs[i]});
+    numPushed++;
+  }
+  if (numPushed % 2 == 1) {
+    text_.instr({"push", "%rbx"});
   }
 
   for (size_t i = 0; i < expr->args.size(); i++) {
@@ -592,10 +611,25 @@ void CodeGen::visit(const Call *expr) {
     }
   }
 
+  // Preserve GP regs
+  // TODO: No need if we could somehow tell that a function's transitive graph won't
+  // use a specific register.
+  std::vector<std::string> gpRegs{ "%r10", "%r11" , "%r12", "%r13"};
+  for (auto & r : gpRegs) {
+    text_.instr({"push", r});
+  }
+
   text_.instr({"call", callee});
   valueRefs_.assign(expr, "%rax");
 
+  for (auto it = gpRegs.rbegin(); it != gpRegs.rend(); ++it) {
+    text_.instr({"pop", *it});
+  }
+
   // Restore scratch registers
+  if (numPushed % 2 == 1) {
+    text_.instr({"pop", "%rbx"});
+  }
   for (size_t i = isMethodCall; i < numArgs; ++i) {
     text_.instr({"pop", argRegs[i]});
   }
