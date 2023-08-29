@@ -178,7 +178,7 @@ std::string AstPrinter::visit(const StrLiteral *expr) {
   if (expr->nil) {
     return "nil";
   } else {
-    return expr->value;
+    return "\"" + expr->value + "\"";
   }
 }
 

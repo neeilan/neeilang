@@ -17,6 +17,21 @@ static bool is_initializer(const std::string &fn) {
     return false;
   }
 }
+// TODO: Copied from LLVM backend - put in common utils
+/* Fetches the correct implementation of method that should be used
+ for dynamic dispatch with type. Note that NL doesn't allow name reuse
+ within a class, so the method name alone suffices here. However, it can
+ be mangled to allow such behavior in the future. */
+std::string get_virtual_method(NLType type, const std::string &method, const std::unordered_set<std::string> funcLabels) {
+  NLType curr = type; // Curr is self or parent
+  for (NLType curr = type; curr != nullptr; curr = curr->supertype) {
+    auto methodName = curr->name + "_" + method;
+    if (funcLabels.contains(methodName)) {
+      return methodName;
+    }
+  }
+  assert(false && "No such virtual fn");
+}
 
 ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
                                 const std::vector<const Expr *>& dims) {
@@ -63,16 +78,17 @@ ValueRefTracker::ValueRef CodeGen::emitClassInit(NLType nlType) {
     return t->fields.size() * 8 + sizeOfMembers(t->supertype);  
   };
   // Total size is sizeOfMembers + 8 bytes for a vtable pointer
+  text_.instr({"push", "%rdi"});
+  text_.instr({"push", "%rsi"});
   text_.instr({"mov", std::string("$")+std::to_string(sizeOfMembers(nlType)+8), "%rdi" });
   text_.instr({"call", "malloc"});
+  text_.instr({"pop", "%rsi"});
+  text_.instr({"pop", "%rdi"});
 
-  // static std::unordered_map<NLType, std::string> vtableLabels;
-  // auto it = vtableLabels.find(t);
-  // if (it == vtableLabels.end()) {
-  //   // determine the vtable size
-  //   // emit the appropriate methods (if not already emitted)
-  // }
-  
+  // First 8 bytes are the vtable pointer
+  text_.instr({"lea", "vtable_" + nlType->name + "(%rip)", "%r15"});
+  text_.instr({"mov", "%r15", "(%rax)"});
+
   // %rax is a pointer to the malloc'd memory
   return "%rax";
 }
@@ -86,6 +102,15 @@ void CodeGen::generate(const std::vector<Stmt *> &program) {
   rodata_.directive({"format_printf_float: .asciz \"%f\\n\""});
   text_.directive({".global main"});
   emit(program);
+
+  for (auto *c : classes_) {
+    auto className = c->name.lexeme;
+    auto const classType = sm_.globals().typetab->get(className);
+    rodata_.directive({ std::string("vtable_") + className + ":"});
+    for (auto m : classType->get_methods()) {
+      rodata_.directive({ std::string(".quad ") + get_virtual_method(classType, m->name, funcLabels_)});
+    }
+  }
 }
 
 void CodeGen::emit(const std::vector<Stmt *> &stmts) {
@@ -109,6 +134,8 @@ void CodeGen::visit(const BlockStmt *stmt) {
 }
 
 void CodeGen::visit(const PrintStmt *stmt) {
+  AstPrinter ap;
+  text_.instr({"# BEGIN print", ap.print(stmt->expression)});
   auto const *e = stmt->expression;
   if (!e) {
     return;
@@ -161,6 +188,7 @@ void CodeGen::visit(const PrintStmt *stmt) {
     text_.instr({"pop", "%rbx"});
   }
   valueRefs_.regFree(exprRef);
+  text_.instr({"# END print", ap.print(stmt->expression)});
 }
 
 void CodeGen::visit(const VarStmt *stmt) {
@@ -203,6 +231,7 @@ void CodeGen::visit(const VarStmt *stmt) {
 }
 
 void CodeGen::visit(const ClassStmt *stmt) {
+  classes_.push_back(stmt);
   enclosingClass_ = sm_.current().typetab->get(stmt->name.lexeme);;
   enterScope();
   for (const Stmt *method : stmt->methods) {
@@ -268,9 +297,8 @@ void CodeGen::visit(const WhileStmt *stmt) {
   text_.label({postLoopLabel});
   if (mustRestoreCond) {
     text_.instr({"pop", cond});
-  } else {
-    valueRefs_.regFree(cond);
   }
+  valueRefs_.regFree(cond);
 }
 
 void CodeGen::visit(const FuncStmt *stmt) {
@@ -285,6 +313,7 @@ void CodeGen::visit(const FuncStmt *stmt) {
     }
     return name + stmt->name.lexeme;
   }();
+  funcLabels_.insert(label);
   text_.label({label});
   text_.instr({"pushq", "%rbp"});
 
@@ -363,7 +392,7 @@ void CodeGen::visit(const Binary *expr) {
     // sub behaves as dest-=right
     text_.instr({ opcode, right, dest });
     valueRefs_.regOverwrite(expr, dest);
-    // Can resuse `right` as dest is the accumulator
+    // Can reuse `right` as dest is the accumulator
     valueRefs_.regFree(right);
   };
 
@@ -560,15 +589,15 @@ void CodeGen::visit(const Call *expr) {
 
   // Constructors
   // ------------
-  auto const isMethodCall = callee.find('_') != std::string::npos;
+  auto const isInitializer = is_initializer(callee);
+  auto const isMethodCall = isInitializer || callee[0] == '%';
   // If it's a constructor, we must first allocate the object.
-  if (is_initializer(callee)) {
+  if (isInitializer) {
     auto const className = callee.substr(0, callee.find('_'));
     auto const classType = sm_.current().typetab->get(className);
     emitClassInit(classType);
     // Preserve the allocated address (rax) and rdi
     text_.instr({"push", "%rdi"});
-    text_.instr({"push", "%rax"});
     // Pass `this` as first arg
     text_.instr({"mov", "%rax", "%rdi"});
   } else if (isMethodCall) {
@@ -619,7 +648,8 @@ void CodeGen::visit(const Call *expr) {
     text_.instr({"push", r});
   }
 
-  text_.instr({"call", callee});
+  text_.instr({"call", (callee[0] == '%' ? "*" : "") + callee});
+  valueRefs_.regFree(callee);
   valueRefs_.assign(expr, "%rax");
 
   for (auto it = gpRegs.rbegin(); it != gpRegs.rend(); ++it) {
@@ -639,9 +669,6 @@ void CodeGen::visit(const Call *expr) {
   }
 
   if (isMethodCall) {
-    if (is_initializer(callee)) {
-      text_.instr({"pop", "%rax"});
-    }
     text_.instr({"pop", "%rdi"});
   }
 }
@@ -666,7 +693,27 @@ void CodeGen::visit(const Get *expr) {
 
   // Methods
   if (calleeType->second->has_method(fieldName)) {
-    valueRefs_.assign(expr, calleeType->second->name + "_" + fieldName);
+    text_.instr({"# BEGIN method lookup: " + fieldName});  
+    auto [reg, mustRestore] = valueRefs_.acquireRegister(expr);
+    text_.instr({"mov", lastDereferencedObj_, reg});
+
+    // reg holds address of the callee
+    // therefore (reg) holds address of the vtable
+    text_.instr({"mov", "(" + reg + ")", reg});
+    // now reg holds address of the vtable
+    // therefore reg[i] holds address of method i for this class
+    auto idx = calleeType->second->method_idx(fieldName);
+    if (auto offset = idx * 8) {
+      text_.instr({"add", std::string("$") + std::to_string(offset), reg});
+    }
+    // Set reg to the address of the method
+    text_.instr({"mov", "(" + reg + ")", reg});
+    valueRefs_.assign(expr, reg);
+    if (mustRestore) {
+      text_.instr({"pop", reg});
+    }
+    text_.instr({"# END method lookup: " + fieldName});
+    valueRefs_.regFree(lastDereferencedObj_);
     return;
   }
 
@@ -677,7 +724,7 @@ void CodeGen::visit(const Get *expr) {
   text_.instr({"movq", lastDereferencedObj_, "%rax"});
 
   // constexpr uint64_t fieldSize = 8;
-  for (int i = 0; i < idx; i++) {
+  for (int i = 0; i <= idx; i++) {
     text_.instr({"add", "$8", "%rax"});
   }
 
@@ -704,7 +751,7 @@ void CodeGen::visit(const Set *expr) {
   auto idx = calleeType->second->field_idx(fieldName);
   // Value is idx * 8 byte offset into the address of the last deref object
   text_.instr({"movq", calleeRef, "%rax"});
-  for (int i = 0; i < idx; i++) {
+  for (int i = 0; i <= idx; i++) {
     text_.instr({"add", "$8", "%rax"});
   }
   auto const fieldAccess = "(%rax)";

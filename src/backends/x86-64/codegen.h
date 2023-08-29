@@ -49,7 +49,14 @@ public:
       unusedGpRegs_.erase(it);
       return reg;
     }
-    assert(false && "No GP regs to assign");
+
+    AstPrinter ap;
+    std::cerr << "[makeAssignable] No GP register to assign for expr [" << ap.print(expr) << "]\n"
+      << "  Current assignments:\n";
+    for (auto it = registerToExpr_.begin(); it != registerToExpr_.end(); ++it) {
+      std::cerr << "   > " << it->first << " : [" << ap.print(it->second) << "]\n";
+    }
+    exit(1);
   }
 
   void overwrite(const Expr* expr, const ValueRef& v) {
@@ -92,9 +99,14 @@ public:
       unusedGpRegs_.erase(it);
       return {reg, false};
     }
-    assert(false && "No GP regs to assign");
-    // Push some other register to the stack
-    return {"", true};
+
+    AstPrinter ap;
+    std::cerr << "[acquireRegister] No GP register to assign for expr [" << ap.print(expr) << "]\n"
+      << "  Current assignments:\n";
+    for (auto it = registerToExpr_.begin(); it != registerToExpr_.end(); ++it) {
+      std::cerr << "   > " << it->first << " : [" << ap.print(it->second) << "]\n";
+    }
+    exit(1);
   }
 
   // Ensure no expressions use the register,
@@ -121,7 +133,7 @@ public:
   }
 
 private:
-  std::unordered_set<Register> unusedGpRegs_ { "%r10", "%r11" , "%r12"};
+  std::unordered_set<Register> unusedGpRegs_ { "%r10", "%r11" , "%r12", "%r13"};
   std::unordered_map<const Expr*, std::string> exprToRef_;
   std::unordered_map<const Expr*, Register> exprToRegister_;
   std::unordered_map<Register, const Expr*> registerToExpr_;
@@ -182,6 +194,8 @@ private:
 
   const ExprTypes &exprTypes_;
   ScopeManager &sm_;
+  std::unordered_set<std::string> funcLabels_;
+  std::vector<ClassStmt const*> classes_;
 
   StackFrameSizer stackFrames_;
   const FuncStmt * enclosingFunc_ = nullptr;

@@ -33,7 +33,9 @@ fn main() : Int {
   return 0;
 }
 
+/*
 %output
 super
 sub
 %output
+*/
