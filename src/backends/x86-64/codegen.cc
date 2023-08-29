@@ -66,7 +66,8 @@ ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
   // %rax is a pointer to the malloc'd memory
   // Array header { u32: size of each element, u32: number of elements }
   text_.instr({"movl", "$8", "(%rax)"});
-  text_.instr({"movl", valueRefs_.get(dims[0]), "4(%rax)"});
+  auto dimRef = valueRefs_.get(dims[0]);
+  text_.instr({"movl", dimRef[0] == '%' ? (dimRef+"d") : dimRef , "4(%rax)"});
   return "%rax";
 }
 
@@ -290,6 +291,7 @@ void CodeGen::visit(const WhileStmt *stmt) {
   }
   text_.instr({"test", cond, cond});
   text_.instr({"je", postLoopLabel});
+  valueRefs_.regFree(cond);
   if (stmt->body) {
     emit(stmt->body);
   }
@@ -298,7 +300,6 @@ void CodeGen::visit(const WhileStmt *stmt) {
   if (mustRestoreCond) {
     text_.instr({"pop", cond});
   }
-  valueRefs_.regFree(cond);
 }
 
 void CodeGen::visit(const FuncStmt *stmt) {
@@ -746,7 +747,7 @@ void CodeGen::visit(const Set *expr) {
 
   // Emit the value
   emit(&expr->value);
-  auto const valueRef = valueRefs_.get(&expr->value);
+  auto valueRef = valueRefs_.get(&expr->value);
 
   auto idx = calleeType->second->field_idx(fieldName);
   // Value is idx * 8 byte offset into the address of the last deref object
@@ -755,7 +756,16 @@ void CodeGen::visit(const Set *expr) {
     text_.instr({"add", "$8", "%rax"});
   }
   auto const fieldAccess = "(%rax)";
+
+  bool mustRestoreVal = false;
+  if (valueRef[0] != '%' && valueRef[0] != '$') {
+    auto [valReg, mustRestore] = valueRefs_.acquireRegister(&expr->value);
+    text_.instr({"mov", valueRef, valReg});
+    valueRef = valReg; mustRestoreVal = mustRestore;
+  }
+
   text_.instr({"movq", valueRef, fieldAccess});
+  if (mustRestoreVal) { text_.instr({"pop", valueRef}); }
 
   valueRefs_.regFree(calleeRef);
   valueRefs_.regFree(valueRef);
@@ -773,8 +783,11 @@ void CodeGen::visit(const GetIndex * expr) {
 
   auto const elem = std::string("8(") + arr + ", " + index + ", 8)";
   valueRefs_.regFree(arr);
+
   valueRefs_.regFree(index);
   auto res = valueRefs_.makeAssignable(expr);
+  valueRefs_.regFree(arr);
+
   text_.instr({"movq",  elem, res});
   valueRefs_.assign(expr, res);
 }
