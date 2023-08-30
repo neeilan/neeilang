@@ -154,9 +154,9 @@ std::string AstPrinter::visit(const Binary *expr) {
 
 std::string AstPrinter::visit(const Call *expr) { return "Call"; }
 
-std::string AstPrinter::visit(const Get *expr) { return "Get"; }
+std::string AstPrinter::visit(const Get *expr) { return "Get " + expr->name.lexeme; }
 
-std::string AstPrinter::visit(const Set *expr) { return "Set"; }
+std::string AstPrinter::visit(const Set *expr) { return "Set " + expr->name.lexeme; }
 
 std::string AstPrinter::visit(const GetIndex *expr) {
   return "<GetIndex " + print(&expr->callee) + "[" + print(&expr->index) + "]>";

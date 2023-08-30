@@ -42,6 +42,7 @@ ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
   // TODO: check that each dim is > 0.
   emit(dims[0]);
   text_.instr({"push", "%rdi"});
+  text_.instr({"push", "%rsi"});
   // rdi holds # of elems
   text_.instr({"mov", valueRefs_.get(dims[0]), "%rdi"});
   // rdi now holds # of elems * size per elem
@@ -61,6 +62,7 @@ ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
     text_.instr({"pop", "%rbx"});
   }
 
+  text_.instr({"pop", "%rsi"});
   // Restore %rdi
   text_.instr({"pop", "%rdi"});
   // %rax is a pointer to the malloc'd memory
@@ -171,19 +173,13 @@ void CodeGen::visit(const PrintStmt *stmt) {
 
     // This is hacky - we want to use r14/r15 as GP, not just
     // compiler scratch.
-    text_.instr({"push", "%r14"});
-    text_.instr({"push", "%r15"});
-    text_.instr({"mov", "%rdi", "%r14"});
-    text_.instr({"mov", "%rsi", "%r15"});
-
+    text_.instr({"push", "%rdi"});
+    text_.instr({"push", "%rsi"});
     text_.instr({"lea", "format_printf_int(%rip)", "%rdi"});
-    text_.instr({"mov", (exprRef == "%rdi" ? "%r14" : exprRef), "%rsi"});
+    text_.instr({"mov", exprRef, "%rsi"});
     text_.instr({"call", "printf"});
-
-    text_.instr({"mov", "%r14", "%rdi"});
-    text_.instr({"mov", "%r15", "%rsi"});
-    text_.instr({"pop", "%r15"});
-    text_.instr({"pop", "%r14"});
+    text_.instr({"pop", "%rsi"});
+    text_.instr({"pop", "%rdi"});
   }
   if (stackLocals.totalSize % 16) {
     text_.instr({"pop", "%rbx"});
