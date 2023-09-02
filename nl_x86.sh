@@ -1,7 +1,7 @@
 # /usr/bin/sh
 bin/neeilang "$1" 1> output.s 2> nl_stderr.txt
 if [ $? -eq 0 ]; then
-  gcc -o a.out output.s
+  gcc -o a.out output.s runtime.o -lstdc++
   if [ $? -eq 0 ]; then
     ./a.out
   else

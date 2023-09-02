@@ -57,7 +57,7 @@ ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
     text_.instr({"push", "%rbx"});
   }
   // %rdi holds array size
-  text_.instr({"call", "malloc"});
+  text_.instr({"call", "nl_runtime_alloc"});
   if (stackLocals.totalSize % 16 == 0) {
     text_.instr({"pop", "%rbx"});
   }
@@ -84,7 +84,7 @@ ValueRefTracker::ValueRef CodeGen::emitClassInit(NLType nlType) {
   text_.instr({"push", "%rdi"});
   text_.instr({"push", "%rsi"});
   text_.instr({"mov", std::string("$")+std::to_string(sizeOfMembers(nlType)+8), "%rdi" });
-  text_.instr({"call", "malloc"});
+  text_.instr({"call", "nl_runtime_alloc"});
   text_.instr({"pop", "%rsi"});
   text_.instr({"pop", "%rdi"});
 
@@ -290,6 +290,13 @@ void CodeGen::visit(const WhileStmt *stmt) {
   valueRefs_.regFree(cond);
   if (stmt->body) {
     emit(stmt->body);
+
+    text_.instr({"push", "%rax"});
+    text_.instr({"push", "%rax"});
+    text_.instr({"mov", "%rsp", "%rdi"});
+    text_.instr({"call", "nl_runtime_run_gc"});
+    text_.instr({"pop", "%rax"});
+    text_.instr({"pop", "%rax"});
   }
   text_.instr({"jmp", checkCondLabel});
   text_.label({postLoopLabel});
@@ -322,6 +329,11 @@ void CodeGen::visit(const FuncStmt *stmt) {
   text_.instr({"movq", "%rsp", "%rbp"});
   text_.instr({"subq", "$" + std::to_string(stackLocalsBase.totalSize),
                "%rsp"});  // locals sit between bp and sp
+
+  if (stmt->name.lexeme == "main") {
+    text_.instr({"mov", "%rbp", "%rdi"});
+    text_.instr({"call", "nl_register_stack_start"});
+  }
 
   emit(stmt->body);
   
@@ -668,6 +680,14 @@ void CodeGen::visit(const Call *expr) {
   if (isMethodCall) {
     text_.instr({"pop", "%rdi"});
   }
+
+  text_.instr({"push", "%rax"});
+  text_.instr({"push", "%rax"});
+  text_.instr({"mov", "%rsp", "%rdi"});
+  text_.instr({"call", "nl_runtime_run_gc"});
+  text_.instr({"pop", "%rax"});
+  text_.instr({"pop", "%rax"});
+
 }
 void CodeGen::visit(const Get *expr) {
   auto fieldName = expr->name.lexeme;
@@ -772,6 +792,7 @@ void CodeGen::visit(const GetIndex * expr) {
   emit(&expr->index);
 
   // arr is array base - 8
+  // sa_.get({})
   auto const arr = valueRefs_.makeAssignable(&expr->callee);
   text_.instr({"mov", valueRefs_.get(&expr->callee), arr});
   auto const index = valueRefs_.makeAssignable(&expr->index);
