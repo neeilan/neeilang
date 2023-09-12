@@ -137,7 +137,6 @@ private:
   std::unordered_map<const Expr*, std::string> exprToRef_;
   std::unordered_map<const Expr*, Register> exprToRegister_;
   std::unordered_map<Register, const Expr*> registerToExpr_;
-  uint8_t stackOffset;
 };
 
 struct AsmLine {
@@ -171,7 +170,7 @@ public:
   CodeGen(const ExprTypes &exprTypes, ScopeManager &sm) : exprTypes_(exprTypes), sm_(sm)
   , stackFrames_(StackFrameSizer(sm))
   {}
-  virtual void generate(const std::vector<Stmt *> &program);
+  virtual void generate(const std::vector<Stmt *> &program) override;
   void dump() const;
 
   OVERRIDE_EXPR_VISITOR_FNS(void)

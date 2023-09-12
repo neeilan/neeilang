@@ -26,7 +26,7 @@ std::string get_virtual_method(NLType type, const std::string &method, const std
   NLType curr = type; // Curr is self or parent
   for (NLType curr = type; curr != nullptr; curr = curr->supertype) {
     auto methodName = curr->name + "_" + method;
-    if (funcLabels.contains(methodName)) {
+    if (funcLabels.find(methodName) == funcLabels.end()) {
       return methodName;
     }
   }
