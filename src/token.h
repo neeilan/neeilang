@@ -53,7 +53,8 @@ enum TokenType {
   TRUE,
   VAR,
   WHILE,
-  END_OF_FILE
+  END_OF_FILE,
+  RESERVED_KEYWORD
 };
 
 class Token {

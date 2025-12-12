@@ -18,7 +18,7 @@ static std::vector<std::string> token_names{
     "AND",           "CLASS",       "ELSE",       "FALSE",       "FN",
     "LAMBDA",        "FOR",         "IF",         "NIL",         "OR",
     "PRINT",         "RETURN",      "SUPER",      "THIS",        "TRUE",
-    "VAR",           "WHILE",       "EOF"};
+    "VAR",           "WHILE",       "EOF",        "RESERVED_KEYWORD"};
 
 std::string Token::str() const {
   return token_names[type] + " " + lexeme +
