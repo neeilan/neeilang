@@ -27,7 +27,9 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"while", WHILE},
 
     // Reserve C++ keywords
+    {"namespace", NAMESPACE},
     {"struct", CLASS},
+
     {"alignas", RESERVED_KEYWORD},
     {"alignof", RESERVED_KEYWORD},
     {"auto", RESERVED_KEYWORD},
@@ -63,7 +65,6 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"int", RESERVED_KEYWORD},
     {"long", RESERVED_KEYWORD},
     {"mutable", RESERVED_KEYWORD},
-    {"namespace", RESERVED_KEYWORD},
     {"new", RESERVED_KEYWORD},
     {"noexcept", RESERVED_KEYWORD},
     {"nullptr", RESERVED_KEYWORD},
@@ -148,7 +149,7 @@ void Scanner::scan_token() {
     add_token(SEMICOLON);
     break;
   case ':':
-    add_token(COLON);
+    add_token(match(':') ? COLON_COLON : COLON);
     break;
   case '*':
     add_token(STAR);

@@ -11,14 +11,14 @@ static std::vector<std::string> token_names{
     "SEMICOLON",     "COLON",       "SLASH",      "STAR",
 
     "BANG",          "BANG_EQUAL",  "EQUAL",      "EQUAL_EQUAL", "GREATER",
-    "GREATER_EQUAL", "LESS",        "LESS_EQUAL",
+    "GREATER_EQUAL", "LESS",        "LESS_EQUAL", "COLON_COLON",
 
     "IDENTIFIER",    "STRING",      "NUMBER",
 
     "AND",           "CLASS",       "ELSE",       "FALSE",       "FN",
     "LAMBDA",        "FOR",         "IF",         "NIL",         "OR",
     "PRINT",         "RETURN",      "SUPER",      "THIS",        "TRUE",
-    "VAR",           "WHILE",       "EOF",        "RESERVED_KEYWORD"};
+    "VAR",           "WHILE",       "EOF",        "NAMESPACE",   "RESERVED_KEYWORD"};
 
 std::string Token::str() const {
   return token_names[type] + " " + lexeme +

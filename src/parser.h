@@ -30,6 +30,8 @@ private:
   bool at_end();
   const std::string *outer_class = nullptr;
 
+  std::vector<Token> consume_qualified_identifier();
+
   Token &advance();
   Token &consume(TokenType type, std::string msg);
   Token &peek();
@@ -57,6 +59,7 @@ private:
   Stmt *statement();
   Stmt *print_statement(Token keyword);
   Stmt *block_statement();
+  Stmt *namespace_statement();
   Stmt *expression_statement();
   Stmt *if_statement(Token keyword);
   Stmt *while_statement(Token keyword);

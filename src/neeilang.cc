@@ -51,53 +51,53 @@ void Neeilang::run(const std::string &source) {
     return;
   }
 
-  // AstPrinter printer;
-  // std::cerr << printer.print(program);
+  AstPrinter printer;
+  std::cerr << printer.print(program);
 
-  Resolver resolver;
-  resolver.resolve_program(program);
+//   Resolver resolver;
+//   resolver.resolve_program(program);
 
-  if (had_error) {
-    return;
-  }
+//   if (had_error) {
+//     return;
+//   }
 
-  ScopeManager scope_manager;
+//   ScopeManager scope_manager;
 
-  GlobalHoister hoister(scope_manager);
-  hoister.hoist_program(program);
+//   GlobalHoister hoister(scope_manager);
+//   hoister.hoist_program(program);
 
-  if (had_error) {
-    return;
-  }
+//   if (had_error) {
+//     return;
+//   }
 
-  NL::Reachability dce;
-  dce.analyze_program(program);
+//   NL::Reachability dce;
+//   dce.analyze_program(program);
 
-  if (had_error) {
-    return;
-  }
+//   if (had_error) {
+//     return;
+//   }
 
-  TypeChecker type_checker(scope_manager);
-  type_checker.check(program);
+//   TypeChecker type_checker(scope_manager);
+//   type_checker.check(program);
 
-  if (had_error) {
-    return; // Compilation halted due to type errors.
-  }
+//   if (had_error) {
+//     return; // Compilation halted due to type errors.
+//   }
 
-#ifdef TARGET_X86
-  x86_64::CodeGen codegen(type_checker.get_expr_types(), scope_manager);
-  codegen.generate(program);
-  codegen.dump();
-#else
-  CodeGen codegen(scope_manager, type_checker.get_expr_types());
-  codegen.generate(program);
+// #ifdef TARGET_X86
+//   x86_64::CodeGen codegen(type_checker.get_expr_types(), scope_manager);
+//   codegen.generate(program);
+//   codegen.dump();
+// #else
+//   CodeGen codegen(scope_manager, type_checker.get_expr_types());
+//   codegen.generate(program);
 
-  if (!had_error)
-  {
-    // codegen.print();
-    codegen.write_bitcode();
-  }
-#endif
+//   if (!had_error)
+//   {
+//     // codegen.print();
+//     codegen.write_bitcode();
+//   }
+// #endif
 }
 
 void Neeilang::error(int line, const std::string &message) {

@@ -1,4 +1,5 @@
 #include <memory>
+#include <iostream>
 #include <vector>
 
 #include "neeilang.h"
@@ -116,6 +117,8 @@ Stmt *Parser::statement() {
     return while_statement(previous());
   if (match({FOR}))
     return for_statement(previous());
+  if (match({NAMESPACE}))
+    return namespace_statement();
   if (match({LEFT_BRACE}))
     return block_statement();
 
@@ -150,6 +153,31 @@ Stmt *Parser::block_statement() {
   consume(RIGHT_BRACE, "Expect '}' after block.");
 
   return new BlockStmt(stmts);
+}
+
+Stmt *Parser::namespace_statement() {
+  std::vector<Stmt *> stmts;
+
+  std::string name;
+  if (check(LEFT_BRACE)) {
+    // anonymous namespace
+  } else {
+    std::vector<Token> qual_name = consume_qualified_identifier();
+    for (size_t i = 0; i < qual_name.size(); ++i) {
+      if (i > 0) {
+        name += "::";
+      }
+      name += qual_name[i].lexeme;
+    }
+  }
+
+  consume(LEFT_BRACE, "Expect '{' at start of namespace.");
+  while (!check(RIGHT_BRACE) && !at_end()) {
+    stmts.push_back(declaration());
+  }
+  consume(RIGHT_BRACE, "Expect '}' at end of namespace.");
+
+  return new NamespaceStmt(name, stmts);
 }
 
 Stmt *Parser::if_statement(Token keyword) {
@@ -492,6 +520,21 @@ Expr *Parser::primary() {
     return (new Grouping(*expr));
   }
   throw error(peek(), "Expect expression.");
+}
+
+std::vector<Token> Parser::consume_qualified_identifier() {
+  std::vector<Token> res;
+
+  while (check(IDENTIFIER) || check(COLON_COLON)) {
+    res.push_back(consume(IDENTIFIER, "Expect identifier"));
+    if (match({COLON_COLON})) {
+      // OK, move onto next identifier
+    } else {
+      break;
+    }
+  }
+
+  return res;
 }
 
 /* Error handling and recovery */

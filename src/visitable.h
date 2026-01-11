@@ -22,6 +22,7 @@ class SentinelExpr;
 class Stmt;
 class ExprStmt;
 class BlockStmt;
+class NamespaceStmt;
 class PrintStmt;
 class VarStmt;
 class ClassStmt;

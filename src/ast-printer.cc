@@ -18,6 +18,18 @@ std::string AstPrinter::print(const std::vector<Stmt *> &program) {
   return out.str();
 }
 
+std::string AstPrinter::visit(const NamespaceStmt *stmt) {
+  ostringstream out;
+  std::string name = "(anonymous)";
+  if (!stmt->name.empty()) { name = stmt->name; }
+  OUT << "<namespace " << name << std::endl;
+  nest++;
+  out << print(stmt->contents);
+  nest--;
+  OUT << "end-namespace " << name << ">";
+  return out.str();
+}
+
 std::string AstPrinter::visit(const BlockStmt *stmt) {
   ostringstream out;
   if (!stmt->block_contents.size()) {
@@ -118,7 +130,7 @@ std::string AstPrinter::visit(const WhileStmt *stmt) {
 
 std::string AstPrinter::visit(const FuncStmt *stmt) {
   ostringstream out;
-  out << "<Function name='" << stmt->name.lexeme << "'  returns='"
+  OUT << "<Function name='" << stmt->name.lexeme << "'  returns='"
       << stmt->return_type.name.lexeme << "'"
       << "  args=( ";
 
@@ -126,15 +138,15 @@ std::string AstPrinter::visit(const FuncStmt *stmt) {
     OUT << stmt->parameters[i].lexeme << ":"
         << stmt->parameter_types[i].name.lexeme << " ";
   }
-  out << ") Body=" << std::endl;
+  OUT << ") Body=" << std::endl;
 
   nest++;
   for (auto _stmt : stmt->body) {
-    out << print(_stmt);
+    OUT << print(_stmt);
   }
   nest--;
 
-  out << ">";
+  OUT << ">";
 
   return out.str();
 }

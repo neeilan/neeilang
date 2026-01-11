@@ -66,6 +66,16 @@ public:
   std::vector<Stmt *> block_contents;
 };
 
+class NamespaceStmt : public StmtCRTP<NamespaceStmt> {
+public:
+  explicit NamespaceStmt(std::string name, std::vector<Stmt *> contents)
+      : name(std::move(name)), contents(std::move(contents)) {}
+
+  std::string name;
+  std::vector<Stmt *> contents;
+};
+
+
 class IfStmt : public StmtCRTP<IfStmt> {
 public:
   explicit IfStmt(const Token keyword, Expr *condition, Stmt *then_branch,

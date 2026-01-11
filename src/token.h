@@ -29,6 +29,7 @@ enum TokenType {
   GREATER_EQUAL,
   LESS,
   LESS_EQUAL,
+  COLON_COLON,
 
   // Literals.
   IDENTIFIER,
@@ -54,6 +55,7 @@ enum TokenType {
   VAR,
   WHILE,
   END_OF_FILE,
+  NAMESPACE,
   RESERVED_KEYWORD
 };
 
