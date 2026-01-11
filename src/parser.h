@@ -61,6 +61,7 @@ private:
   Stmt *block_statement();
   Stmt *namespace_statement();
   Stmt *template_statement();
+  Stmt *enum_declaration();
   Stmt *expression_statement();
   Stmt *if_statement(Token keyword);
   Stmt *while_statement(Token keyword);

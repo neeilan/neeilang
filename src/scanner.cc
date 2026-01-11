@@ -31,6 +31,7 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"template", TEMPLATE},
     {"typename", TYPENAME},
     {"struct", CLASS},
+    {"enum", ENUM},
 
     {"alignas", RESERVED_KEYWORD},
     {"alignof", RESERVED_KEYWORD},
@@ -56,7 +57,6 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"do", RESERVED_KEYWORD},
     {"double", RESERVED_KEYWORD},
     {"dynamic_cast", RESERVED_KEYWORD},
-    {"enum", RESERVED_KEYWORD},
     {"explicit", RESERVED_KEYWORD},
     {"export", RESERVED_KEYWORD},
     {"extern", RESERVED_KEYWORD},

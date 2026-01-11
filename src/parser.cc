@@ -121,6 +121,8 @@ Stmt *Parser::statement() {
     return namespace_statement();
   if (match({TEMPLATE}))
     return template_statement();
+  if (match({ENUM}))
+    return enum_declaration();
   if (match({LEFT_BRACE}))
     return block_statement();
 
@@ -155,6 +157,40 @@ Stmt *Parser::block_statement() {
   consume(RIGHT_BRACE, "Expect '}' after block.");
 
   return new BlockStmt(stmts);
+}
+
+// Specifically, scoped enumerators
+Stmt *Parser::enum_declaration() {
+  std::optional<TypeParse> underlying;
+  std::vector<NamedEnumerator> vals;
+
+  consume(CLASS, "Expect 'class' or 'struct' after 'enum'");
+  Token name = consume(IDENTIFIER, "Expect name for scoped enum");
+
+  if (check({COLON})) {
+    consume(COLON, "");
+    underlying = parse_type("Expect enum underlying type");
+  }
+
+  consume(LEFT_BRACE, "Expect '{' in enum decl");
+
+  if (!check(RIGHT_BRACE)) {
+
+    do {
+      NamedEnumerator e;
+      e.name = consume(IDENTIFIER, "Expect enumerator name");
+      if (check({EQUAL})) {
+        consume(EQUAL, "= before enumerator value");
+        e.value = consume(NUMBER, "enumerator value"); // not handled, but can be a char literal too
+      }
+      vals.push_back(e);
+    } while (match({COMMA}));
+
+  }
+
+  consume(RIGHT_BRACE, "Expect '}' after enum decl");
+  
+  return new ScopedEnum(name.lexeme, vals, underlying);
 }
 
 Stmt *Parser::template_statement() {

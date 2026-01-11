@@ -1,6 +1,8 @@
+namespace foo::bar {
 template <typename T>
 fn Test(arg : T) : T {
     return T * 2;
+}
 }
 
 template <typename T, typename C>
@@ -9,7 +11,7 @@ fn foo(arg : x) : T {
 }
 
 template <typename T>
-class Animal {
+struct Animal {
   name : Int;
   age : Int;
 

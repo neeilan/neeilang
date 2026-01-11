@@ -58,6 +58,7 @@ enum TokenType {
   NAMESPACE,
   TEMPLATE,
   TYPENAME,
+  ENUM,
   RESERVED_KEYWORD
 };
 

@@ -30,20 +30,36 @@ std::string AstPrinter::visit(const NamespaceStmt *stmt) {
   return out.str();
 }
 
+std::string AstPrinter::visit(const ScopedEnum * stmt) {
+  ostringstream out;
+  OUT << "<ScopedEnum name=\"" << stmt->name << "\" underlying=\""
+    << (stmt->underlying ? stmt->underlying->name.lexeme : "(nullopt)")
+    << "\">\n";
+
+  nest++;
+  for (const auto& val : stmt->enumerators) {
+    OUT << "<NamedEnumerator name=\"" << val.name.lexeme << "\" value=\""
+        << (val.value ? val.value->lexeme : "(nullopt)") << "\"/>\n";
+  }
+  nest--;
+  OUT << "</ScopedEnum>";
+  return out.str();
+}
+
 std::string AstPrinter::visit(const TemplateStmt * stmt) {
   ostringstream out;
   OUT  << "<Template [";
   for (auto const& arg : stmt->args) {
-    OUT << "typename " << arg.name.lexeme;
+    out << "typename " << arg.name.lexeme;
     if (&arg != &stmt->args.back()) {
-      OUT << ", ";
+      out << ", ";
     }
   }
-  OUT << "]>\n";
+  out << "]>\n";
   nest++;
   out << print(stmt->fnOrClass);
   nest--;
-  OUT << "</Template>\n";
+  OUT << "</Template>";
   return out.str();
 }
 

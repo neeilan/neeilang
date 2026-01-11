@@ -24,6 +24,7 @@ class ExprStmt;
 class BlockStmt;
 class NamespaceStmt;
 class TemplateStmt;
+class ScopedEnum;
 class PrintStmt;
 class VarStmt;
 class ClassStmt;

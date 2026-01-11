@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
 #include "expr.h"
 #include "token.h"
@@ -14,6 +15,11 @@ using std::string;
 struct TemplateArg {
   Token ty;
   Token name;
+};
+
+struct NamedEnumerator {
+  Token name;
+  std::optional<Token> value;
 };
 
 class Stmt {
@@ -88,6 +94,17 @@ public:
   std::vector<TemplateArg> args;
   Stmt * fnOrClass;
 };
+
+class ScopedEnum :  public StmtCRTP<ScopedEnum> {
+public:
+  explicit ScopedEnum(std::string name, std::vector<NamedEnumerator> enumerators, std::optional<TypeParse> underlying)
+    : name(name), enumerators(enumerators), underlying(underlying) {}
+
+  std::string name;
+  std::vector<NamedEnumerator> enumerators;
+  std::optional<TypeParse> underlying;
+};
+
 
 class IfStmt : public StmtCRTP<IfStmt> {
 public:
