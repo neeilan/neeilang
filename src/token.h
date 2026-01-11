@@ -56,6 +56,8 @@ enum TokenType {
   WHILE,
   END_OF_FILE,
   NAMESPACE,
+  TEMPLATE,
+  TYPENAME,
   RESERVED_KEYWORD
 };
 

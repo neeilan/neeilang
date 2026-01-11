@@ -30,6 +30,21 @@ std::string AstPrinter::visit(const NamespaceStmt *stmt) {
   return out.str();
 }
 
+std::string AstPrinter::visit(const FnTemplateStmt * stmt) {
+  ostringstream out;
+  OUT  << "<FunctionTemplate [";
+  for (auto const& arg : stmt->args) {
+    OUT << "typename " << arg.name.lexeme;
+    if (&arg != &stmt->args.back()) {
+      OUT << ", ";
+    }
+  }
+  OUT << "]";
+  OUT << print(stmt->fn);
+  OUT << ">";
+  return out.str();
+}
+
 std::string AstPrinter::visit(const BlockStmt *stmt) {
   ostringstream out;
   if (!stmt->block_contents.size()) {

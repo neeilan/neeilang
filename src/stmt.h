@@ -11,6 +11,11 @@
 
 using std::string;
 
+struct TemplateArg {
+  Token ty;
+  Token name;
+};
+
 class Stmt {
 public:
   virtual void accept(StmtVisitor<void> *visitor) const = 0;
@@ -75,6 +80,14 @@ public:
   std::vector<Stmt *> contents;
 };
 
+class FnTemplateStmt :  public StmtCRTP<FnTemplateStmt> {
+public:
+  explicit FnTemplateStmt(std::vector<TemplateArg> args, Stmt * fn)
+    : args(args), fn(fn) {}
+
+  std::vector<TemplateArg> args;
+  Stmt * fn;
+};
 
 class IfStmt : public StmtCRTP<IfStmt> {
 public:

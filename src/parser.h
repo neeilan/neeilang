@@ -60,6 +60,7 @@ private:
   Stmt *print_statement(Token keyword);
   Stmt *block_statement();
   Stmt *namespace_statement();
+  Stmt *template_statement();
   Stmt *expression_statement();
   Stmt *if_statement(Token keyword);
   Stmt *while_statement(Token keyword);

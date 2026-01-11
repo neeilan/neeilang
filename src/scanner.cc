@@ -28,6 +28,8 @@ const std::map<std::string, TokenType> Scanner::keywords = {
 
     // Reserve C++ keywords
     {"namespace", NAMESPACE},
+    {"template", TEMPLATE},
+    {"typename", TYPENAME},
     {"struct", CLASS},
 
     {"alignas", RESERVED_KEYWORD},
@@ -81,13 +83,11 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"static_assert", RESERVED_KEYWORD},
     {"static_cast", RESERVED_KEYWORD},
     {"switch", RESERVED_KEYWORD},
-    {"template", RESERVED_KEYWORD},
     {"thread_local", RESERVED_KEYWORD},
     {"throw", RESERVED_KEYWORD},
     {"try", RESERVED_KEYWORD},
     {"typedef", RESERVED_KEYWORD},
     {"typeid", RESERVED_KEYWORD},
-    {"typename", RESERVED_KEYWORD},
     {"union", RESERVED_KEYWORD},
     {"unsigned", RESERVED_KEYWORD},
     {"using", RESERVED_KEYWORD},

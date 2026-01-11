@@ -119,6 +119,8 @@ Stmt *Parser::statement() {
     return for_statement(previous());
   if (match({NAMESPACE}))
     return namespace_statement();
+  if (match({TEMPLATE}))
+    return template_statement();
   if (match({LEFT_BRACE}))
     return block_statement();
 
@@ -153,6 +155,24 @@ Stmt *Parser::block_statement() {
   consume(RIGHT_BRACE, "Expect '}' after block.");
 
   return new BlockStmt(stmts);
+}
+
+Stmt *Parser::template_statement() {
+  // Parse the template typename<...> part (or template <>)
+  std::vector<TemplateArg> args;
+  consume(LESS, "Expect '<' after 'template'");
+
+  do {
+    consume(TYPENAME, "Expect 'typename'");
+    Token name = consume(IDENTIFIER, "Expect template arg name");
+    args.push_back(TemplateArg{.name = name });
+  } while (match({COMMA}));
+
+  consume(GREATER, "Expect '>' after template args");
+
+  // Just function templates now
+  consume(FN, "Expect 'fn' for function template");
+  return new FnTemplateStmt(args, func_statement("function"));
 }
 
 Stmt *Parser::namespace_statement() {

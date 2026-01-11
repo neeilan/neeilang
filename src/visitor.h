@@ -10,6 +10,7 @@ public:
   virtual ~StmtVisitor() = default;
   virtual T visit(const BlockStmt *) = 0;
   virtual T visit(const NamespaceStmt *) = 0;
+  virtual T visit(const FnTemplateStmt *) = 0;
   virtual T visit(const ExprStmt *) = 0;
   virtual T visit(const PrintStmt *) = 0;
   virtual T visit(const VarStmt *) = 0;
@@ -44,6 +45,7 @@ public:
 #define OVERRIDE_STMT_VISITOR_FNS(T)           \
   virtual T visit(const BlockStmt *) override; \
   virtual T visit(const NamespaceStmt *) override; \
+  virtual T visit(const FnTemplateStmt *) override; \
   virtual T visit(const ExprStmt *) override;  \
   virtual T visit(const PrintStmt *) override; \
   virtual T visit(const VarStmt *) override;   \
