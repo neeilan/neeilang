@@ -8,7 +8,7 @@ using std::ostringstream;
 
 static int nest = 0;
 
-#define OUT out << std::string(nest, ' ')
+#define OUT out << std::string(nest*2, ' ')
 
 std::string AstPrinter::print(const std::vector<Stmt *> &program) {
   ostringstream out;
@@ -22,49 +22,55 @@ std::string AstPrinter::visit(const NamespaceStmt *stmt) {
   ostringstream out;
   std::string name = "(anonymous)";
   if (!stmt->name.empty()) { name = stmt->name; }
-  OUT << "<namespace " << name << std::endl;
+  OUT << "<Namespace " << name << ">\n";
   nest++;
   out << print(stmt->contents);
   nest--;
-  OUT << "end-namespace " << name << ">";
+  OUT << "</Namespace " << name << ">";
   return out.str();
 }
 
-std::string AstPrinter::visit(const FnTemplateStmt * stmt) {
+std::string AstPrinter::visit(const TemplateStmt * stmt) {
   ostringstream out;
-  OUT  << "<FunctionTemplate [";
+  OUT  << "<Template [";
   for (auto const& arg : stmt->args) {
     OUT << "typename " << arg.name.lexeme;
     if (&arg != &stmt->args.back()) {
       OUT << ", ";
     }
   }
-  OUT << "]";
-  OUT << print(stmt->fn);
-  OUT << ">";
+  OUT << "]>\n";
+  nest++;
+  out << print(stmt->fnOrClass);
+  nest--;
+  OUT << "</Template>\n";
   return out.str();
 }
 
 std::string AstPrinter::visit(const BlockStmt *stmt) {
   ostringstream out;
   if (!stmt->block_contents.size()) {
-    return "<Block>";
+    OUT << "<Block/>\n";
+    return out.str();
   }
-  OUT << "<Block";
-  out << std::endl;
+  OUT << "<Block>\n";
   nest++;
   out << print(stmt->block_contents);
   nest--;
-  OUT << ">" << std::endl;
+  OUT << "</Block>\n";
   return out.str();
 }
 
 std::string AstPrinter::visit(const ExprStmt *stmt) {
-  return std::string(nest, ' ') + "<Expr " + print(stmt->expression) + ">";
+  ostringstream out;
+  OUT << "<Expr " + print(stmt->expression) + "/>";
+  return out.str();
 }
 
 std::string AstPrinter::visit(const PrintStmt *stmt) {
-  return "<Print " + print(stmt->expression) + ">";
+  ostringstream out;
+  OUT << "<Print " + print(stmt->expression) + "/>";
+  return out.str();
 }
 
 std::string AstPrinter::visit(const VarStmt *stmt) {
@@ -80,29 +86,29 @@ std::string AstPrinter::visit(const VarStmt *stmt) {
 
 std::string AstPrinter::visit(const ClassStmt *stmt) {
   ostringstream out;
-  OUT << "<Class " << stmt->name.lexeme << std::endl;
+  OUT << "<Class " << stmt->name.lexeme;
   if (stmt->superclass) {
     out << "  superclass=" << stmt->superclass->lexeme << std::endl;
   }
+  out << ">\n";
   nest++;
-  OUT << "fields: " << std::endl;
+  OUT << "<Class.Fields>" << std::endl;
   nest++;
   for (size_t i = 0; i < stmt->fields.size(); i++) {
-    OUT << stmt->fields[i].lexeme
-        << " type : " << stmt->field_types[i].name.lexeme;
-    out << " ";
+    OUT << "<Field name=\"" << stmt->fields[i].lexeme
+        << "\" type=\"" << stmt->field_types[i].name.lexeme << "\"/>\n";
   }
   nest--;
-
-  OUT << std::endl;
-  OUT << "methods: " << std::endl;
-
+  OUT << "</Class.Fields>" << std::endl;
+  OUT << "<Class.Methods> " << std::endl;
   nest++;
   for (size_t i = 0; i < stmt->methods.size(); i++) {
-    OUT << print(stmt->methods[i]);
+    out << print(stmt->methods[i]);
   }
   nest--;
-  OUT << ">";
+  OUT << "</Class.Methods>\n";
+  nest--;
+  OUT << "</Class>\n";
   return out.str();
 }
 
@@ -145,24 +151,22 @@ std::string AstPrinter::visit(const WhileStmt *stmt) {
 
 std::string AstPrinter::visit(const FuncStmt *stmt) {
   ostringstream out;
-  OUT << "<Function name='" << stmt->name.lexeme << "'  returns='"
-      << stmt->return_type.name.lexeme << "'"
-      << "  args=( ";
-
+  OUT << "<Function name=\"" << stmt->name.lexeme << "\"  return_type=\""
+      << stmt->return_type.name.lexeme << "\" ";
   for (size_t i = 0; i < stmt->parameters.size(); i++) {
-    OUT << stmt->parameters[i].lexeme << ":"
-        << stmt->parameter_types[i].name.lexeme << " ";
+    std::string argn = std::string("args[") + std::to_string(i) + "]";
+    out << argn << ".name=\"" << stmt->parameters[i].lexeme << "\" "
+        << argn << ".type=\"" << stmt->parameter_types[i].name.lexeme << "\" ";
   }
-  OUT << ") Body=" << std::endl;
+  out << ">\n";
 
   nest++;
   for (auto _stmt : stmt->body) {
-    OUT << print(_stmt);
+    out << print(_stmt);
   }
   nest--;
 
-  OUT << ">";
-
+  OUT << "</Function>\n";
   return out.str();
 }
 

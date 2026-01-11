@@ -23,7 +23,7 @@ class Stmt;
 class ExprStmt;
 class BlockStmt;
 class NamespaceStmt;
-class FnTemplateStmt;
+class TemplateStmt;
 class PrintStmt;
 class VarStmt;
 class ClassStmt;

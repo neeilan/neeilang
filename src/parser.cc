@@ -170,9 +170,13 @@ Stmt *Parser::template_statement() {
 
   consume(GREATER, "Expect '>' after template args");
 
-  // Just function templates now
-  consume(FN, "Expect 'fn' for function template");
-  return new FnTemplateStmt(args, func_statement("function"));
+  if (match({FN})) {
+    return new TemplateStmt(args, func_statement("function"));
+  }
+  if (match({CLASS})) {
+    return new TemplateStmt(args, class_declaration());
+  }
+  throw error(peek(), "Not a class or function template.");
 }
 
 Stmt *Parser::namespace_statement() {

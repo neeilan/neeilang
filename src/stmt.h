@@ -80,13 +80,13 @@ public:
   std::vector<Stmt *> contents;
 };
 
-class FnTemplateStmt :  public StmtCRTP<FnTemplateStmt> {
+class TemplateStmt :  public StmtCRTP<TemplateStmt> {
 public:
-  explicit FnTemplateStmt(std::vector<TemplateArg> args, Stmt * fn)
-    : args(args), fn(fn) {}
+  explicit TemplateStmt(std::vector<TemplateArg> args, Stmt * fnOrClass)
+    : args(args), fnOrClass(fnOrClass) {}
 
   std::vector<TemplateArg> args;
-  Stmt * fn;
+  Stmt * fnOrClass;
 };
 
 class IfStmt : public StmtCRTP<IfStmt> {
