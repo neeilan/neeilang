@@ -2,11 +2,12 @@
 #include "neeilang.h"
 #include "token.h"
 
+#include <fstream>
+#include <iostream>
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <fstream>
 
 const std::map<std::string, TokenType> Scanner::keywords = {
     {"and", AND},
@@ -98,17 +99,30 @@ const std::map<std::string, TokenType> Scanner::keywords = {
 };
 
 Scanner::Scanner(const std::string &path) {
+  add_ctx(std::filesystem::path{path});
+}
+
+void Scanner::add_ctx(const std::filesystem::path& path, std::optional<size_t> inclLine) {
   std::ifstream file { path };
   if (!file.is_open()) {
-      throw std::runtime_error("Failed to open " + path);
+      throw std::runtime_error("Failed to open " + path.string());
   }
-  fnames.push_back(path);
+  std::vector<const char*> inclPath = ctxs.empty()
+    ? std::vector<const char*>{} : ctx().inclPath;
+  if (inclLine) {
+    fnames.push_back(std::string(inclPath.back()) + ":" +  std::to_string(*inclLine));
+    inclPath.pop_back(); inclPath.push_back(fnames.back().c_str());
+  }
+  fnames.push_back(path.string());
+  inclPath.push_back(fnames.back().c_str());
+
   ctxs.push(SourceCtx{
     .source = std::string(std::istreambuf_iterator<char>(file), {}),
-    .path = fnames.back().c_str()
-
+    .path = fnames.back().c_str(),
+    .inclPath = inclPath
   });
 }
+
 
 Scanner::SourceCtx& Scanner::ctx() {
   return ctxs.top();
@@ -121,11 +135,47 @@ std::vector<Token> Scanner::scan_tokens() {
     scan_token();
   }
 
-  tokens.push_back(Token(END_OF_FILE, "", "", ctx().line, ctx().path));
+  tokens.push_back(Token(END_OF_FILE, "", "", ctx().line, ctx().inclPath));
   return tokens;
 }
 
-bool Scanner::is_at_end() { return ctx().current >= ctx().source.length(); }
+bool Scanner::is_at_end() {
+  return ctxs.size() == 1 && ctx().current >= ctx().source.length();
+}
+
+void Scanner::preprocessor() {
+  namespace fs = std::filesystem;
+
+  // Encountered a # - is it at start of line?
+  auto curr = ctx().current;
+  bool const at_line_start = curr <= 1 || ctx().source[curr-2] == '\n';
+  if (!at_line_start) {
+    return;
+  }
+
+  std::string directive;
+  while (is_alphanumeric(peek())) {
+    directive += peek();
+    advance();
+  }
+  if (directive == "include") {
+    while (peek() == ' ' || peek() == '\t') { advance(); }
+    char const opener = advance();
+    if (opener != '"' && opener != '<') {
+      Neeilang::error(ctx().inclPath, ctx().line, "Malformed #include directive");
+    }
+    char closer = opener == '<' ? '>' : '"';
+    std::string fname;
+    while (peek() != closer) {
+      fname += advance();
+    }
+    auto const inclLine = ctx().line;
+    advance();
+    add_ctx( fs::path{ctx().path}.parent_path() / fname, inclLine );
+  } else {
+    Neeilang::error(ctx().inclPath, ctx().line, "Unrecognized preprocessor directive " + directive);
+  }
+}
 
 void Scanner::scan_token() {
   char c = advance();
@@ -209,6 +259,9 @@ void Scanner::scan_token() {
   case '\n':
     ctx().line++;
     break;
+  case '#':
+    preprocessor();
+    break;
   case '"':
     string();
     break; // string literals
@@ -220,19 +273,25 @@ void Scanner::scan_token() {
     } else {
       std::ostringstream msg;
       msg << "Unexpected character '" << c << "'";
-      Neeilang::error(ctx().path, ctx().line, msg.str());
+      Neeilang::error(ctx().inclPath, ctx().line, msg.str());
     }
     break;
   }
 }
 
-char Scanner::advance() { return ctx().source[ctx().current++]; }
+char Scanner::advance() {
+  bool const at_end_of_ctx = ctx().current >= ctx().source.length();
+  if (at_end_of_ctx && ctxs.size() > 1) {
+    ctxs.pop();
+  }
+  return ctx().source[ctx().current++];
+}
 
 void Scanner::add_token(TokenType type) { add_token(type, ""); }
 
 void Scanner::add_token(TokenType type, std::string literal) {
   std::string text = ctx().source.substr(ctx().start, ctx().current - ctx().start);
-  tokens.push_back(Token(type, text, literal, ctx().line, ctx().path));
+  tokens.push_back(Token(type, text, literal, ctx().line, ctx().inclPath));
 }
 
 bool Scanner::match(char expected) {
@@ -259,7 +318,7 @@ void Scanner::string() {
 
   // Unterminated string.
   if (is_at_end()) {
-    Neeilang::error(ctx().path, ctx().line, "Unterminated string.");
+    Neeilang::error(ctx().inclPath, ctx().line, "Unterminated string.");
     return;
   }
 

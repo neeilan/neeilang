@@ -1,7 +1,9 @@
 #ifndef _NL_SCANNER_H_
 #define _NL_SCANNER_H_
 
+#include <filesystem>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 #include <stack>
@@ -18,21 +20,21 @@ private:
   struct SourceCtx {
     const std::string source;
     const char* path;
+    std::vector<const char*> inclPath;
     size_t start = 0;
     size_t current = 0;
     int line = 1;
   };
 
+  void add_ctx(const std::filesystem::path& path, std::optional<size_t> inclLine = std::nullopt);
   SourceCtx& ctx();
   std::vector<Token> tokens;
   std::stack<SourceCtx> ctxs;
-  std::vector<std::string> fnames;
+  std::vector<std::string> fnames; // unordered strtab for filenames
 
   static const std::map<std::string, TokenType> keywords;
 
-  size_t start = 0;
-  size_t current = 0;
-  int line = 1;
+  void preprocessor();
 
   bool is_at_end();
 

@@ -7,4 +7,4 @@ enum class bar {
     v4 = 9
 }
 
-// enum class zoo : {} // Error:  at '{' : Expect enum underlying type
+// enum class zoo : {} # // Error:  at '{' : Expect enum underlying type

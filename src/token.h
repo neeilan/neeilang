@@ -2,6 +2,7 @@
 #define _NL_TOKEN_H_
 
 #include <string>
+#include <vector>
 
 enum TokenType {
   // Single-character tokens.
@@ -68,7 +69,8 @@ public:
   std::string lexeme;
   std::string literal;
   int line;
-  const char* fname;
+  // [included-from 1, ..., included-from n, file-token-is-in]
+  std::vector<const char*> inclPath;
 
   Token() {}
 
@@ -77,12 +79,12 @@ public:
     const std::string &lexeme,
     const std::string &literal,
     int line,
-    const char * fname)
+    std::vector<const char *> const& inclPath)
       : type(type)
       , lexeme(lexeme)
       , literal(literal)
       , line(line)
-      , fname(fname) {};
+      , inclPath(inclPath) {};
 
   Token(const Token &token) = default;
 

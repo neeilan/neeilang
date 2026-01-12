@@ -88,23 +88,30 @@ void Neeilang::run_file(const char *path) {
 // #endif
 }
 
-void Neeilang::error(const char* fname, int line, const std::string &message) {
-  report(fname, line, "", message);
+void Neeilang::error(std::vector<const char*> inclPath, int line, const std::string &message) {
+  report(inclPath, line, "", message);
 }
 
 void Neeilang::error(Token token, const std::string &message) {
   if (token.type == END_OF_FILE) {
-    report(token.fname, token.line, " at end", message);
+    report(token.inclPath, token.line, " at end", message);
   } else {
-    report(token.fname, token.line, " at '" + token.lexeme + "'", message);
+    report(token.inclPath, token.line, " at '" + token.lexeme + "'", message);
   }
 }
 
 // Private
 
-void Neeilang::report(const char* fname, int line, std::string const& occurrence,
+void Neeilang::report(std::vector<const char*> inclPath, int line, std::string const& occurrence,
                       std::string const& message) {
-  std::cout << "[" << fname <<  ":" << line << "] Error: ";
+
+  size_t depth = 0;
+  for (size_t i = 0; i < inclPath.size() - 1; ++i) {
+    std::cout << std::string(depth, ' ') << "[In file included from " << inclPath[i] << "]\n";
+    depth++;
+  }
+
+  std::cout << std::string(depth, ' ') << "[" << inclPath.back() <<  ":" << line << "] Error: ";
   if (occurrence.size() > 0) {
     std::cout << occurrence << " : ";
   }

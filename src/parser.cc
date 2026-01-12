@@ -336,7 +336,7 @@ Stmt *Parser::func_statement(std::string kind) {
   TypeParse return_type;
 
   if (outer_class && name.lexeme == "init") {
-    return_type.name = Token(IDENTIFIER, *outer_class, "", -1, "<Unknown file>");
+    return_type.name = Token(IDENTIFIER, *outer_class, "", -1, {"<Unknown file>"});
     consume(LEFT_BRACE, "Expect '{' before init body. Note: Return type is not "
                         "declared for init methods");
   } else {
