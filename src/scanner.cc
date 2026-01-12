@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <fstream>
 
 const std::map<std::string, TokenType> Scanner::keywords = {
     {"and", AND},
@@ -96,20 +97,35 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"volatile", RESERVED_KEYWORD},
 };
 
-Scanner::Scanner(const std::string &source) : source(source) {}
+Scanner::Scanner(const std::string &path) {
+  std::ifstream file { path };
+  if (!file.is_open()) {
+      throw std::runtime_error("Failed to open " + path);
+  }
+  fnames.push_back(path);
+  ctxs.push(SourceCtx{
+    .source = std::string(std::istreambuf_iterator<char>(file), {}),
+    .path = fnames.back().c_str()
+
+  });
+}
+
+Scanner::SourceCtx& Scanner::ctx() {
+  return ctxs.top();
+}
 
 std::vector<Token> Scanner::scan_tokens() {
   while (!is_at_end()) {
     // Invariant: All lexemes before current have been scanned
-    start = current;
+    ctx().start = ctx().current;
     scan_token();
   }
 
-  tokens.push_back(Token(END_OF_FILE, "", "", line));
+  tokens.push_back(Token(END_OF_FILE, "", "", ctx().line, ctx().path));
   return tokens;
 }
 
-bool Scanner::is_at_end() { return current >= source.length(); }
+bool Scanner::is_at_end() { return ctx().current >= ctx().source.length(); }
 
 void Scanner::scan_token() {
   char c = advance();
@@ -175,7 +191,7 @@ void Scanner::scan_token() {
       while (in_comment && !is_at_end()) {
         while (!match('*') && !is_at_end()) {
           if (peek() == '\n')
-            line++;
+            ctx().line++;
           advance();
         }
         // Matched a * - comment ends if we match a /
@@ -191,7 +207,7 @@ void Scanner::scan_token() {
     // Ignore whitespace.
     break;
   case '\n':
-    line++;
+    ctx().line++;
     break;
   case '"':
     string();
@@ -204,26 +220,26 @@ void Scanner::scan_token() {
     } else {
       std::ostringstream msg;
       msg << "Unexpected character '" << c << "'";
-      Neeilang::error(line, msg.str());
+      Neeilang::error(ctx().path, ctx().line, msg.str());
     }
     break;
   }
 }
 
-char Scanner::advance() { return source[current++]; }
+char Scanner::advance() { return ctx().source[ctx().current++]; }
 
 void Scanner::add_token(TokenType type) { add_token(type, ""); }
 
 void Scanner::add_token(TokenType type, std::string literal) {
-  std::string text = source.substr(start, current - start);
-  tokens.push_back(Token(type, text, literal, line));
+  std::string text = ctx().source.substr(ctx().start, ctx().current - ctx().start);
+  tokens.push_back(Token(type, text, literal, ctx().line, ctx().path));
 }
 
 bool Scanner::match(char expected) {
-  if (is_at_end() || source[current] != expected)
+  if (is_at_end() || ctx().source[ctx().current] != expected)
     return false;
 
-  current++;
+  ctx().current++;
   return true;
 }
 
@@ -231,19 +247,19 @@ bool Scanner::match(char expected) {
 char Scanner::peek() {
   if (is_at_end())
     return '\0';
-  return source[current];
+  return ctx().source[ctx().current];
 }
 
 void Scanner::string() {
   while (peek() != '"' && !is_at_end()) {
     if (peek() == '\n')
-      line++;
+      ctx().line++;
     advance();
   }
 
   // Unterminated string.
   if (is_at_end()) {
-    Neeilang::error(line, "Unterminated string.");
+    Neeilang::error(ctx().path, ctx().line, "Unterminated string.");
     return;
   }
 
@@ -251,8 +267,8 @@ void Scanner::string() {
   advance();
 
   // Trim the surrounding quotes.
-  int str_start = start + 1;
-  std::string value = source.substr(str_start, current - 1 - str_start);
+  int str_start = ctx().start + 1;
+  std::string value = ctx().source.substr(str_start, ctx().current - 1 - str_start);
   add_token(STRING, value);
 }
 
@@ -269,14 +285,14 @@ void Scanner::number() {
       advance();
   }
 
-  std::string value = source.substr(start, current - start);
+  std::string value = ctx().source.substr(ctx().start, ctx().current - ctx().start);
   add_token(NUMBER, value);
 }
 
 char Scanner::peek_next() {
-  if (current + 1 >= source.length())
+  if (ctx().current + 1 >= ctx().source.length())
     return '\0';
-  return source[current + 1];
+  return ctx().source[ctx().current + 1];
 }
 
 void Scanner::identifier() {
@@ -284,7 +300,7 @@ void Scanner::identifier() {
     advance();
 
   // See if the identifier is a reserved word.
-  std::string text = source.substr(start, current - start);
+  std::string text = ctx().source.substr(ctx().start, ctx().current - ctx().start);
 
   TokenType type = keywords.count(text) ? keywords.at(text) : IDENTIFIER;
   add_token(type);

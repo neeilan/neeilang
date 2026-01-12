@@ -68,19 +68,23 @@ public:
   std::string lexeme;
   std::string literal;
   int line;
+  const char* fname;
 
   Token() {}
 
-  Token(TokenType type, const std::string &lexeme, const std::string &literal,
-        int line)
-      : type(type), lexeme(lexeme), literal(literal), line(line) {}
+  Token(
+    TokenType type,
+    const std::string &lexeme,
+    const std::string &literal,
+    int line,
+    const char * fname)
+      : type(type)
+      , lexeme(lexeme)
+      , literal(literal)
+      , line(line)
+      , fname(fname) {};
 
-  Token(const Token &token) {
-    this->type = token.type;
-    this->lexeme = token.lexeme;
-    this->literal = token.literal;
-    this->line = token.line;
-  }
+  Token(const Token &token) = default;
 
   std::string str() const;
 };

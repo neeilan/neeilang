@@ -25,19 +25,7 @@
 bool Neeilang::had_error = false;
 
 void Neeilang::run_file(const char *path) {
-  const std::ifstream file(path);
-  std::stringstream src_buffer;
-
-  src_buffer << file.rdbuf();
-
-  run(src_buffer.str());
-
-  if (had_error)
-    exit(65); // data format error
-}
-
-void Neeilang::run(const std::string &source) {
-  Scanner scanner(source);
+  Scanner scanner(path);
   const std::vector<Token> tokens = scanner.scan_tokens();
 
   // for (Token t : tokens) {
@@ -100,23 +88,23 @@ void Neeilang::run(const std::string &source) {
 // #endif
 }
 
-void Neeilang::error(int line, const std::string &message) {
-  report(line, "", message);
+void Neeilang::error(const char* fname, int line, const std::string &message) {
+  report(fname, line, "", message);
 }
 
 void Neeilang::error(Token token, const std::string &message) {
   if (token.type == END_OF_FILE) {
-    report(token.line, " at end", message);
+    report(token.fname, token.line, " at end", message);
   } else {
-    report(token.line, " at '" + token.lexeme + "'", message);
+    report(token.fname, token.line, " at '" + token.lexeme + "'", message);
   }
 }
 
 // Private
 
-void Neeilang::report(int line, const std::string &occurrence,
-                      const std::string &message) {
-  std::cout << "[line " << line << "] Error: ";
+void Neeilang::report(const char* fname, int line, std::string const& occurrence,
+                      std::string const& message) {
+  std::cout << "[" << fname <<  ":" << line << "] Error: ";
   if (occurrence.size() > 0) {
     std::cout << occurrence << " : ";
   }

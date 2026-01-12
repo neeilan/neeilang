@@ -4,18 +4,30 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <stack>
 
 #include "token.h"
 
 class Scanner {
 public:
-  Scanner(const std::string &source);
+  Scanner(const std::string &path);
 
   std::vector<Token> scan_tokens();
 
 private:
-  const std::string source;
+  struct SourceCtx {
+    const std::string source;
+    const char* path;
+    size_t start = 0;
+    size_t current = 0;
+    int line = 1;
+  };
+
+  SourceCtx& ctx();
   std::vector<Token> tokens;
+  std::stack<SourceCtx> ctxs;
+  std::vector<std::string> fnames;
+
   static const std::map<std::string, TokenType> keywords;
 
   size_t start = 0;
