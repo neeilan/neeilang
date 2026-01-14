@@ -1,4 +1,4 @@
-fn negativeTwo() : Float {
+fn negativeTwo() : float {
   return -(4.0-2.0);
 }
 

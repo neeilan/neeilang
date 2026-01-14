@@ -20,7 +20,7 @@ NLType Int() {
 }
 
 NLType Float() {
-  static NLType type = std::make_shared<Type>("Float");
+  static NLType type = std::make_shared<Type>("float");
   return type;
 }
 

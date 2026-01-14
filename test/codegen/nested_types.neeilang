@@ -1,10 +1,10 @@
 class A {
   aIntField : Int;
-  aFloatField : Float;
+  aFloatField : float;
 }
 
 class B {
   bIntField : Int;
   bAField : A;
-  bFloatField : Float;
+  bFloatField : float;
 }

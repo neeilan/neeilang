@@ -1,5 +1,5 @@
 fn cond1(a : Int) : Int {
-  var a1 : Float = 16.0;
+  var a1 : float = 16.0;
   if (a1 < 5.1) {
     return 1;
   }

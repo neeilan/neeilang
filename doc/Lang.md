@@ -17,7 +17,7 @@ are six primitive types:
 |  Type  | Description                                        |
 |--------|-----------------------------------------------------
 | Int    | Signed integer >= 32 bits wide                     |
-| Float  | 'At-least' single-precision FP number              |
+| float  | 'At-least' single-precision FP number              |
 | Bool   | Boolean type - true or false                       |
 | String | Character sequence - each char is >= 8 bits wide   |
 | Array  | An array of type T and size s is indicated as T[s] |
@@ -41,7 +41,7 @@ NL is a statically-typed language, and the types of parameters
 and return values must be explicitly declared:
 
 ```
-fn add(a : Float, b : Float) : Float { return a + b; }
+fn add(a : float, b : float) : float { return a + b; }
 ```
 
 While this adds verbosity, it also eliminates an entire class of
@@ -49,7 +49,7 @@ type errors at compile time. For example, calling `add(1.5, "two")`
 fails with the following message:
 
 ```
-Expected argument type ( Float Float ) but got ( Float String )
+Expected argument type ( float float ) but got ( float String )
 ```
 
 Similarly, variables are strongly typed and require explicit types:
@@ -180,7 +180,7 @@ comments
 ### Type semantics
 
 Types in NL can be widely divided into numeric and non-numeric types.
-Numeric types are the primitive `Int`, `Float`, and  `Bool` types.
+Numeric types are the primitive `Int`, `float`, and  `Bool` types.
 Almost every other type, including user-defined types, is non-numeric.
 The general rule for value vs reference semantics is as follows:
 

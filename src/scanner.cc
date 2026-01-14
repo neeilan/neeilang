@@ -62,7 +62,7 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"explicit", RESERVED_KEYWORD},
     {"export", RESERVED_KEYWORD},
     {"extern", RESERVED_KEYWORD},
-    {"float", RESERVED_KEYWORD},
+    // {"float", RESERVED_KEYWORD},
     {"friend", RESERVED_KEYWORD},
     {"goto", RESERVED_KEYWORD},
     {"inline", RESERVED_KEYWORD},

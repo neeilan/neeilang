@@ -1,5 +1,5 @@
 fn main() : Int {
-  var myFloat : Float = 3.5;
+  var myFloat : float = 3.5;
 
   if (myFloat > 1) {
     print "myFloat 3.5 is bigger than the integer 1";

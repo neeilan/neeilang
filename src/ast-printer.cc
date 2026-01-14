@@ -134,19 +134,25 @@ std::string AstPrinter::visit(const IfStmt *stmt) {
   if (stmt->condition) {
     out << print(stmt->condition);
   }
+  OUT << ">\n";
   if (stmt->then_branch) {
-    OUT << "then: ";
+    nest++;
+    OUT << "<Then>\n";
     nest++;
     out << print(stmt->then_branch);
     nest--;
+    OUT << "</Then>\n";
+    nest--;
   }
   if (stmt->else_branch) {
-    OUT << "else: ";
+    nest++;
+    OUT << "<Else>\n";
     nest++;
     out << print(stmt->else_branch);
     nest--;
+    OUT << "</Else>\n";
+    nest--;
   }
-  nest--;
   return out.str();
 }
 

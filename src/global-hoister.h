@@ -23,7 +23,7 @@ public:
   GlobalHoister(ScopeManager &sm) : sm(sm) {
     typetab()->insert("String", Primitives::String());
     typetab()->insert("Int", Primitives::Int());
-    typetab()->insert("Float", Primitives::Float());
+    typetab()->insert("float", Primitives::Float());
     typetab()->insert("Bool", Primitives::Bool());
     typetab()->insert("void", Primitives::Void());
   }

@@ -4,7 +4,7 @@ class Point {
 }
 
 class Point3D {
-  x : Float;
-  y : Float;
-  z : Float;
+  x : float;
+  y : float;
+  z : float;
 }

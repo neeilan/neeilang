@@ -1,19 +1,19 @@
 class A  {
   parentInt : Int;
-  parentFloat : Float;
+  parentFloat : float;
 }
 
 class B < A {
   firstChildInt : Int;
-  firstChildFloat : Float;
+  firstChildFloat : float;
 }
 
 class B1 < A {
   secondChildInt : Int;
-  secondChildFloat : Float;
+  secondChildFloat : float;
 }
 
 class C < B {
   grandChildInt : Int;
-  grandChildFloat : Float;
+  grandChildFloat : float;
 }
