@@ -51,9 +51,9 @@ void TypeChecker::visit(const VarStmt *stmt) {
       var_type = inferred_type;
     }
   } else {
-    var_type = types()->get(stmt->tp.name.lexeme);
+    var_type = types()->get(stmt->tp.get_name());
     if (!var_type) {
-      Neeilang::error(stmt->tp.name, "Unknown type");
+      Neeilang::error(stmt->tp.name.back(), "Unknown type");
       return;
     }
 
@@ -61,7 +61,7 @@ void TypeChecker::visit(const VarStmt *stmt) {
       for (const Expr *expr : stmt->tp.dims) {
         auto dim_type = check(expr);
         if (dim_type != Primitives::Int()) {
-          Neeilang::error(stmt->tp.name, "Array dimensions must be Int. Got " +
+          Neeilang::error(stmt->tp.name.back(), "Array dimensions must be Int. Got " +
                                              dim_type->name);
         }
       }
@@ -74,7 +74,7 @@ void TypeChecker::visit(const VarStmt *stmt) {
         std::ostringstream msg;
         msg << "Illegal initialization of variable of type " << var_type->name
             << " with expression of type " << expr_type->name;
-        Neeilang::error(stmt->tp.name, msg.str());
+        Neeilang::error(stmt->tp.name.back(), msg.str());
         return;
       }
     }

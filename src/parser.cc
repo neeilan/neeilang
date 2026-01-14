@@ -27,6 +27,8 @@ Stmt *Parser::declaration() {
     return func_statement("function");
   if (match({CLASS}))
     return class_declaration();
+  if (match({ENUM}))
+    return enum_declaration();
   if (match({VAR})) {
     return var_declaration();
   } else {
@@ -36,7 +38,9 @@ Stmt *Parser::declaration() {
 
 TypeParse Parser::parse_type(const std::string &msg) {
   TypeParse tp;
-  tp.name = consume(IDENTIFIER, msg);
+
+  tp.name = consume_qualified_identifier(msg);
+
 
   while (match({LEFT_BRACKET})) {
     tp.dims.push_back(expression());
@@ -121,8 +125,6 @@ Stmt *Parser::statement() {
     return namespace_statement();
   if (match({TEMPLATE}))
     return template_statement();
-  if (match({ENUM}))
-    return enum_declaration();
   if (match({LEFT_BRACE}))
     return block_statement();
 
@@ -222,7 +224,7 @@ Stmt *Parser::namespace_statement() {
   if (check(LEFT_BRACE)) {
     // anonymous namespace
   } else {
-    std::vector<Token> qual_name = consume_qualified_identifier();
+    std::vector<Token> qual_name = consume_qualified_identifier("Expect namespace name");
     for (size_t i = 0; i < qual_name.size(); ++i) {
       if (i > 0) {
         name += "::";
@@ -311,6 +313,7 @@ Stmt *Parser::for_statement(Token for_tok) {
 }
 
 Stmt *Parser::func_statement(std::string kind) {
+
   Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
 
   consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
@@ -336,7 +339,7 @@ Stmt *Parser::func_statement(std::string kind) {
   TypeParse return_type;
 
   if (outer_class && name.lexeme == "init") {
-    return_type.name = Token(IDENTIFIER, *outer_class, "", -1, {"<Unknown file>"});
+    return_type.name = {Token(IDENTIFIER, *outer_class, "", -1, {"<Unknown file>"})};
     consume(LEFT_BRACE, "Expect '{' before init body. Note: Return type is not "
                         "declared for init methods");
   } else {
@@ -582,11 +585,22 @@ Expr *Parser::primary() {
   throw error(peek(), "Expect expression.");
 }
 
-std::vector<Token> Parser::consume_qualified_identifier() {
+std::vector<Token> Parser::consume_qualified_identifier(std::string const& msg) {
   std::vector<Token> res;
 
+  if (!check(IDENTIFIER) && !check(COLON_COLON)) {
+    Neeilang::error(peek(), msg);
+  }
+
+  // TODO: explicit global namespace should be handled
+  // separately (::foo is different from foo)
+  if (check(COLON_COLON)) {
+    consume(COLON_COLON, "");
+    // res.globalNamespace = true;
+  }
+
   while (check(IDENTIFIER) || check(COLON_COLON)) {
-    res.push_back(consume(IDENTIFIER, "Expect identifier"));
+    res.push_back(consume(IDENTIFIER, msg));
     if (match({COLON_COLON})) {
       // OK, move onto next identifier
     } else {

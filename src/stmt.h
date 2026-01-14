@@ -137,13 +137,14 @@ public:
       : name(name), parameters(parameters), parameter_types(parameter_types),
         return_type(return_type), body(body) {}
 
-  bool is_void() const { return return_type.name.lexeme == "void"; }
+  bool is_void() const { return return_type.get_name() == "::void"; }
 
   const Token name;
   const std::vector<Token> parameters;
   const std::vector<TypeParse> parameter_types;
   const TypeParse return_type;
   const std::vector<Stmt *> body;
+  bool isStatic = false;
 };
 
 class ReturnStmt : public StmtCRTP<ReturnStmt> {

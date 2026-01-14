@@ -33,7 +33,7 @@ std::string AstPrinter::visit(const NamespaceStmt *stmt) {
 std::string AstPrinter::visit(const ScopedEnum * stmt) {
   ostringstream out;
   OUT << "<ScopedEnum name=\"" << stmt->name << "\" underlying=\""
-    << (stmt->underlying ? stmt->underlying->name.lexeme : "(nullopt)")
+    << (stmt->underlying ? stmt->underlying->get_name() : "(nullopt)")
     << "\">\n";
 
   nest++;
@@ -91,7 +91,7 @@ std::string AstPrinter::visit(const PrintStmt *stmt) {
 
 std::string AstPrinter::visit(const VarStmt *stmt) {
   ostringstream out;
-  OUT << "<Var name=" << stmt->name.lexeme << " type=" << stmt->tp.name.lexeme;
+  OUT << "<Var name=" << stmt->name.lexeme << " type=" << stmt->tp.get_name();
   if (stmt->expression) {
     out << " initializer=" << print(stmt->expression);
   }
@@ -112,7 +112,7 @@ std::string AstPrinter::visit(const ClassStmt *stmt) {
   nest++;
   for (size_t i = 0; i < stmt->fields.size(); i++) {
     OUT << "<Field name=\"" << stmt->fields[i].lexeme
-        << "\" type=\"" << stmt->field_types[i].name.lexeme << "\"/>\n";
+        << "\" type=\"" << stmt->field_types[i].get_name() << "\"/>\n";
   }
   nest--;
   OUT << "</Class.Fields>" << std::endl;
@@ -174,11 +174,11 @@ std::string AstPrinter::visit(const WhileStmt *stmt) {
 std::string AstPrinter::visit(const FuncStmt *stmt) {
   ostringstream out;
   OUT << "<Function name=\"" << stmt->name.lexeme << "\"  return_type=\""
-      << stmt->return_type.name.lexeme << "\" ";
+      << stmt->return_type.get_name() << "\" ";
   for (size_t i = 0; i < stmt->parameters.size(); i++) {
     std::string argn = std::string("args[") + std::to_string(i) + "]";
     out << argn << ".name=\"" << stmt->parameters[i].lexeme << "\" "
-        << argn << ".type=\"" << stmt->parameter_types[i].name.lexeme << "\" ";
+        << argn << ".type=\"" << stmt->parameter_types[i].get_name() << "\" ";
   }
   out << ">\n";
 
