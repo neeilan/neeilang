@@ -1,6 +1,6 @@
 fn fnWithLocalVars() : void {
   var myInt : Int = 4;
-  var myBool : Bool = true;
+  var myBool : bool = true;
   var myFloat : float;
 
   myInt;

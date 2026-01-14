@@ -3,7 +3,7 @@ class A {
 }
 
 class B < A {
-  bBool : Bool;
+  bBool : bool;
 }
 
 fn myFunc(a : A, b : B, num1: Int, num2: Int) : Int {

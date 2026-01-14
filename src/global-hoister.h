@@ -24,7 +24,7 @@ public:
     typetab()->insert("String", Primitives::String());
     typetab()->insert("Int", Primitives::Int());
     typetab()->insert("float", Primitives::Float());
-    typetab()->insert("Bool", Primitives::Bool());
+    typetab()->insert("bool", Primitives::Bool());
     typetab()->insert("void", Primitives::Void());
   }
 

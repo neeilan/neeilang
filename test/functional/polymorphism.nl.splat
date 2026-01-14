@@ -1,5 +1,5 @@
 class SuperClass {
-  flag : Bool;
+  flag : bool;
   init() { return this; }
   sound() : void { print "super"; return;  }
 }

@@ -38,7 +38,7 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"alignas", RESERVED_KEYWORD},
     {"alignof", RESERVED_KEYWORD},
     {"auto", RESERVED_KEYWORD},
-    {"bool", RESERVED_KEYWORD},
+    // {"bool", RESERVED_KEYWORD},
     {"break", RESERVED_KEYWORD},
     {"continue", RESERVED_KEYWORD},
     {"case", RESERVED_KEYWORD},

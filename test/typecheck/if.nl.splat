@@ -10,7 +10,7 @@ if (12) {
 
 }
 
-fn getBool() : Bool {}
+fn getBool() : bool {}
 
 
 if (1) {}

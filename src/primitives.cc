@@ -25,7 +25,7 @@ NLType Float() {
 }
 
 NLType Bool() {
-  static NLType type = std::make_shared<Type>("Bool");
+  static NLType type = std::make_shared<Type>("bool");
   return type;
 }
 

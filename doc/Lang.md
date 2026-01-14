@@ -18,7 +18,7 @@ are six primitive types:
 |--------|-----------------------------------------------------
 | Int    | Signed integer >= 32 bits wide                     |
 | float  | 'At-least' single-precision FP number              |
-| Bool   | Boolean type - true or false                       |
+| bool   | Boolean type - true or false                       |
 | String | Character sequence - each char is >= 8 bits wide   |
 | Array  | An array of type T and size s is indicated as T[s] |
 | void   | Indicates no return value in function signatures   |
@@ -108,7 +108,7 @@ class Cat < Animal {
 The type system supports polymorphic variable assignment, function 
 argument passing, and function returns. Consider the following (legal) code:
 ```
-class Super { flag : Bool; init() { return this; } }
+class Super { flag : bool; init() { return this; } }
 class Sub < Super { init() { return this; } }
 
 fn returnsSuper(superArg : Super) : Super {
@@ -180,7 +180,7 @@ comments
 ### Type semantics
 
 Types in NL can be widely divided into numeric and non-numeric types.
-Numeric types are the primitive `Int`, `float`, and  `Bool` types.
+Numeric types are the primitive `Int`, `float`, and  `bool` types.
 Almost every other type, including user-defined types, is non-numeric.
 The general rule for value vs reference semantics is as follows:
 
