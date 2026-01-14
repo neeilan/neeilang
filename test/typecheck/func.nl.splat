@@ -2,7 +2,7 @@
 %snippet "Unknown return type"
 */
 
-fn funcName(intArg : Int, strArg : String) : UndefinedTypeX {
+fn funcName(intArg : int, strArg : String) : UndefinedTypeX {
   return intArg + strArg;
 }
 
@@ -18,7 +18,7 @@ fn doStuff() : void {
   return;
 }
 
-fn main() : Int {
+fn main() : int {
   doStuff();
   return 10;
 }

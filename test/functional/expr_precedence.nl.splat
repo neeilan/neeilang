@@ -1,4 +1,4 @@
-fn main() : Int {
+fn main() : int {
   print 4;
   print 4 + 7;
   print 4 + 7 * 2;

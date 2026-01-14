@@ -1,6 +1,6 @@
 class FibonacciCalculator {
   init() { return this; }
-  calculateNthFib(n : Int) : Int {
+  calculateNthFib(n : int) : int {
     if (n <= 0) { return 0; }
     if (n == 1) { return 1; }
     else {
@@ -10,9 +10,9 @@ class FibonacciCalculator {
   }
 }
 
-fn main() : Int {
+fn main() : int {
   var fc : FibonacciCalculator = FibonacciCalculator.init();
-  for (var i : Int = 0; i < 4; i = i + 1) {
+  for (var i : int = 0; i < 4; i = i + 1) {
     print fc.calculateNthFib(i);
   }
   return 0;

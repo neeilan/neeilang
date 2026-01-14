@@ -2,7 +2,7 @@ class SomeObject {
   someMethod() : void {
     var a : SomeObject = this; // No error
     var b : SomeObject = "3";  // Error
-    var c : Int = this;        // Error
+    var c : int = this;        // Error
   }
 }
 
@@ -10,7 +10,7 @@ class AnotherObject < SomeObject {
   someMethod() : void {
     var a : AnotherObject = this; // No error
     var b : AnotherObject = "3";  // Error
-    var c : Int = this;           // Error
+    var c : int = this;           // Error
     var d : SomeObject = this;    // No error
     return 3;
   }

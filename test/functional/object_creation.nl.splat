@@ -1,22 +1,22 @@
-fn main() : Int {
+fn main() : int {
   var a : Animal = Animal.init();  
   print "init called successfully";
   return 0;
 }
 
-//fn globalFunc(i : Int) : Float {
+//fn globalFunc(i : int) : Float {
 //  return i / 0.5;
 //}
 
 class Animal {
-  intField : Int;
+  intField : int;
   //floatField : Float;
   init() {
-    var x : Int = 5;
+    var x : int = 5;
     return this;
   }
 
-  notInit() : Int { return 4; }
+  notInit() : int { return 4; }
 }
 
 /* splat segment

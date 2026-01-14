@@ -1,16 +1,16 @@
-fn main() : Int {
-  var i : Int; // Default value is 0
+fn main() : int {
+  var i : int; // Default value is 0
 
   while (i < 3) {
-    // Try: var i : Int; - couple ways to handle it.
+    // Try: var i : int; - couple ways to handle it.
     print i;
     i = i + 1;
   }
 
-  var j : Int = i;
+  var j : int = i;
 
   while (j > 0) {
-    var k : Int = 2;
+    var k : int = 2;
     print j * k;
     j = j - 1;
   }

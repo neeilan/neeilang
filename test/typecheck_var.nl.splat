@@ -1,6 +1,6 @@
 fn getBool() : bool {}
-fn getInt() : Int {}
+fn getInt() : int {}
 
 var x : bool = getBool();
-var y : Int = getBool();
+var y : int = getBool();
 var z : bool = getInt();

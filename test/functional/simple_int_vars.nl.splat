@@ -1,11 +1,11 @@
-fn main() : Int {
-  var a : Int;
-  var b : Int = 2;
+fn main() : int {
+  var a : int;
+  var b : int = 2;
   print a;
   print b;
   {
-    var c : Int = 4;
-    var d : Int = 6;
+    var c : int = 4;
+    var d : int = 6;
     print c;
     print d;
     print a;

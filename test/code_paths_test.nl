@@ -1,6 +1,6 @@
-fn main() : Int {
-  var a : Int = 5;
-  var b : Int = 3;
+fn main() : int {
+  var a : int = 5;
+  var b : int = 3;
 
   print a + b;    // 8
   print a - b;    // 2

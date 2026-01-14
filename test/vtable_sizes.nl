@@ -3,7 +3,7 @@ class SizeOne {
 }
 
 class SizeTwo < SizeOne {
-  B() : Int { return 1; }
+  B() : int { return 1; }
 }
 
 class SizeThree < SizeTwo {
@@ -11,5 +11,5 @@ class SizeThree < SizeTwo {
 }
 
 class StillSizeTwo < SizeTwo {
-  B() : Int { return 5; }
+  B() : int { return 5; }
 }

@@ -1,5 +1,5 @@
 class LLNode {
-  data : Int;
+  data : int;
   is_head : bool;
   next : LLNode;
 }

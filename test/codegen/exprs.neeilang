@@ -1,4 +1,4 @@
-fn something() : Int {
+fn something() : int {
   5 + 3 + (3 - 5) > 3;
   5 <= 11;
   return 4;

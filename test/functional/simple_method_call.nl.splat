@@ -1,4 +1,4 @@
-fn main() : Int {
+fn main() : int {
   var a : Animal = Animal.init();  
   print "init called successfully";
   a.notInit(1,2);
@@ -7,14 +7,14 @@ fn main() : Int {
 }
 
 class Animal {
-  intField : Int;
-  floatField : Float;
+  intField : int;
+  floatField : float;
   init() {
-    var x : Int = 5;
+    var x : int = 5;
     return this;
   }
 
-  notInit(i : Int, j : Int) : void {
+  notInit(i : int, j : int) : void {
     print "notInit called";
     return;
   }

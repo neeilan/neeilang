@@ -22,7 +22,7 @@ class GlobalHoister : public StmtVisitor<void> {
 public:
   GlobalHoister(ScopeManager &sm) : sm(sm) {
     typetab()->insert("String", Primitives::String());
-    typetab()->insert("Int", Primitives::Int());
+    typetab()->insert("int", Primitives::Int());
     typetab()->insert("float", Primitives::Float());
     typetab()->insert("bool", Primitives::Bool());
     typetab()->insert("void", Primitives::Void());

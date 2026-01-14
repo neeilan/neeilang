@@ -1,5 +1,5 @@
-fn createArray() : Int[5] {
-  var arr : Int[5];
+fn createArray() : int[5] {
+  var arr : int[5];
 
   arr[0] = 5;
   arr[1] = 6;
@@ -10,7 +10,7 @@ fn createArray() : Int[5] {
   return arr;
 }
 
-fn sumOfElems(list : Int[5]) : Int {
+fn sumOfElems(list : int[5]) : int {
   var sum = 0;
   for (var i = 0; i < 5; i = i+1) {
     sum = sum + list[i];
@@ -18,7 +18,7 @@ fn sumOfElems(list : Int[5]) : Int {
   return sum;
 }
 
-fn main() : Int {
+fn main() : int {
   print sumOfElems( createArray() );
 
   /*

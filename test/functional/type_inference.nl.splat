@@ -1,15 +1,15 @@
 class SomeClass {
-  someField : Int;
+  someField : int;
 
-  init(f : Int) {
+  init(f : int) {
     this.someField = f;
     return this;
   }
 
-  getField() : Int { return this.someField; }
+  getField() : int { return this.someField; }
 }
 
-fn main() : Int {
+fn main() : int {
   var myInt = 4;
   var myStr = "Inferred string";
   var myObj = SomeClass.init(33);

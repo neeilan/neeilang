@@ -1,6 +1,6 @@
 #include "preprocessor_dep_1.nl"
 #include    <preprocessor_dep_2.nl>
 
-fn Test() : Int {
+fn Test() : int {
     return 42;
 }

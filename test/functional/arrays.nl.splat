@@ -1,6 +1,6 @@
-fn main() : Int {
-  var x : Int;
-  var y : Int[5];
+fn main() : int {
+  var x : int;
+  var y : int[5];
 
   y[1] = 33.1;
 

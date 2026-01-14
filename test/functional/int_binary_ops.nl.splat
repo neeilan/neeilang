@@ -1,11 +1,11 @@
-fn main() : Int {
+fn main() : int {
   test();
   return 0;
 }
 
 fn test() : void {
-  var a : Int = 5;
-  var b : Int = 3;
+  var a : int = 5;
+  var b : int = 3;
 
   print a + b;    // 8
   print a - b;    // 2

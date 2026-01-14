@@ -4,7 +4,7 @@ class Animal {}
 
 class Cat < Animal {}
 
-fn hello(i: Int) : void {
+fn hello(i: int) : void {
 }
 
 hello(5 + 6);
@@ -13,5 +13,5 @@ fn helloCat(a : Animal) : Animal {
 
 }
 
-var myInt : Int;
+var myInt : int;
 

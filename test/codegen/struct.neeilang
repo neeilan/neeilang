@@ -1,6 +1,6 @@
 class Point {
-  x : Int;
-  y : Int;
+  x : int;
+  y : int;
 }
 
 class Point3D {

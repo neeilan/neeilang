@@ -2,7 +2,7 @@ fn funcall(x : String) : void {
 	print x;
 }
 
-fn main() : Int {
+fn main() : int {
 	var x = "hii";
 	funcall(x);
 	funcall("hiii");

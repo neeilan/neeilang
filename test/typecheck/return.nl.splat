@@ -1,8 +1,8 @@
-fn a() : Int {
+fn a() : int {
   return 5 - 3;
 }
 
-fn b() : Int {
+fn b() : int {
   return "5"; // Error
 }
 

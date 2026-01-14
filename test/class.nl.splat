@@ -7,7 +7,7 @@ class Cat < Animal {
 
 
 class Octopus < Animal {
-  tentacles : Int = 8;
+  tentacles : int = 8;
   color : String = "white";
 
   sayHi() : String {}

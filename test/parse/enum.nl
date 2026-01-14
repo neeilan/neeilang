@@ -1,4 +1,4 @@
-enum class foo : Int {}
+enum class foo : int {}
 
 enum class bar {
     v1,

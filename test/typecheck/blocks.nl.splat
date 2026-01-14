@@ -1,7 +1,7 @@
 var x : String = "hi";
 
 {
-  var x : Int = 3;
+  var x : int = 3;
   x = 4;
   {
     x = 5;

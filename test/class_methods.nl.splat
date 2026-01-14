@@ -1,13 +1,13 @@
 class Animal {
-  name : Int;
+  name : int;
 
-  sayHi(x : float) : Int { print "hi"; return 3; }
+  sayHi(x : float) : int { print "hi"; return 3; }
 
 }
 
 class Human {
-  sayHi(x : float) : Int { return -1; }
+  sayHi(x : float) : int { return -1; }
 }
 
 
-fn sayHi(x : float) : Int { print "hi"; return 0; }
+fn sayHi(x : float) : int { print "hi"; return 0; }

@@ -15,7 +15,7 @@ NLType String() {
 }
 
 NLType Int() {
-  static NLType type = std::make_shared<Type>("Int");
+  static NLType type = std::make_shared<Type>("int");
   return type;
 }
 

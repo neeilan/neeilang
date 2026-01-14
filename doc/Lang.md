@@ -27,11 +27,11 @@ are six primitive types:
 A NL program is a sequence of function and/or class statements.
 
 Functions are declared using the `fn` keyword. NL programs start 
-executing in the `main() : Int` function. Hence, this is the 
+executing in the `main() : int` function. Hence, this is the 
 simplest possible 'Hello, world!' program:
 
 ```
-fn main() : Int {              
+fn main() : int {              
   print "Hello, world!";        
   return 0;                     
 }                              
@@ -54,7 +54,7 @@ Expected argument type ( float float ) but got ( float String )
 
 Similarly, variables are strongly typed and require explicit types:
 ```
-var age  : Int;
+var age  : int;
 var name : String;
 ```
 
@@ -73,9 +73,9 @@ methods.
 
 ```
 class Animal {
-  numLegs : Int;
+  numLegs : int;
   
-  init(legs: Int) {
+  init(legs: int) {
     this.numLegs = legs;
     return this;
   }

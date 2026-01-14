@@ -12,10 +12,10 @@ fn foo(arg : x) : T {
 
 template <typename T>
 struct Animal {
-  name : Int;
-  age : Int;
+  name : int;
+  age : int;
 
   init() { print "Animal init called"; return this; }
-  sayHi(x : Int, y : T) : Int { print "hi"; return 3 + y; }
+  sayHi(x : int, y : T) : int { print "hi"; return 3 + y; }
 
 }

@@ -3,4 +3,4 @@ fn sayHi(first : String, last : String, sayHi : String) : int {
   return 0;
 }
 
-var i : Int = sayHi("Dear", "Reader");
+var i : int = sayHi("Dear", "Reader");

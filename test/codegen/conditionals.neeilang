@@ -1,4 +1,4 @@
-fn cond1(a : Int) : Int {
+fn cond1(a : int) : int {
   var a1 : float = 16.0;
   if (a1 < 5.1) {
     return 1;

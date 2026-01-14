@@ -1,4 +1,4 @@
-fn main() : Int {
+fn main() : int {
   var a : Animal = Animal.init("somename");
   print "init done";
   print a.feet;
@@ -17,7 +17,7 @@ fn main() : Int {
 }
 
 class Animal {
-  feet : Int;
+  feet : int;
   //pi : Float;
 
   init(name : String) {

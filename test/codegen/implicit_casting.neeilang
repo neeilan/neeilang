@@ -1,4 +1,4 @@
-fn main() : Int {
+fn main() : int {
   var myFloat : float = 3.5;
 
   if (myFloat > 1) {
@@ -8,8 +8,8 @@ fn main() : Int {
   }
   
 
-  // Add a Float to an Int
-  var myInt : Int = 5;
+  // Add a float to an int
+  var myInt : int = 5;
   print (myFloat + myInt + 1); // 9.5
 
   if (3 >= 3.0) {

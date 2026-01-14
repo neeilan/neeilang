@@ -1,4 +1,4 @@
-fn main() : Int {
+fn main() : int {
     print "Hello World!";
     return 0;
 }

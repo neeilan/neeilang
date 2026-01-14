@@ -7,7 +7,7 @@ class Cat < Animal {
 
 
 class Octopus < Animal {
-  tentacles : Int = 8;
+  tentacles : int = 8;
   color : String = "white";
 
   sayHi() : String {}
@@ -15,7 +15,7 @@ class Octopus < Animal {
 }
 
 class Dog < Animal {}
-fn funcName(intArg : Int, strArg : String) : void {
+fn funcName(intArg : int, strArg : String) : void {
   return intArg + strArg;
 }
 
@@ -23,7 +23,7 @@ fn doStuff() : void {
   return;
 }
 
-fn main() : Int {
+fn main() : int {
   doStuff();
   return 10;
 }
@@ -33,4 +33,4 @@ fn sayHi(first : String, last : String, sayHi : String) : int {
   return 0;
 }
 
-var i : Int = sayHi("Dear", "Reader");
+var i : int = sayHi("Dear", "Reader");

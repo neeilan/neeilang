@@ -20,7 +20,7 @@ fn returnsSuper(superArg : SuperClass) : SuperClass {
 }
 
 
-fn main() : Int {
+fn main() : int {
   var sup  = SuperClass.init();
   var sub  = SubClass.init();
 

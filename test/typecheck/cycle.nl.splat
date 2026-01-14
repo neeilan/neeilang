@@ -3,7 +3,7 @@ class Cat < Animal {
 }
 
 class Animal < Cat {
-  num_legs : Int;
+  num_legs : int;
   name : String;
 }
 

@@ -1,4 +1,4 @@
-fn main() : Int {
+fn main() : int {
   sayHiNTimes(3);
   return 0;
 }
@@ -11,9 +11,9 @@ hi
 %output
 */
 
-fn sayHiNTimes(n : Int) : void {
+fn sayHiNTimes(n : int) : void {
   var hi : String = "hi";
-  var i : Int = 0;
+  var i : int = 0;
   while (i < n) {
     print hi;
     i = i + 1;

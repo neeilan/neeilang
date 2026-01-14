@@ -1,3 +1,3 @@
-fn Test4() : Int {
+fn Test4() : int {
     return 75;
 }

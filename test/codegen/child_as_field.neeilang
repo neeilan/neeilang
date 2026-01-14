@@ -3,5 +3,5 @@ class Parent {
 }
 
 class Child < Parent {
-  intField : Int;
+  intField : int;
 }

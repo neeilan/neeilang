@@ -1,4 +1,4 @@
-fn Test1() : Int {
+fn Test1() : int {
   if (5 > 1) {
     return 5;
   } else {

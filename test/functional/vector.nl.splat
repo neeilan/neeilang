@@ -1,19 +1,19 @@
 class SimpleVector {
-  arr : Int[2];
-  size : Int;
-  capacity : Int;
+  arr : int[2];
+  size : int;
+  capacity : int;
 
   init() {
-    var arrInit : Int[2];
+    var arrInit : int[2];
     this.arr = arrInit;
     this.size = 0;
     this.capacity = 2;
     return this;
   }
-  push(e : Int) : void {
+  push(e : int) : void {
     if (this.size == this.capacity) {
       this.capacity = this.capacity *  2;
-      var new_arr : Int[ this.capacity ];
+      var new_arr : int[ this.capacity ];
       for (var i = 0; i < this.size; i = i+1) {
         new_arr[i] = this.arr[i];
       }
@@ -24,13 +24,13 @@ class SimpleVector {
     return;
   }
 
-  get(i : Int) : Int {
+  get(i : int) : int {
     return this.arr[i];
   }
 }
 
 
-fn main() : Int {
+fn main() : int {
   var vec = SimpleVector.init();
   var vec_size = 10;
 
