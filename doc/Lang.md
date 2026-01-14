@@ -21,7 +21,7 @@ are six primitive types:
 | Bool   | Boolean type - true or false                       |
 | String | Character sequence - each char is >= 8 bits wide   |
 | Array  | An array of type T and size s is indicated as T[s] |
-| Void   | Indicates no return value in function signatures   |
+| void   | Indicates no return value in function signatures   |
 
 
 A NL program is a sequence of function and/or class statements.
@@ -80,7 +80,7 @@ class Animal {
     return this;
   }
   
-  makeSound() : Void { print "grr!"; }
+  makeSound() : void { print "grr!"; }
 }
 ```
 
@@ -98,7 +98,7 @@ The `<` symbol is used to create a subclass.
 ```
 class Cat < Animal {
   init() { return this; }
-  makeSound() : Void { print "meeeow!"; }
+  makeSound() : void { print "meeeow!"; }
 }
 ```
 

@@ -137,7 +137,7 @@ public:
       : name(name), parameters(parameters), parameter_types(parameter_types),
         return_type(return_type), body(body) {}
 
-  bool is_void() const { return return_type.name.lexeme == "Void"; }
+  bool is_void() const { return return_type.name.lexeme == "void"; }
 
   const Token name;
   const std::vector<Token> parameters;

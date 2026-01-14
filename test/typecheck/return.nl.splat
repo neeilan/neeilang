@@ -6,10 +6,10 @@ fn b() : Int {
   return "5"; // Error
 }
 
-fn c() : Void {
+fn c() : void {
   return;
 }
 
-fn d() : Void {
+fn d() : void {
   return 5 * 2; // Error
 }

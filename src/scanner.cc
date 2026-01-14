@@ -94,7 +94,7 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"unsigned", RESERVED_KEYWORD},
     {"using", RESERVED_KEYWORD},
     {"virtual", RESERVED_KEYWORD},
-    {"void", RESERVED_KEYWORD},
+    // {"void", RESERVED_KEYWORD},
     {"volatile", RESERVED_KEYWORD},
 };
 

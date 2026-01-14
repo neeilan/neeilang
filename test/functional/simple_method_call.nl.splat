@@ -14,7 +14,7 @@ class Animal {
     return this;
   }
 
-  notInit(i : Int, j : Int) : Void {
+  notInit(i : Int, j : Int) : void {
     print "notInit called";
     return;
   }
@@ -24,7 +24,7 @@ class Animal {
 
 class Cat {
   init() { return this; }
-  meow() : Void { print "meow"; return; }
+  meow() : void { print "meow"; return; }
 }
 
 /* splat segment

@@ -325,7 +325,7 @@ void CodeGen::visit(const FuncStmt *stmt) {
 
   emit(stmt->body);
   
-  // Void functions may not have return stmt
+  // void functions may not have return stmt
   // TODO: Insert this in reachability stage!
   if (text_.contents.back().values[0] != "ret") {
     ReturnStmt tmp({}, nullptr);

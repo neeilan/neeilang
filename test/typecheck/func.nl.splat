@@ -6,7 +6,7 @@ fn funcName(intArg : Int, strArg : String) : UndefinedTypeX {
   return intArg + strArg;
 }
 
-fn doStuff() : Void {
+fn doStuff() : void {
   return;
 }
 
@@ -14,7 +14,7 @@ fn doStuff() : Void {
 %snippet "already declared"
 */
 
-fn doStuff() : Void {
+fn doStuff() : void {
   return;
 }
 

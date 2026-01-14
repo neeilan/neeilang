@@ -59,7 +59,7 @@ void Reachability::visit(const FuncStmt *stmt) {
 
   if (!fn->is_void_func() && !fn->returns()) {
     Neeilang::error(stmt->name,
-                    "Non-Void function has return-less code path(s).");
+                    "Non-void function has return-less code path(s).");
   }
 }
 

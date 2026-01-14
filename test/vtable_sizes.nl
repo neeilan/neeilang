@@ -1,5 +1,5 @@
 class SizeOne {
-  A() : Void {}
+  A() : void {}
 }
 
 class SizeTwo < SizeOne {
@@ -7,7 +7,7 @@ class SizeTwo < SizeOne {
 }
 
 class SizeThree < SizeTwo {
-  C() : Void  {}
+  C() : void  {}
 }
 
 class StillSizeTwo < SizeTwo {

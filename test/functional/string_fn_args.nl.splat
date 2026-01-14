@@ -1,4 +1,4 @@
-fn funcall(x : String) : Void {
+fn funcall(x : String) : void {
 	print x;
 }
 

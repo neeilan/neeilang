@@ -25,7 +25,7 @@ public:
     typetab()->insert("Int", Primitives::Int());
     typetab()->insert("Float", Primitives::Float());
     typetab()->insert("Bool", Primitives::Bool());
-    typetab()->insert("Void", Primitives::Void());
+    typetab()->insert("void", Primitives::Void());
   }
 
   void hoist_program(const std::vector<Stmt *> statements);

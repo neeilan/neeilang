@@ -46,7 +46,7 @@ void TypeChecker::visit(const VarStmt *stmt) {
     } else {
       auto inferred_type = check(stmt->expression);
       if (inferred_type == Primitives::Void()) {
-        Neeilang::error(stmt->name, "Cannot initialize a variable of type Void");
+        Neeilang::error(stmt->name, "Cannot initialize a variable of type void");
       }
       var_type = inferred_type;
     }
@@ -219,7 +219,7 @@ void TypeChecker::visit(const ReturnStmt *stmt) {
     }
   } else if (declared_rettype != Primitives::Void()) {
     Neeilang::error(stmt->keyword,
-                    "Found Void return. Expected " + declared_rettype->name);
+                    "Found void return. Expected " + declared_rettype->name);
   }
 }
 

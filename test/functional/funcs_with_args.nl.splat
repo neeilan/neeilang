@@ -11,7 +11,7 @@ hi
 %output
 */
 
-fn sayHiNTimes(n : Int) : Void {
+fn sayHiNTimes(n : Int) : void {
   var hi : String = "hi";
   var i : Int = 0;
   while (i < n) {
@@ -21,7 +21,7 @@ fn sayHiNTimes(n : Int) : Void {
   return;
 }
 class Animal {
-  sayHi() : Void {
+  sayHi() : void {
     this;
     return;
   }

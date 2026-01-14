@@ -1,4 +1,4 @@
-fn fnWithLocalVars() : Void {
+fn fnWithLocalVars() : void {
   var myInt : Int = 4;
   var yourInt : Int = 5;
   

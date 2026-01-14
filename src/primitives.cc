@@ -30,7 +30,7 @@ NLType Bool() {
 }
 
 NLType Void() {
-  static NLType type = std::make_shared<Type>("Void");
+  static NLType type = std::make_shared<Type>("void");
   return type;
 }
 

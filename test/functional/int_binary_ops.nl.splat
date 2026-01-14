@@ -3,7 +3,7 @@ fn main() : Int {
   return 0;
 }
 
-fn test() : Void {
+fn test() : void {
   var a : Int = 5;
   var b : Int = 3;
 
