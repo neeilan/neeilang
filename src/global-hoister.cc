@@ -73,10 +73,10 @@ void GlobalHoister::visit(const ClassStmt *cls) {
   // Fields
   for (size_t i = 0; i < cls->fields.size(); i++) {
     std::string field_name = cls->fields[i].lexeme;
-    std::string field_type_name = cls->field_types[i].get_name();
+    std::string field_type_name = cls->field_types[i].name.str();
 
     if (!typetab()->contains(field_type_name)) {
-      Neeilang::error(cls->field_types[i].name.back(), "Unknown type in field");
+      Neeilang::error(cls->field_types[i].name.token(), "Unknown type in field");
       return;
     }
 
@@ -114,7 +114,7 @@ void GlobalHoister::visit(const FuncStmt *stmt) {
   }
 
   const std::string fn_name = stmt->name.lexeme;
-  const std::string return_type_name = stmt->return_type.get_name();
+  const std::string return_type_name = stmt->return_type.name.str();
   hoist_type(return_type_name);
 
   std::shared_ptr<FuncType> functype = std::make_shared<FuncType>();
@@ -122,12 +122,12 @@ void GlobalHoister::visit(const FuncStmt *stmt) {
 
   bool had_error = false;
 
-  if (!typetab()->contains(stmt->return_type.get_name())) {
-    Neeilang::error(stmt->return_type.name.back(),
-                    "Unknown return type " + stmt->return_type.get_name());
+  if (!typetab()->contains(stmt->return_type.name.str())) {
+    Neeilang::error(stmt->return_type.name.token(),
+                    "Unknown return type " + stmt->return_type.name.str());
     had_error = true;
   } else {
-    functype->return_type = typetab()->get(stmt->return_type.get_name());
+    functype->return_type = typetab()->get(stmt->return_type.name.str());
     if (stmt->return_type.is_array()) {
       functype->return_type = Primitives::Array(functype->return_type,
                                                 stmt->return_type.array_dims());
@@ -135,12 +135,12 @@ void GlobalHoister::visit(const FuncStmt *stmt) {
   }
 
   for (TypeParse param_tp : stmt->parameter_types) {
-    hoist_type(param_tp.get_name());
-    if (!typetab()->contains(param_tp.get_name())) {
-      Neeilang::error(param_tp.name.back(), "Unknown parameter type");
+    hoist_type(param_tp.name.str());
+    if (!typetab()->contains(param_tp.name.str())) {
+      Neeilang::error(param_tp.name.token(), "Unknown parameter type");
       had_error = true;
     } else {
-      NLType param_type = typetab()->get(param_tp.get_name());
+      NLType param_type = typetab()->get(param_tp.name.str());
       if (param_tp.is_array()) {
         param_type = Primitives::Array(param_type, param_tp.array_dims());
       }
@@ -179,11 +179,11 @@ void GlobalHoister::visit(const VarStmt *stmt) {
     return;
   }
 
-  const std::string type = stmt->tp.get_name();
+  const std::string type = stmt->tp.name.str();
 
   hoist_type(type);
   if (!typetab()->contains(type)) {
-    Neeilang::error(stmt->tp.name.back(), "Unknown type in variable declaration.");
+    Neeilang::error(stmt->tp.name.token(), "Unknown type in variable declaration.");
   }
 }
 

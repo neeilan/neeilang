@@ -30,7 +30,7 @@ private:
   bool at_end();
   const std::string *outer_class = nullptr;
 
-  std::vector<Token> consume_qualified_identifier(std::string const& msg);
+  QualifiedName consume_qualified_identifier(std::string const& msg);
 
   Token &advance();
   Token &consume(TokenType type, std::string msg);

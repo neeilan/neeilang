@@ -4,24 +4,18 @@
 #include <vector>
 
 #include "token.h"
+#include "name.h"
 
 class Expr;
 class SentinelExpr;
 
 struct TypeParse {
-  std::vector<Token> name;
+  QualifiedName name;
   std::vector<const Expr *> dims;
   bool inferred = false;
   bool isConst = false;
 
-  std::string get_name() const {
-    std::string res;
-    for (auto const&s : name) {
-      res += "::";
-      res += s.lexeme;
-    }
-    return res;
-  }
+
   
   bool is_array() const { return dims.size() > 0; }
   unsigned array_dims() const { return dims.size(); }
