@@ -173,7 +173,7 @@ std::string AstPrinter::visit(const WhileStmt *stmt) {
 
 std::string AstPrinter::visit(const FuncStmt *stmt) {
   ostringstream out;
-  OUT << "<Function name=\"" << stmt->name.lexeme << "\"  return_type=\""
+  OUT << "<Function name=\"" << stmt->name.lexeme << "\" specifiers=\"" << stmt->specifiers.str() << "\"  return_type=\""
       << stmt->return_type.name.str() << "\" ";
   for (size_t i = 0; i < stmt->parameters.size(); i++) {
     std::string argn = std::string("args[") + std::to_string(i) + "]";

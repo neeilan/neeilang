@@ -23,8 +23,14 @@ std::vector<Stmt *> Parser::parse() {
 }
 
 Stmt *Parser::declaration() {
+  Specifiers s = consume_specifiers();
+
+  if (match({NAMESPACE}))
+    return namespace_statement();
+  if (match({TEMPLATE}))
+    return template_statement();
   if (match({FN}))
-    return func_statement("function");
+    return func_statement(s, "function");
   if (match({CLASS}))
     return class_declaration();
   if (match({ENUM}))
@@ -48,6 +54,52 @@ TypeParse Parser::parse_type(const std::string &msg) {
   }
 
   return tp;
+}
+
+Specifiers Parser::consume_specifiers() {
+  Specifiers s{};
+
+  std::vector<TokenType> spToks = {
+    STATIC, INLINE, CONST, CONSTEVAL, CONSTEXPR, EXPLICIT,
+    VIRTUAL, FRIEND, EXTERN, NOEXCEPT};
+  for (auto tok = consume_any_of(spToks); tok; tok = consume_any_of(spToks)) {
+    switch (tok->type) {
+      case STATIC:
+        s.f.isStatic = true;
+        break;
+      case INLINE:
+        s.f.isInline = true;
+        break;
+      case CONST:
+        s.f.isConst = true;
+        break;
+      case CONSTEXPR:
+        s.f.isConstexpr = true;
+        break;
+      case CONSTEVAL:
+        s.f.isConsteval = true;
+        break;
+      case EXPLICIT:
+        s.f.isExplicit = true;
+        break;
+      case VIRTUAL:
+        s.f.isVirtual = true;
+        break;
+      case FRIEND:
+        s.f.isFriend = true;
+        break;
+      case EXTERN:
+        s.f.isExtern = true;
+        break;
+      case NOEXCEPT:
+        s.f.isNoexcept = true;
+        break;
+      default:
+        assert(false && "Unexpected token");
+    }
+  }
+
+  return s;
 }
 
 Stmt *Parser::var_declaration() {
@@ -98,7 +150,8 @@ Stmt *Parser::class_declaration() {
       fields.push_back(stmt->name);
       field_types.push_back(stmt->tp);
     } else {
-      methods.push_back(func_statement("method"));
+      // TODO: Parse specifiers
+      methods.push_back(func_statement(Specifiers{}, "method"));
     }
   }
 
@@ -121,10 +174,6 @@ Stmt *Parser::statement() {
     return while_statement(previous());
   if (match({FOR}))
     return for_statement(previous());
-  if (match({NAMESPACE}))
-    return namespace_statement();
-  if (match({TEMPLATE}))
-    return template_statement();
   if (match({LEFT_BRACE}))
     return block_statement();
 
@@ -209,7 +258,7 @@ Stmt *Parser::template_statement() {
   consume(GREATER, "Expect '>' after template args");
 
   if (match({FN})) {
-    return new TemplateStmt(args, func_statement("function"));
+    return new TemplateStmt(args, func_statement(Specifiers{}, "function"));
   }
   if (match({CLASS})) {
     return new TemplateStmt(args, class_declaration());
@@ -307,7 +356,7 @@ Stmt *Parser::for_statement(Token for_tok) {
   return body;
 }
 
-Stmt *Parser::func_statement(std::string kind) {
+Stmt *Parser::func_statement(Specifiers specifiers, std::string kind) {
 
   Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
 
@@ -346,7 +395,9 @@ Stmt *Parser::func_statement(std::string kind) {
   std::vector<Stmt *> body;
   body.push_back(block_statement());
 
-  return new FuncStmt(name, parameters, parameter_types, return_type, body);
+  auto * func = new FuncStmt(name, parameters, parameter_types, return_type, body);
+  func->setSpecifiers(specifiers);
+  return func;
 }
 
 Stmt *Parser::expression_statement() {
@@ -430,6 +481,15 @@ bool Parser::match(const std::vector<TokenType> &types) {
     }
   }
   return false;
+}
+
+std::optional<Token> Parser::consume_any_of(const std::vector<TokenType> &types) {
+  for (const TokenType &type : types) {
+    if (check(type)) {
+      return advance();
+    }
+  }
+  return std::nullopt;
 }
 
 bool Parser::check(const TokenType &type) {

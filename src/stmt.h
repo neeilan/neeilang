@@ -22,6 +22,68 @@ struct NamedEnumerator {
   std::optional<Token> value;
 };
 
+struct Specifiers {
+  union {
+  struct {
+  uint16_t isConst     : 1;
+  uint16_t isConstexpr : 1;
+  uint16_t isConsteval : 1;
+  uint16_t isStatic    : 1;
+  uint16_t isInline    : 1;
+  uint16_t isVirtual   : 1;
+  uint16_t isExplicit  : 1;
+  uint16_t isFriend    : 1;
+  uint16_t isExtern    : 1;
+  uint16_t isNoexcept  : 1;
+  uint16_t _pad        : 6;
+  } f;
+  uint16_t bits;
+  };
+
+  bool any() const {
+    return bits != 0;
+  }
+
+  std::string str() const {
+    std::string res;
+
+    auto add = [&res](const char* s) {
+      if (!res.empty())
+        res += ' ';
+
+      // lowercase first char after "is"
+      res += static_cast<char>(
+        std::tolower(static_cast<unsigned char>(s[2]))
+      );
+      // append the rest
+      res += (s + 3);
+    };
+
+#define SP_HANDLE(x) \
+    if (f.x) add(#x);
+
+    SP_HANDLE(isConst)
+    SP_HANDLE(isConstexpr)
+    SP_HANDLE(isConsteval)
+    SP_HANDLE(isStatic)
+    SP_HANDLE(isInline)
+    SP_HANDLE(isVirtual)
+    SP_HANDLE(isExplicit)
+    SP_HANDLE(isFriend)
+    SP_HANDLE(isExtern)
+    SP_HANDLE(isNoexcept)
+
+#undef SP_HANDLE
+
+    return res;
+  }
+};
+
+struct Attributes {
+  uint8_t isPacked    : 1;
+  uint8_t isNoDiscard : 1;
+};
+
 class Stmt {
 public:
   virtual void accept(StmtVisitor<void> *visitor) const = 0;
@@ -145,6 +207,11 @@ public:
   const TypeParse return_type;
   const std::vector<Stmt *> body;
   bool isStatic = false;
+  Specifiers specifiers;
+
+  void setSpecifiers(Specifiers s) {
+    specifiers = s;
+  }
 };
 
 class ReturnStmt : public StmtCRTP<ReturnStmt> {

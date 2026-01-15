@@ -2,6 +2,7 @@
 #define _NL_PARSER_H_
 
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -27,10 +28,12 @@ private:
 
   bool match(const std::vector<TokenType> &);
   bool check(const TokenType &type);
+  std::optional<Token> consume_any_of(const std::vector<TokenType> &types);
   bool at_end();
   const std::string *outer_class = nullptr;
 
   QualifiedName consume_qualified_identifier(std::string const& msg);
+  Specifiers consume_specifiers();
 
   Token &advance();
   Token &consume(TokenType type, std::string msg);
@@ -67,7 +70,7 @@ private:
   Stmt *while_statement(Token keyword);
   Stmt *for_statement(Token keyword);
   Stmt *return_statement();
-  Stmt *func_statement(std::string kind);
+  Stmt *func_statement(Specifiers s, std::string kind);
 
   ParseErr error(Token token, std::string msg);
   void synchronize();
