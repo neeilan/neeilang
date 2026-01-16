@@ -607,7 +607,7 @@ Expr *Parser::multiplication() {
 }
 
 Expr *Parser::unary() {
-  if (match({BANG, MINUS})) {
+  if (match({BANG, MINUS, AMP, STAR})) {
     Token &op = previous();
     Expr *right = unary(); /* Unary is right-recursive */
     return (new Unary(op, *right));
