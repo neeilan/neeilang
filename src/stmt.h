@@ -13,8 +13,8 @@
 using std::string;
 
 struct TemplateArg {
-  Token ty;
   Token name;
+  bool isVariadic = false;
 };
 
 struct NamedEnumerator {

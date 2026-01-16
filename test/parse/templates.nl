@@ -17,5 +17,9 @@ struct Animal {
 
   init() { print "Animal init called"; return this; }
   sayHi(x : int, y : T) : int { print "hi"; return 3 + y; }
+}
 
+template <typename... T, typename C>
+fn variadic(arg : T...) : T {
+    return 3;
 }

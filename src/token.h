@@ -40,6 +40,7 @@ enum TokenType {
   PIPE,
   PIPE_EQUAL,
   ARROW,
+  ELLIPSIS,
 
   // Literals.
   IDENTIFIER,

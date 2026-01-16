@@ -12,7 +12,7 @@ static std::vector<std::string> token_names{
 
     "BANG",          "BANG_EQUAL",  "EQUAL",      "EQUAL_EQUAL", "GREATER",
     "GREATER_EQUAL", "GREATER_GREATER", "LESS",        "LESS_EQUAL", "LESS_LESS",
-    "COLON_COLON",   "AMP",  "AMP_EQUAL", "PIPE", "PIPE_EQUAL", "ARROW",
+    "COLON_COLON",   "AMP",  "AMP_EQUAL", "PIPE", "PIPE_EQUAL", "ARROW", "ELLIPSIS",
 
     "IDENTIFIER",    "STRING",      "NUMBER",
 

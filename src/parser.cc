@@ -47,6 +47,10 @@ TypeParse Parser::parse_type(const std::string &msg) {
 
   tp.name = consume_qualified_identifier(msg);
 
+  if (match({ELLIPSIS})) {
+    tp.isVariadic = true;
+  }
+
 
   while (match({LEFT_BRACKET})) {
     tp.dims.push_back(expression());
@@ -251,8 +255,10 @@ Stmt *Parser::template_statement() {
 
   do {
     consume(TYPENAME, "Expect 'typename'");
+    bool isVariadic = false;
+    if (match({ELLIPSIS})) { isVariadic = true; }
     Token name = consume(IDENTIFIER, "Expect template arg name");
-    args.push_back(TemplateArg{.name = name });
+    args.push_back(TemplateArg{.name = name, .isVariadic = isVariadic });
   } while (match({COMMA}));
 
   consume(GREATER, "Expect '>' after template args");

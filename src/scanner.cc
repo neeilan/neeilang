@@ -203,7 +203,16 @@ void Scanner::scan_token() {
     add_token(COMMA);
     break;
   case '.':
-    add_token(DOT);
+    if (match('.')) {
+      if (match('.')) {
+        add_token(ELLIPSIS);
+        break;
+      }
+      // .. is illegal syntax
+      Neeilang::error(ctx().inclPath, ctx().line, "Illegal token '..;");
+    } else {
+      add_token(DOT);
+    }
     break;
   case '-':
     add_token(match('>') ? ARROW : (match('-') ? MINUS_MINUS : MINUS));

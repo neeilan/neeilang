@@ -14,6 +14,7 @@ struct TypeParse {
   std::vector<const Expr *> dims;
   bool inferred = false;
   bool isConst = false;
+  bool isVariadic = false;
 
 
   

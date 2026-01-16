@@ -50,7 +50,9 @@ std::string AstPrinter::visit(const TemplateStmt * stmt) {
   ostringstream out;
   OUT  << "<Template [";
   for (auto const& arg : stmt->args) {
-    out << "typename " << arg.name.lexeme;
+    out << "typename "
+        << (arg.isVariadic ? "..." : "")
+        << arg.name.lexeme;
     if (&arg != &stmt->args.back()) {
       out << ", ";
     }
@@ -176,9 +178,11 @@ std::string AstPrinter::visit(const FuncStmt *stmt) {
   OUT << "<Function name=\"" << stmt->name.lexeme << "\" specifiers=\"" << stmt->specifiers.str() << "\"  return_type=\""
       << stmt->return_type.name.str() << "\" ";
   for (size_t i = 0; i < stmt->parameters.size(); i++) {
+    bool isVariadic = stmt->parameter_types[i].isVariadic;
     std::string argn = std::string("args[") + std::to_string(i) + "]";
     out << argn << ".name=\"" << stmt->parameters[i].lexeme << "\" "
-        << argn << ".type=\"" << stmt->parameter_types[i].name.str() << "\" ";
+        << argn << ".type=\"" << stmt->parameter_types[i].name.str()
+        << (isVariadic ? "..." : "") << "\" ";
   }
   out << ">\n";
 
