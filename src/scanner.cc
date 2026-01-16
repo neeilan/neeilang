@@ -206,10 +206,10 @@ void Scanner::scan_token() {
     add_token(DOT);
     break;
   case '-':
-    add_token(match('>') ? ARROW : MINUS);
+    add_token(match('>') ? ARROW : (match('-') ? MINUS_MINUS : MINUS));
     break;
   case '+':
-    add_token(PLUS);
+    add_token(match('+') ? PLUS_PLUS : PLUS);
     break;
   case ';':
     add_token(SEMICOLON);

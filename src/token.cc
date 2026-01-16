@@ -7,8 +7,8 @@
 // workaround.
 static std::vector<std::string> token_names{
     "LEFT_PAREN",    "RIGHT_PAREN", "LEFT_BRACE", "RIGHT_BRACE", "LEFT_BRACKET",
-    "RIGHT_BRACKET", "COMMA",       "DOT",        "MINUS",       "PLUS",
-    "SEMICOLON",     "COLON",       "SLASH",      "STAR",
+    "RIGHT_BRACKET", "COMMA",       "DOT",        "MINUS",        "MINUS_MINUS",
+    "PLUS",  "PLUS_PLUS", "SEMICOLON",     "COLON",       "SLASH",      "STAR",
 
     "BANG",          "BANG_EQUAL",  "EQUAL",      "EQUAL_EQUAL", "GREATER",
     "GREATER_EQUAL", "GREATER_GREATER", "LESS",        "LESS_EQUAL", "LESS_LESS",
