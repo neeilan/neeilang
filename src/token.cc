@@ -11,7 +11,8 @@ static std::vector<std::string> token_names{
     "SEMICOLON",     "COLON",       "SLASH",      "STAR",
 
     "BANG",          "BANG_EQUAL",  "EQUAL",      "EQUAL_EQUAL", "GREATER",
-    "GREATER_EQUAL", "LESS",        "LESS_EQUAL", "COLON_COLON",
+    "GREATER_EQUAL", "GREATER_GREATER", "LESS",        "LESS_EQUAL", "LESS_LESS",
+    "COLON_COLON",
 
     "IDENTIFIER",    "STRING",      "NUMBER",
 

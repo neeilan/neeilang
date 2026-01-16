@@ -430,6 +430,10 @@ Expr *Parser::assignment() {
     }
 
     Neeilang::error(equals, "Invalid assignment target.");
+  } else if (match({LESS_LESS, GREATER_GREATER})) {
+    Token op = previous();
+    Expr *right = assignment(); // right-associative, so recurse
+    return new Binary(*expr, op, *right);
   }
 
   // If no assignment found, fall through to

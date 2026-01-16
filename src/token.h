@@ -28,8 +28,10 @@ enum TokenType {
   EQUAL_EQUAL,
   GREATER,
   GREATER_EQUAL,
+  GREATER_GREATER,
   LESS,
   LESS_EQUAL,
+  LESS_LESS,
   COLON_COLON,
 
   // Literals.
