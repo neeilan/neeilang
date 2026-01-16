@@ -202,14 +202,22 @@ std::string AstPrinter::visit(const ReturnStmt *stmt) {
 }
 
 std::string AstPrinter::visit(const Binary *expr) {
-  return parenthesize((expr->op).lexeme, &(expr->left), &(expr->right));
+  return parenthesize((expr->op).str(), &(expr->left), &(expr->right));
 }
 
 std::string AstPrinter::visit(const Call *expr) { return "Call"; }
 
 std::string AstPrinter::visit(const Get *expr) { return "Get " + expr->name.lexeme; }
 
-std::string AstPrinter::visit(const Set *expr) { return "Set " + expr->name.lexeme; }
+std::string AstPrinter::visit(const Set *expr) {
+  ostringstream out;
+  OUT << "<Set field=\"" << expr->name.lexeme << "\" >";
+  nest++;
+  out << print(&expr->value);
+  nest--;
+  OUT << "</Set>";
+  return out.str();
+}
 
 std::string AstPrinter::visit(const GetIndex *expr) {
   return "<GetIndex " + print(&expr->callee) + "[" + print(&expr->index) + "]>";
@@ -264,7 +272,7 @@ std::string AstPrinter::visit(const Variable *expr) {
 }
 
 std::string AstPrinter::visit(const Logical *expr) {
-  return parenthesize(expr->op.lexeme, &expr->left, &expr->right);
+  return parenthesize(expr->op.str(), &expr->left, &expr->right);
 }
 
 std::string AstPrinter::parenthesize(std::string name, const Expr *expr) {

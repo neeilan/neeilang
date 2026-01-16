@@ -414,22 +414,46 @@ Expr *Parser::assignment() {
   // so parse LHS as an Expr and check that it's an l-value.
   Expr *expr = logical_or();
 
-  if (match({EQUAL})) {
-    Token equals = previous();
+  if (match({EQUAL, AMP_EQUAL, PIPE_EQUAL})) {
+    Token equalLike = previous();
     Expr *value = assignment(); // right-associative, so recurse
 
     if (expr->lvalue()) {
       Variable *variable = dynamic_cast<Variable *>(expr);
-      return new Assignment(variable->name, *value);
+      if (equalLike.type == EQUAL) {
+        return new Assignment(variable->name, *value);
+      } else if (equalLike.type == AMP_EQUAL) {
+        auto* newVal = new Logical(*expr, equalLike.transform(AND), *value);
+        return new Assignment(variable->name, *newVal);
+      } else if (equalLike.type == PIPE_EQUAL) {
+        auto* newVal = new Logical(*expr, equalLike.transform(OR), *value);
+        return new Assignment(variable->name, *newVal);
+      }
     } else if (expr->is_object_field()) {
       Get *get = static_cast<Get *>(expr);
-      return new Set(get->callee, get->name, *value);
+      if (equalLike.type == EQUAL) {
+        return new Set(get->callee, get->name, *value);
+      } else if (equalLike.type == AMP_EQUAL) {
+        auto* newVal = new Logical(*expr, equalLike.transform(AND), *value);
+        return new Set(get->callee, get->name, *newVal);
+      } else if (equalLike.type == PIPE_EQUAL) {
+        auto* newVal = new Logical(*expr, equalLike.transform(OR), *value);
+        return new Set(get->callee, get->name, *newVal);
+      }
     } else if (expr->is_indexed()) {
       GetIndex *get = static_cast<GetIndex *>(expr);
-      return new SetIndex(get->callee, get->bracket, get->index, *value);
+      if (equalLike.type == EQUAL) {
+        return new SetIndex(get->callee, get->bracket, get->index, *value);
+      } else if (equalLike.type == AMP_EQUAL) {
+        auto* newVal = new Logical(*expr, equalLike.transform(AND), *value);
+        return new SetIndex(get->callee, get->bracket, get->index, *newVal);
+      } else if (equalLike.type == PIPE_EQUAL) {
+        auto* newVal = new Logical(*expr, equalLike.transform(OR), *value);
+        return new SetIndex(get->callee, get->bracket, get->index, *newVal);
+      }
     }
 
-    Neeilang::error(equals, "Invalid assignment target.");
+    Neeilang::error(equalLike, "Invalid assignment target.");
   } else if (match({LESS_LESS, GREATER_GREATER})) {
     Token op = previous();
     Expr *right = assignment(); // right-associative, so recurse
@@ -454,14 +478,36 @@ Expr *Parser::logical_or() {
 }
 
 Expr *Parser::logical_and() {
-  Expr *expr = equality();
+  Expr *expr = bitwise_or();
 
   while (match({AND})) {
     Token op = previous();
-    Expr *right = equality();
+    Expr *right = bitwise_or();
     expr = new Logical(*expr, op, *right);
   }
 
+  return expr;
+}
+
+Expr *Parser::bitwise_or() {
+  Expr *expr = bitwise_and();
+
+  while (match({PIPE})) {
+    Token op = previous();
+    Expr *right = bitwise_and();
+    expr = new Binary(*expr, op, *right);
+  }
+  return expr;
+}
+
+Expr *Parser::bitwise_and() {
+  Expr *expr = equality();
+
+  while (match({AMP})) {
+    Token op = previous();
+    Expr *right = equality();
+    expr = new Binary(*expr, op, *right);
+  }
   return expr;
 }
 

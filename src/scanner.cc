@@ -234,6 +234,12 @@ void Scanner::scan_token() {
     add_token(match('=') ? GREATER_EQUAL
     : (match('>') ? GREATER_GREATER : GREATER));
     break;
+  case '&':
+    add_token(match('&') ? AND : (match('=') ? AMP_EQUAL : AMP));
+    break; 
+  case '|':
+    add_token(match('|') ? OR : (match('=') ? PIPE_EQUAL : PIPE));
+    break; 
   case '/':
     if (match('/')) { // A '//' single-line comment
       while (peek() != '\n' && !is_at_end())

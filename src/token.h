@@ -33,6 +33,10 @@ enum TokenType {
   LESS_EQUAL,
   LESS_LESS,
   COLON_COLON,
+  AMP,
+  AMP_EQUAL,
+  PIPE,
+  PIPE_EQUAL,
 
   // Literals.
   IDENTIFIER,
@@ -99,6 +103,12 @@ public:
       , inclPath(inclPath) {};
 
   Token(const Token &token) = default;
+
+  Token transform(TokenType t) {
+    Token other = *this;
+    other.type = t;
+    return other;
+  }
 
   std::string str() const;
 };

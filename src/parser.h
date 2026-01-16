@@ -43,6 +43,8 @@ private:
   TypeParse parse_type(const std::string &msg);
 
   Expr *assignment();
+  Expr *bitwise_or();
+  Expr *bitwise_and();
   Expr *logical_or();
   Expr *logical_and();
   Expr *expression();
