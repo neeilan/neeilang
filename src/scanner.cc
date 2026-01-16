@@ -206,7 +206,7 @@ void Scanner::scan_token() {
     add_token(DOT);
     break;
   case '-':
-    add_token(MINUS);
+    add_token(match('>') ? ARROW : MINUS);
     break;
   case '+':
     add_token(PLUS);

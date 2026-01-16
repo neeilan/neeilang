@@ -632,9 +632,10 @@ Expr *Parser::call() {
       expr = finish_call(expr);
     } else if (match({LEFT_BRACKET})) {
       expr = finish_index_get(expr);
-    } else if (match({DOT})) {
+    } else if (match({DOT, ARROW})) {
+      Token prev = previous();
       Token name = consume(IDENTIFIER, "Expect property name after '.'.");
-      expr = new Get(*expr, name);
+      expr = new Get(*expr, name, prev.type);
     } else {
       break;
     }

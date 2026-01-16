@@ -12,7 +12,7 @@ static std::vector<std::string> token_names{
 
     "BANG",          "BANG_EQUAL",  "EQUAL",      "EQUAL_EQUAL", "GREATER",
     "GREATER_EQUAL", "GREATER_GREATER", "LESS",        "LESS_EQUAL", "LESS_LESS",
-    "COLON_COLON",   "AMP",  "AMP_EQUAL", "PIPE", "PIPE_EQUAL",
+    "COLON_COLON",   "AMP",  "AMP_EQUAL", "PIPE", "PIPE_EQUAL", "ARROW",
 
     "IDENTIFIER",    "STRING",      "NUMBER",
 
@@ -26,6 +26,6 @@ static std::vector<std::string> token_names{
     "RESERVED_KEYWORD"};
 
 std::string Token::str() const {
-  return token_names[type] + "-via-" + lexeme +
+  return token_names[type] + " via '" + lexeme + "'" +
          ((type == NUMBER || type == STRING) ? " " + literal : "");
 }

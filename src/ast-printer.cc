@@ -207,7 +207,9 @@ std::string AstPrinter::visit(const Binary *expr) {
 
 std::string AstPrinter::visit(const Call *expr) { return "Call"; }
 
-std::string AstPrinter::visit(const Get *expr) { return "Get " + expr->name.lexeme; }
+std::string AstPrinter::visit(const Get *expr) {
+  return "(Get '" + expr->name.lexeme + "' via '" + (expr->accessOp == DOT ? "." : "->") +  "')";
+}
 
 std::string AstPrinter::visit(const Set *expr) {
   ostringstream out;

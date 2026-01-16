@@ -37,6 +37,7 @@ enum TokenType {
   AMP_EQUAL,
   PIPE,
   PIPE_EQUAL,
+  ARROW,
 
   // Literals.
   IDENTIFIER,

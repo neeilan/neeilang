@@ -160,12 +160,14 @@ public:
 
 class Get : public ExprCRTP<Get> {
 public:
-  Get(Expr &callee, Token name) : callee(callee), name(name) {}
+  Get(Expr &callee, Token name, TokenType accessOp)
+    : callee(callee), name(name), accessOp(accessOp) {}
 
   virtual bool is_object_field() const { return true; }
 
   Expr &callee;
   const Token name;
+  TokenType accessOp;
 };
 
 class Set : public ExprCRTP<Set> {
