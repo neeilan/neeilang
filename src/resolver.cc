@@ -269,4 +269,6 @@ void Resolver::visit(const SetIndex *expr) {}
 void Resolver::visit(const BoolLiteral *expr) {}
 void Resolver::visit(const NumLiteral *expr) {}
 void Resolver::visit(const StrLiteral *expr) {}
+void Resolver::visit(const SizeOf *expr) {}
+void Resolver::visit(const AlignOf *expr) {}
 void Resolver::visit(const SentinelExpr *expr) {}

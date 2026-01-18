@@ -809,6 +809,13 @@ void CodeGen::visit(const This *expr) {
   valueRefs_.assign(expr, "%rdi");
 }
 
+void CodeGen::visit(const SizeOf *) {
+  assert(false && "Unimplemented");
+}
+void CodeGen::visit(const AlignOf *) {
+  assert(false && "Unimplemented");
+}
+
 void CodeGen::visit(const SentinelExpr *) {}
 
 void CodeGen::dump() const {

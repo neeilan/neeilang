@@ -90,6 +90,9 @@ static std::vector < std::string > token_names {
   "DELETE",
   "STATIC_ASSERT",
   "USING",
+  "SIZEOF",
+  "ALIGNOF",
+  "TYPEID",
   "RESERVED_KEYWORD"
 };
 

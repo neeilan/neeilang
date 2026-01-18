@@ -580,4 +580,12 @@ void TypeChecker::visit(const SetIndex *expr) {
   }
 }
 
+void TypeChecker::visit(const SizeOf *) {
+  assert(false && "Unimplemented");
+}
+
+void TypeChecker::visit(const AlignOf *) {
+  assert(false && "Unimplemented");
+}
+
 void TypeChecker::visit(const SentinelExpr *expr) {}

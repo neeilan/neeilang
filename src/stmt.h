@@ -94,7 +94,7 @@ public:
     uint8_t classMember : 1;
     uint8_t classVar    : 1;
     uint8_t fnLike      : 1;
-    uint8_t pad_        : 6;
+    uint8_t pad_        : 5;
   } allowedCtxs = {};
 };
 

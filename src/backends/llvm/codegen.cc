@@ -751,3 +751,10 @@ void CodeGen::visit(const SetIndex *expr) {
 void CodeGen::visit(const SentinelExpr *expr) {
   // noop
 }
+
+void CodeGen::visit(const SizeOf *) {
+  assert(false && "Unimplemented");
+}
+void CodeGen::visit(const AlignOf *) {
+  assert(false && "Unimplemented");
+}

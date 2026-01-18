@@ -90,6 +90,9 @@ enum TokenType {
   DELETE,
   STATIC_ASSERT,
   USING,
+  SIZEOF,
+  ALIGNOF,
+  TYPEID,
   RESERVED_KEYWORD
 };
 

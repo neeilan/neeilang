@@ -42,6 +42,8 @@ public:
   virtual T visit(const Set *) = 0;
   virtual T visit(const GetIndex *) = 0;
   virtual T visit(const SetIndex *) = 0;
+  virtual T visit(const SizeOf *) = 0;
+  virtual T visit(const AlignOf *) = 0;
   virtual T visit(const This *) = 0;
   virtual T visit(const SentinelExpr *) = 0;
 };
@@ -78,6 +80,8 @@ public:
   virtual T visit(const Set *) override;          \
   virtual T visit(const GetIndex *) override;     \
   virtual T visit(const SetIndex *) override;     \
+  virtual T visit(const SizeOf *) override;     \
+  virtual T visit(const AlignOf *) override;     \
   virtual T visit(const SentinelExpr *) override; \
   virtual T visit(const This *) override;
 

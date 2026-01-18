@@ -153,6 +153,8 @@ Stmt *Parser::class_declaration() {
   Token name = consume(IDENTIFIER, "Expect class name.");
   if (templateCtx.inTemplate) {
     templateNames.insert(name.lexeme);
+  } else {
+    typeNames.insert(name.lexeme);
   }
 
 
@@ -265,6 +267,7 @@ Stmt *Parser::enum_declaration() {
 
   consume(CLASS, "Expect 'class' or 'struct' after 'enum'");
   Token name = consume(IDENTIFIER, "Expect name for scoped enum");
+  typeNames.insert(name.lexeme);
 
   if (check({COLON})) {
     consume(COLON, "");
@@ -296,7 +299,6 @@ Stmt *Parser::template_statement() {
   // Parse the template typename<...> part (or template <>)
   std::vector<TemplateArg> args;
   consume(LESS, "Expect '<' after 'template'");
-
   do {
     consume(TYPENAME, "Expect 'typename'");
     bool isVariadic = false;
@@ -727,7 +729,37 @@ Expr *Parser::unary() {
     return (new Unary(op, *right));
   }
 
-  return call();
+  return call_like();
+}
+
+Expr *Parser::call_like() {
+  if (match({SIZEOF, ALIGNOF})) {
+    TokenType matched = previous().type;
+    consume(LEFT_PAREN, "Expect '(' after sizeof/alignof");
+    Expr* expr;
+    if (matched == ALIGNOF) {
+      expr = new AlignOf(parse_type("alignof requires type-id"));
+    } else {
+      Expr* typeIdOrExpr = expression();
+      if (!typeIdOrExpr->allowedCtxs.typeLike) {
+        expr = new SizeOf(typeIdOrExpr);
+      } else {
+        // This could be a type or an identifier
+        Variable* asVar = (Variable*)typeIdOrExpr;
+        // TODO: - entityTable.resolve(asVar->name).kind
+        if (isType(asVar->name)) {
+          expr = new SizeOf(asVar->name);
+        } else {
+          expr = new SizeOf(typeIdOrExpr);
+        }
+        
+      }
+    }
+    consume(RIGHT_PAREN, "Expect '(' after sizeof/alignof type-id/expr");
+    return expr;
+  } else {
+    return call();
+  }
 }
 
 Expr *Parser::call() {
@@ -888,3 +920,6 @@ bool Parser::isTemplateName(const std::string& name) {
   return templateNames.count(name);
 }
 
+bool Parser::isType(const QualifiedName& name) {
+  return typeNames.count(name.str());
+}

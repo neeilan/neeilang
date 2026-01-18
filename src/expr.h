@@ -4,10 +4,12 @@
 #include "name.h"
 #include "token.h"
 #include "type.h"
+#include "type-parse.h"
 #include "visitor.h"
 
 #include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 
 using std::string;
@@ -17,11 +19,17 @@ public:
   virtual void accept(ExprVisitor<void> *visitor) const = 0;
   virtual string accept(ExprVisitor<string> *visitor) const = 0;
 
+  // TODO: Move into allowedCtxs
   virtual bool lvalue() const { return false; }
   virtual bool is_object_field() const { return false; }
   virtual bool is_indexed() const { return false; }
   virtual bool callable() const { return false; }
   virtual ~Expr(){};
+
+  struct {
+    uint8_t typeLike    : 1;
+    uint8_t pad_        : 7;
+  } allowedCtxs = {};
 };
 
 // Use CRTP (https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)
@@ -101,7 +109,9 @@ public:
 
 class Variable : public ExprCRTP<Variable> {
 public:
-  Variable(QualifiedName name) : name(name) {}
+  Variable(QualifiedName name) : name(name) {
+    allowedCtxs.typeLike = true;
+  }
 
   virtual bool lvalue() const { return true; }
   const QualifiedName name;
@@ -179,6 +189,20 @@ public:
   Expr &callee;
   const Token name;
   const Expr &value;
+};
+
+class SizeOf : public ExprCRTP<SizeOf> {
+public:
+  explicit SizeOf(std::variant<QualifiedName, Expr*> operand)
+    : operand(operand) {}
+  std::variant<QualifiedName, Expr*> operand;
+};
+
+class AlignOf : public ExprCRTP<AlignOf> {
+public:
+  AlignOf(TypeParse typeId)
+      : typeId(typeId) {}
+  TypeParse typeId;
 };
 
 class SentinelExpr : public ExprCRTP<SentinelExpr> {

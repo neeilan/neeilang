@@ -100,6 +100,7 @@ private:
   Expr *multiplication();
   Expr *modulus();
   Expr *unary();
+  Expr *call_like();
   Expr *call();
   Expr *finish_call(Expr *caller);
   Expr *finish_index_get(Expr *expr);
@@ -127,6 +128,9 @@ private:
   void synchronize();
   std::unordered_set<std::string> templateNames;
   bool isTemplateName(const std::string& name);
+  std::unordered_set<std::string> typeNames;
+  bool isType(const QualifiedName& name);
+
 };
 
 #endif //_NL_PARSER_H_

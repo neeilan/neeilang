@@ -284,6 +284,21 @@ std::string AstPrinter::visit(const SetIndex *expr) {
 
 std::string AstPrinter::visit(const This *expr) { return "This"; }
 
+std::string AstPrinter::visit(const SizeOf *expr) {
+  std::string operand;
+  if (std::holds_alternative<QualifiedName>(expr->operand)) {
+    operand = "<type> " + std::get<QualifiedName>(expr->operand).str();
+  } else {
+    auto *opExp = std::get<Expr*>(expr->operand);
+    operand = print(opExp);
+  }
+  return "(SizeOf operand=\"" + operand + "\")";
+}
+
+std::string AstPrinter::visit(const AlignOf *expr) {
+  return "(AlignOf \"" + expr->typeId.prettyName() + "\")";
+}
+
 std::string AstPrinter::visit(const Assignment *expr) {
   return "<Assignment var=" + expr->name.str() +
          " value=" + print(&expr->value) + ">";

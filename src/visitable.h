@@ -17,6 +17,8 @@ class Set;
 class GetIndex;
 class SetIndex;
 class This;
+class SizeOf;
+class AlignOf;
 class SentinelExpr;
 
 class Stmt;
