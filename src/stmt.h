@@ -177,6 +177,29 @@ public:
   const Expr * value;
 };
 
+class UsingStmt :  public StmtCRTP<UsingStmt> {
+public:
+  explicit UsingStmt(QualifiedName name) : name(name) {
+      allowedCtxs.classMember = true;
+  };
+  QualifiedName name;
+  struct {
+    uint8_t isNamespace : 1;
+    uint8_t isEnum      : 1;
+    uint8_t pad_           : 6;
+  } variant;
+};
+
+class AliasStmt :  public StmtCRTP<AliasStmt> {
+public:
+  explicit AliasStmt(QualifiedName alias, QualifiedName identifier)
+  : alias(alias), origId(identifier)  {
+      allowedCtxs.classMember = true;
+  };
+  QualifiedName alias;
+  QualifiedName origId;
+};
+
 class ScopedEnum :  public StmtCRTP<ScopedEnum> {
 public:
   explicit ScopedEnum(std::string name, std::vector<NamedEnumerator> enumerators, std::optional<TypeParse> underlying)

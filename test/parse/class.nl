@@ -23,4 +23,11 @@ class Foo {
         var item : T;
     };
 
+    using MyStr = std::string;
+
+    template <typename T>
+    class string {};
+    using WideStr = string<eWide>;
+
+    using MyStr = std::string;
 };

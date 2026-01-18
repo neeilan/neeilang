@@ -75,6 +75,21 @@ std::string AstPrinter::visit(const StaticAssertStmt * stmt) {
   return out.str();
 }
 
+
+std::string AstPrinter::visit(const UsingStmt * stmt) {
+  ostringstream out;
+  const char* nsPart = stmt->variant.isNamespace ? " namespace" : "";
+  const char* enumPart = stmt->variant.isEnum ? " enum" : "";
+  OUT  << "<Using" << nsPart << enumPart << " name=\"" << stmt->name.str() << "\"/>";
+  return out.str();
+}
+
+std::string AstPrinter::visit(const AliasStmt * stmt) {
+  ostringstream out;
+  OUT  << "<TypeAlias origId=\"" << stmt->origId.str() << "\" alias=\""<< stmt->alias.str() << "\"/>";
+  return out.str();
+}
+
 std::string AstPrinter::visit(const BlockStmt *stmt) {
   ostringstream out;
   if (!stmt->block_contents.size()) {

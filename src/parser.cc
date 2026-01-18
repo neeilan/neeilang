@@ -38,8 +38,10 @@ Stmt *Parser::declaration() {
     return class_declaration();
   if (match({ENUM}))
     return enum_declaration();
-  if (match({VAR})) {
+  if (match({VAR}))
     return var_declaration();
+  if (match({USING})) {
+    return using_declaration();
   } else {
     return statement();
   }
@@ -199,7 +201,6 @@ Stmt *Parser::statement() {
     return block_statement();
   if (match({STATIC_ASSERT}))
     return static_assert_statement();
-
   return expression_statement();
 }
 
@@ -231,6 +232,30 @@ Stmt *Parser::block_statement() {
   consume(RIGHT_BRACE, "Expect '}' after block.");
 
   return new BlockStmt(stmts);
+}
+
+Stmt *Parser::using_declaration() {
+  bool isNamespace = false, isEnum = false;
+  if (match({NAMESPACE})) { isNamespace = true; }
+  if (match({ENUM})) { isEnum = true; }
+
+  QualifiedName n1 = consume_qualified_identifier("name for 'using'");
+  if (!match({EQUAL})) {
+
+    consume(SEMICOLON, "Expect ';' after using decl.");
+    auto * stmt = new UsingStmt(n1);
+    stmt->variant.isNamespace = isNamespace;
+    stmt->variant.isEnum = isEnum;
+    return stmt;
+  }
+
+  if (isNamespace || isEnum) {
+    Neeilang::error(previous(), "Cannot use 'namespace' or 'enum' in alias statment");
+  }
+  
+  QualifiedName n2 = consume_qualified_identifier("identifier for type alias");
+  consume(SEMICOLON, "Expect ';' after type alias decl.");
+  return new AliasStmt(n1, n2);
 }
 
 // Specifically, scoped enumerators

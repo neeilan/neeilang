@@ -114,6 +114,7 @@ private:
   Stmt *namespace_statement();
   Stmt *template_statement();
   Stmt *static_assert_statement();
+  Stmt *using_declaration();
   Stmt *enum_declaration();
   Stmt *expression_statement();
   Stmt *if_statement(Token keyword);

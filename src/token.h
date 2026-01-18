@@ -89,6 +89,7 @@ enum TokenType {
   NEW,
   DELETE,
   STATIC_ASSERT,
+  USING,
   RESERVED_KEYWORD
 };
 

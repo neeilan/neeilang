@@ -25,6 +25,8 @@ class BlockStmt;
 class NamespaceStmt;
 class TemplateStmt;
 class StaticAssertStmt;
+class UsingStmt;
+class AliasStmt;
 class ScopedEnum;
 class PrintStmt;
 class VarStmt;
