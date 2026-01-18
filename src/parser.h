@@ -52,6 +52,7 @@ private:
   Expr *comparison();
   Expr *addition();
   Expr *multiplication();
+  Expr *modulus();
   Expr *unary();
   Expr *call();
   Expr *finish_call(Expr *caller);

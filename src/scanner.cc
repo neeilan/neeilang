@@ -215,10 +215,12 @@ void Scanner::scan_token() {
     }
     break;
   case '-':
-    add_token(match('>') ? ARROW : (match('-') ? MINUS_MINUS : MINUS));
+    add_token(match('>') ? ARROW :
+      (match('-') ? MINUS_MINUS :
+      (match('=') ? MINUS_EQUAL : MINUS)));
     break;
   case '+':
-    add_token(match('+') ? PLUS_PLUS : PLUS);
+    add_token(match('+') ? PLUS_PLUS : (match('=') ? PLUS_EQUAL : PLUS));
     break;
   case ';':
     add_token(SEMICOLON);
@@ -227,7 +229,7 @@ void Scanner::scan_token() {
     add_token(match(':') ? COLON_COLON : COLON);
     break;
   case '*':
-    add_token(STAR);
+    add_token(match('=') ? STAR_EQUAL : STAR);
     break;
   case '!':
     add_token(match('=') ? BANG_EQUAL : BANG);
@@ -249,6 +251,9 @@ void Scanner::scan_token() {
   case '|':
     add_token(match('|') ? OR : (match('=') ? PIPE_EQUAL : PIPE));
     break; 
+  case '%':
+    add_token(match('=') ? MOD_EQUAL : MOD);
+    break; 
   case '/':
     if (match('/')) { // A '//' single-line comment
       while (peek() != '\n' && !is_at_end())
@@ -265,7 +270,7 @@ void Scanner::scan_token() {
         in_comment = !match('/');
       }
     } else {
-      add_token(SLASH);
+      add_token(match('=') ? SLASH_EQUAL : SLASH);
     }
     break;
   case ' ':

@@ -5,7 +5,6 @@
 #include <vector>
 
 enum TokenType {
-  // Single-character tokens.
   LEFT_PAREN,
   RIGHT_PAREN,
   LEFT_BRACE,
@@ -16,14 +15,16 @@ enum TokenType {
   DOT,
   MINUS,
   MINUS_MINUS,
+  MINUS_EQUAL,
   PLUS,
   PLUS_PLUS,
+  PLUS_EQUAL,
   SEMICOLON,
   COLON,
   SLASH,
+  SLASH_EQUAL,
   STAR,
-
-  // One or two character tokens.
+  STAR_EQUAL,
   BANG,
   BANG_EQUAL,
   EQUAL,
@@ -41,6 +42,8 @@ enum TokenType {
   PIPE_EQUAL,
   ARROW,
   ELLIPSIS,
+  MOD,
+  MOD_EQUAL,
 
   // Literals.
   IDENTIFIER,
@@ -108,7 +111,7 @@ public:
 
   Token(const Token &token) = default;
 
-  Token transform(TokenType t) {
+  Token transform(TokenType t) const {
     Token other = *this;
     other.type = t;
     return other;

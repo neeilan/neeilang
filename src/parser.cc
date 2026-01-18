@@ -420,45 +420,54 @@ Expr *Parser::assignment() {
   // so parse LHS as an Expr and check that it's an l-value.
   Expr *expr = logical_or();
 
-  if (match({EQUAL, AMP_EQUAL, PIPE_EQUAL})) {
+  auto compoundAssignmentTransform = [](Token const& cmpd, Expr* l, Expr* r) -> Expr* {
+#define LOGL(t, o) case t: return new Logical(*l, cmpd.transform(o), *r)
+#define BIN(t, o)  case t: return new Binary (*l, cmpd.transform(o), *r)
+    switch (cmpd.type) {
+      LOGL(AMP_EQUAL,   AND);
+      LOGL(PIPE_EQUAL,  OR);
+      BIN (PLUS_EQUAL,  PLUS);
+      BIN (MINUS_EQUAL, MINUS);
+      BIN (SLASH_EQUAL, SLASH);
+      BIN (STAR_EQUAL,  STAR);
+      BIN (MOD_EQUAL,  MOD);
+      default:
+        assert(false);
+        return nullptr;
+    }
+#undef LOGL
+#undef BIN
+  };
+
+  if (match(
+    {EQUAL, AMP_EQUAL, PIPE_EQUAL, PLUS_EQUAL, MINUS_EQUAL, STAR_EQUAL, SLASH_EQUAL, MOD_EQUAL})) {
     Token equalLike = previous();
     Expr *value = assignment(); // right-associative, so recurse
-
     if (expr->lvalue()) {
       Variable *variable = dynamic_cast<Variable *>(expr);
       if (equalLike.type == EQUAL) {
         return new Assignment(variable->name, *value);
-      } else if (equalLike.type == AMP_EQUAL) {
-        auto* newVal = new Logical(*expr, equalLike.transform(AND), *value);
-        return new Assignment(variable->name, *newVal);
-      } else if (equalLike.type == PIPE_EQUAL) {
-        auto* newVal = new Logical(*expr, equalLike.transform(OR), *value);
-        return new Assignment(variable->name, *newVal);
+      } else {
+        return new Assignment(variable->name,
+          *compoundAssignmentTransform(equalLike, expr, value));
       }
     } else if (expr->is_object_field()) {
       Get *get = static_cast<Get *>(expr);
       if (equalLike.type == EQUAL) {
         return new Set(get->callee, get->name, *value);
-      } else if (equalLike.type == AMP_EQUAL) {
-        auto* newVal = new Logical(*expr, equalLike.transform(AND), *value);
-        return new Set(get->callee, get->name, *newVal);
-      } else if (equalLike.type == PIPE_EQUAL) {
-        auto* newVal = new Logical(*expr, equalLike.transform(OR), *value);
-        return new Set(get->callee, get->name, *newVal);
+      } else {
+        return new Set(get->callee, get->name,
+          *compoundAssignmentTransform(equalLike, expr, value));
       }
     } else if (expr->is_indexed()) {
       GetIndex *get = static_cast<GetIndex *>(expr);
       if (equalLike.type == EQUAL) {
         return new SetIndex(get->callee, get->bracket, get->index, *value);
-      } else if (equalLike.type == AMP_EQUAL) {
-        auto* newVal = new Logical(*expr, equalLike.transform(AND), *value);
-        return new SetIndex(get->callee, get->bracket, get->index, *newVal);
-      } else if (equalLike.type == PIPE_EQUAL) {
-        auto* newVal = new Logical(*expr, equalLike.transform(OR), *value);
-        return new SetIndex(get->callee, get->bracket, get->index, *newVal);
+      } else {
+        return new SetIndex(get->callee, get->bracket, get->index, 
+          *compoundAssignmentTransform(equalLike, expr, value));
       }
     }
-
     Neeilang::error(equalLike, "Invalid assignment target.");
   } else if (match({LESS_LESS, GREATER_GREATER})) {
     Token op = previous();
@@ -601,9 +610,21 @@ Expr *Parser::addition() {
 }
 
 Expr *Parser::multiplication() {
-  Expr *expr = unary();
+  Expr *expr = modulus();
 
   while (match({STAR, SLASH})) {
+    Token &op = previous();
+    Expr *right = modulus();
+    expr = (new Binary(*expr, op, *right));
+  }
+
+  return expr;
+}
+
+Expr* Parser::modulus() {
+  Expr *expr = unary();
+
+  while (match({MOD})) {
     Token &op = previous();
     Expr *right = unary();
     expr = (new Binary(*expr, op, *right));
