@@ -11,6 +11,7 @@ public:
   virtual T visit(const BlockStmt *) = 0;
   virtual T visit(const NamespaceStmt *) = 0;
   virtual T visit(const TemplateStmt *) = 0;
+  virtual T visit(const StaticAssertStmt *) = 0;
   virtual T visit(const ScopedEnum *) = 0;
   virtual T visit(const ExprStmt *) = 0;
   virtual T visit(const PrintStmt *) = 0;
@@ -47,6 +48,7 @@ public:
   virtual T visit(const BlockStmt *) override; \
   virtual T visit(const NamespaceStmt *) override; \
   virtual T visit(const TemplateStmt *) override; \
+  virtual T visit(const StaticAssertStmt *) override; \
   virtual T visit(const ScopedEnum *) override; \
   virtual T visit(const ExprStmt *) override;  \
   virtual T visit(const PrintStmt *) override; \

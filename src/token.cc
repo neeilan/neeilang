@@ -88,6 +88,7 @@ static std::vector < std::string > token_names {
   "OPERATOR",
   "NEW",
   "DELETE",
+  "STATIC_ASSERT",
   "RESERVED_KEYWORD"
 };
 

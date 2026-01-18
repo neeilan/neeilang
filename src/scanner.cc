@@ -47,6 +47,7 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"operator", OPERATOR},
     {"new", NEW},
     {"delete", DELETE},
+    {"static_assert", STATIC_ASSERT},
 
     {"alignas", RESERVED_KEYWORD},
     {"alignof", RESERVED_KEYWORD},
@@ -83,7 +84,6 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"short", RESERVED_KEYWORD},
     {"signed", RESERVED_KEYWORD},
     {"sizeof", RESERVED_KEYWORD},
-    {"static_assert", RESERVED_KEYWORD},
     {"static_cast", RESERVED_KEYWORD},
     {"switch", RESERVED_KEYWORD},
     {"thread_local", RESERVED_KEYWORD},

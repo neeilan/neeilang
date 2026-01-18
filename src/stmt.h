@@ -157,6 +157,12 @@ public:
   Stmt * fnOrClass;
 };
 
+class StaticAssertStmt :  public StmtCRTP<StaticAssertStmt> {
+public:
+  explicit StaticAssertStmt(const Expr * value) : value(value) {};
+  const Expr * value;
+};
+
 class ScopedEnum :  public StmtCRTP<ScopedEnum> {
 public:
   explicit ScopedEnum(std::string name, std::vector<NamedEnumerator> enumerators, std::optional<TypeParse> underlying)

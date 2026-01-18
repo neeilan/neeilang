@@ -200,6 +200,8 @@ Stmt *Parser::statement() {
     return for_statement(previous());
   if (match({LEFT_BRACE}))
     return block_statement();
+  if (match({STATIC_ASSERT}))
+    return static_assert_statement();
 
   return expression_statement();
 }
@@ -291,6 +293,14 @@ Stmt *Parser::template_statement() {
     return new TemplateStmt(args, class_declaration());
   }
   throw error(peek(), "Not a class or function template.");
+}
+
+Stmt *Parser::static_assert_statement() {
+  consume(LEFT_PAREN, "Expect '(' after static_assert");
+  auto* expr = expression();
+  consume(RIGHT_PAREN, "Unterminated static_assert");
+  consume(SEMICOLON, "Expect ';' after static_assert.");
+  return new StaticAssertStmt(expr);
 }
 
 Stmt *Parser::namespace_statement() {

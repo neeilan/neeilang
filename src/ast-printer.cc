@@ -65,6 +65,16 @@ std::string AstPrinter::visit(const TemplateStmt * stmt) {
   return out.str();
 }
 
+std::string AstPrinter::visit(const StaticAssertStmt * stmt) {
+  ostringstream out;
+  OUT  << "<StaticAssert>";
+  nest++;
+  out << print(stmt->value);
+  nest--;
+  OUT << "</StaticAssert>";
+  return out.str();
+}
+
 std::string AstPrinter::visit(const BlockStmt *stmt) {
   ostringstream out;
   if (!stmt->block_contents.size()) {
