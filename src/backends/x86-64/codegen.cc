@@ -507,7 +507,7 @@ void CodeGen::visit(const BoolLiteral *expr) {
 }
 
 void CodeGen::visit(const Variable *expr) {
-  auto const &varName = expr->name.lexeme;
+  auto const &varName = expr->name.str();
   auto key = TypeTableUtil::fn_key(varName);
   auto const nlType = sm_.current().typetab->get(key);
   // Referring to a function?
@@ -535,7 +535,7 @@ void CodeGen::visit(const Assignment *expr) {
   // Move into reg because x86 doesn't support memory-to-memory `mov`s
   auto const [srcReg, mustRestore] = valueRefs_.acquireRegister(&expr->value);
   text_.instr({"mov", valueRefs_.get(&expr->value), srcReg});
-  auto const dest = namedVals->get(expr->name.lexeme);
+  auto const dest = namedVals->get(expr->name.str());
   text_.instr({"mov", srcReg, dest});
   if (mustRestore) {
     text_.instr({"pop", srcReg});
@@ -677,7 +677,7 @@ void CodeGen::visit(const Get *expr) {
   // Initializers / static fields
   if (calleeType->second == Primitives::Class()) {
     const Variable *callee = static_cast<const Variable *>(&expr->callee);
-    const auto& className = callee->name.lexeme;
+    const auto& className = callee->name.str();
     if (fieldName == "init") {
       valueRefs_.assign(expr, className + "_init");
     }

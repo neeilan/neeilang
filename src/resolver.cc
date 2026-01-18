@@ -52,18 +52,20 @@ void Resolver::visit(const VarStmt *stmt) {
 }
 
 void Resolver::visit(const Variable *expr) {
-  if (!scopes.empty() && scopes.back()->map.count(expr->name.lexeme) > 0 &&
-      scopes.back()->map.at(expr->name.lexeme) == false) {
-    Neeilang::error(expr->name,
-                    "Cannot read local variable in its own initializer.");
-  }
+  // TODO: Variable name is a QualifiedName now
+  // if (!scopes.empty() && scopes.back()->map.count(expr->name.lexeme) > 0 &&
+  //     scopes.back()->map.at(expr->name.lexeme) == false) {
+  //   Neeilang::error(expr->name,
+  //                   "Cannot read local variable in its own initializer.");
+  // }
 
-  resolve_local(expr, expr->name);
+  // resolve_local(expr, expr->name);
 }
 
 void Resolver::visit(const Assignment *expr) {
-  resolve(&expr->value); // resolve RHS, in case it references other vars
-  resolve_local(expr, expr->name); // resolve the var being assigned to
+  // TODO: Variable name is a QualifiedName now
+  // resolve(&expr->value); // resolve RHS, in case it references other vars
+  // resolve_local(expr, expr->name); // resolve the var being assigned to
 }
 
 void Resolver::visit(const This *expr) {

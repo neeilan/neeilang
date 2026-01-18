@@ -86,19 +86,19 @@ void TypeChecker::visit(const VarStmt *stmt) {
 }
 
 void TypeChecker::visit(const Variable *expr) {
-  auto name = expr->name.lexeme;
+  auto name = expr->name.str();
   if (symbols()->contains(name)) {
     expr_types[expr] = symbols()->get(name).type;
     return;
   }
 
-  auto fn_key = TypeTableUtil::fn_key(expr->name.lexeme);
+  auto fn_key = TypeTableUtil::fn_key(expr->name.str());
   if (types()->contains(fn_key)) {
     expr_types[expr] = types()->get(fn_key);
     return;
   }
 
-  Neeilang::error(expr->name, "Unknown variable");
+  Neeilang::error(expr->name.token(), "Unknown variable");
   expr_types[expr] = TypeError();
 }
 
@@ -110,14 +110,14 @@ void TypeChecker::visit(const Assignment *expr) {
   }
 
   // The variable being assigned to.
-  Symbol var = symbols()->get(expr->name.lexeme);
+  Symbol var = symbols()->get(expr->name.str());
   auto left = var.type;
 
   if (!right->subclass_of(left.get())) {
     std::ostringstream msg;
     msg << "Cannot assign value of type " << right->name << " to variable '"
         << var.name << "' of type " << left->name;
-    Neeilang::error(expr->name, msg.str());
+    Neeilang::error(expr->name.token(), msg.str());
     expr_types[expr] = TypeError();
     return;
   }
@@ -370,7 +370,7 @@ void TypeChecker::visit(const Get *expr) {
     // This isn't necesarily bad, but we want to ensure other forms are allowed
     // in previous passes.
     // Change callee from Class type to real type.
-    callee_type = types()->get(callee->name.lexeme);
+    callee_type = types()->get(callee->name.str());
   }
 
   auto field_name = expr->name.lexeme;

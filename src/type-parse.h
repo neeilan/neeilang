@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <iostream>
 
 #include "token.h"
 #include "name.h"
@@ -19,6 +20,9 @@ struct TypeParse {
   uint8_t ptrDepth = 0;
   bool isLvalRef = false;
   bool isRvalOrUniversalRef = false;
+
+  TypeParse() = default;
+  TypeParse(const TypeParse &) = default;
 
   // TODO: Make this canonicalName?
   std::string prettyName() const {

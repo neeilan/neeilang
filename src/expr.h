@@ -1,6 +1,7 @@
 #ifndef _NL_EXPR_H_
 #define _NL_EXPR_H_
 
+#include "name.h"
 #include "token.h"
 #include "type.h"
 #include "visitor.h"
@@ -100,17 +101,17 @@ public:
 
 class Variable : public ExprCRTP<Variable> {
 public:
-  Variable(Token name) : name(name) {}
+  Variable(QualifiedName name) : name(name) {}
 
   virtual bool lvalue() const { return true; }
-  const Token name;
+  const QualifiedName name;
 };
 
 class Assignment : public ExprCRTP<Assignment> {
 public:
-  Assignment(Token name, Expr &value) : name(name), value(value) {}
+  Assignment(QualifiedName name, Expr &value) : name(name), value(value) {}
 
-  const Token name;
+  const QualifiedName name;
   const Expr &value;
 };
 

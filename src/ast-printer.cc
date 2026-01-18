@@ -93,11 +93,17 @@ std::string AstPrinter::visit(const PrintStmt *stmt) {
 
 std::string AstPrinter::visit(const VarStmt *stmt) {
   ostringstream out;
-  OUT << "<Var name=\"" << stmt->name.lexeme << "\" type=\"" << stmt->tp.prettyName() << "\"";
+  OUT << "<Var name=\"" << stmt->name.lexeme << "\" type=\"" << stmt->tp.prettyName() << "\">\n";
   if (stmt->expression) {
-    out << " initializer=" << print(stmt->expression);
+    nest++;
+    OUT << "<Var.Initializer>\n";
+    nest++;
+    OUT << print(stmt->expression) << '\n';
+    nest--;
+    OUT << "</Var.Initializer>\n";
+    nest--;
   }
-  out << ">";
+  OUT << "</Var>";
 
   return out.str();
 }
@@ -215,7 +221,26 @@ std::string AstPrinter::visit(const Binary *expr) {
   return parenthesize((expr->op).str(), &(expr->left), &(expr->right));
 }
 
-std::string AstPrinter::visit(const Call *expr) { return "Call"; }
+std::string AstPrinter::visit(const Call *expr) {
+  ostringstream out;
+  OUT << "<Call>\n";
+  nest++;
+  OUT << "<Call.callee>\n";
+  nest++;
+  OUT << print(&expr->callee) << '\n';
+  nest--;
+  OUT << "</Call.callee>\n";
+  OUT << "<Call.args>\n";
+  nest++;
+  for (auto const* arg : expr->args) {
+    OUT << print(arg) << '\n';
+  }
+  nest--;
+  OUT << "</Call.args>\n";
+  nest--;
+  OUT << "</Call>";
+  return out.str();
+}
 
 std::string AstPrinter::visit(const Get *expr) {
   return "(Get '" + expr->name.lexeme + "' via '" + (expr->accessOp == DOT ? "." : "->") +  "')";
@@ -243,7 +268,7 @@ std::string AstPrinter::visit(const SetIndex *expr) {
 std::string AstPrinter::visit(const This *expr) { return "This"; }
 
 std::string AstPrinter::visit(const Assignment *expr) {
-  return "<Assignment var=" + expr->name.lexeme +
+  return "<Assignment var=" + expr->name.str() +
          " value=" + print(&expr->value) + ">";
 }
 
@@ -256,11 +281,13 @@ std::string AstPrinter::visit(const StrLiteral *expr) {
 }
 
 std::string AstPrinter::visit(const NumLiteral *expr) {
+  ostringstream out;
   if (expr->nil) {
     return "nil";
   } else {
-    return expr->value;
+    out << "(NumLiteral value=\"" << expr->value << "\")";
   }
+  return out.str();
 }
 
 std::string AstPrinter::visit(const BoolLiteral *expr) {
@@ -280,7 +307,9 @@ std::string AstPrinter::visit(const Unary *expr) {
 }
 
 std::string AstPrinter::visit(const Variable *expr) {
-  return expr->name.lexeme;
+  ostringstream out;
+  out << "(Variable name=\"" << expr->name.str() << "\")";
+  return out.str();
 }
 
 std::string AstPrinter::visit(const Logical *expr) {
@@ -288,12 +317,12 @@ std::string AstPrinter::visit(const Logical *expr) {
 }
 
 std::string AstPrinter::parenthesize(std::string name, const Expr *expr) {
-  return "(" + name + " " + print(expr) + ")";
+  return "((" + name + ") " + print(expr) + ")";
 }
 
 std::string AstPrinter::parenthesize(std::string name, const Expr *expr1,
                                      const Expr *expr2) {
-  return "(" + name + " " + print(expr1) + " " + print(expr2) + ")";
+  return "((" + name + ") " + print(expr1) + " " + print(expr2) + ")";
 }
 
 std::string AstPrinter::visit(const SentinelExpr *expr) {

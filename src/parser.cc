@@ -8,6 +8,9 @@
 #include "token.h"
 #include "type-parse.h"
 
+Parser::Parser(const std::vector<Token> &tokens)
+: tokens(tokens) {}
+
 std::vector<Stmt *> Parser::parse() {
   std::vector<Stmt *> statements;
 
@@ -146,6 +149,9 @@ Stmt *Parser::var_declaration() {
 
 Stmt *Parser::class_declaration() {
   Token name = consume(IDENTIFIER, "Expect class name.");
+  if (templateCtx.inTemplate) {
+    templateNames.insert(name.lexeme);
+  }
   const std::string *prev_outer_class = outer_class;
   outer_class = &name.lexeme;
 
@@ -277,6 +283,7 @@ Stmt *Parser::template_statement() {
 
   consume(GREATER, "Expect '>' after template args");
 
+  TemplateCtxGuard tcg{templateCtx};
   if (match({FN})) {
     return new TemplateStmt(args, func_statement(Specifiers{}, "function"));
   }
@@ -408,6 +415,9 @@ Stmt *Parser::func_statement(Specifiers specifiers, std::string kind) {
     }
   } else {
     name = consume(IDENTIFIER, "Expect " + kind + " name.");
+    if (templateCtx.inTemplate) {
+      templateNames.insert(name->lexeme);
+    }
   }
 
   consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
@@ -753,8 +763,8 @@ Expr *Parser::primary() {
   }
   if (match({STRING}))
     return new StrLiteral(previous().literal);
-  if (match({IDENTIFIER}))
-    return new Variable(previous());
+  if (check(IDENTIFIER) || check(COLON_COLON))
+    return new Variable(consume_qualified_identifier("Variable identifier parse"));
   if (match({LEFT_PAREN})) {
     Expr *expr = expression();
     consume(RIGHT_PAREN, "Expect ')' after expression.");
@@ -784,6 +794,27 @@ QualifiedName Parser::consume_qualified_identifier(std::string const& msg) {
     }
   }
 
+  // Is the thing we've parsed so far a template?
+  // TODO: This should be based on the (to-be-built)
+  // namespace-based name tracker as it doesn't correct
+  // account for namespacing. Dirty impl for now:
+  if (!isTemplateName(res.token().lexeme)) {
+    return res;
+  }
+
+  if (match({LESS})) {
+    auto lessTok = peek();
+    res.tmplInstantiation.emplace();
+    if (match({GREATER})) {
+      return res;
+    }
+    do {
+      res.tmplInstantiation->push_back(new TypeParse(parse_type("Expect template type")));
+    } while (match({COMMA}));
+    if (!match({GREATER})) {
+      throw error(lessTok, "Unmatched template '<");
+    }
+  }
   return res;
 }
 
@@ -820,3 +851,8 @@ void Parser::synchronize() {
     advance();
   }
 }
+
+bool Parser::isTemplateName(const std::string& name) {
+  return templateNames.count(name);
+}
+

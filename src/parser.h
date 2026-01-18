@@ -5,6 +5,7 @@
 #include <optional>
 #include <stdexcept>
 #include <vector>
+#include <unordered_set>
 
 #include "expr.h"
 #include "stmt.h"
@@ -19,10 +20,29 @@ public:
 
 class Parser {
 public:
-  Parser(const std::vector<Token> &tokens) : tokens(tokens) {}
+  Parser(const std::vector<Token> &tokens);
   std::vector<Stmt *> parse();
 
 private:
+  struct TemplateCtx {
+    bool inTemplate = false;
+  };
+  TemplateCtx templateCtx;
+
+  struct TemplateCtxGuard {
+    TemplateCtx& ctx;
+    TemplateCtx old;
+
+    explicit TemplateCtxGuard(TemplateCtx& ctx)
+      : ctx(ctx), old(ctx) {
+      ctx.inTemplate = true;
+    }
+
+    ~TemplateCtxGuard() {
+      ctx = old;
+    }
+  };
+
   int current = 0; // next token to be used
   std::vector<Token> tokens;
 
@@ -77,6 +97,8 @@ private:
 
   ParseErr error(Token token, std::string msg);
   void synchronize();
+  std::unordered_set<std::string> templateNames;
+  bool isTemplateName(const std::string& name);
 };
 
 #endif //_NL_PARSER_H_
