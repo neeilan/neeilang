@@ -45,12 +45,22 @@ Stmt *Parser::declaration() {
 TypeParse Parser::parse_type(const std::string &msg) {
   TypeParse tp;
 
+  if (match({AMP})) {
+    tp.isLvalRef = true;
+  } else if (match({AND}) && previous().lexeme == "&&") {
+      tp.isRvalOrUniversalRef = true;
+  }
+
+  if (match({CONST})) {
+    tp.isConst = true;
+  }
+
+
   tp.name = consume_qualified_identifier(msg);
 
   if (match({ELLIPSIS})) {
     tp.isVariadic = true;
   }
-
 
   while (match({LEFT_BRACKET})) {
     tp.dims.push_back(expression());

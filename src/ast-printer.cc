@@ -93,7 +93,7 @@ std::string AstPrinter::visit(const PrintStmt *stmt) {
 
 std::string AstPrinter::visit(const VarStmt *stmt) {
   ostringstream out;
-  OUT << "<Var name=" << stmt->name.lexeme << " type=" << stmt->tp.prettyName();
+  OUT << "<Var name=\"" << stmt->name.lexeme << "\" type=\"" << stmt->tp.prettyName() << "\"";
   if (stmt->expression) {
     out << " initializer=" << print(stmt->expression);
   }

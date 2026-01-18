@@ -17,10 +17,14 @@ struct TypeParse {
   bool isConst = false;
   bool isVariadic = false;
   uint8_t ptrDepth = 0;
+  bool isLvalRef = false;
+  bool isRvalOrUniversalRef = false;
 
   // TODO: Make this canonicalName?
   std::string prettyName() const {
-    return name.str() + std::string(ptrDepth, '*');
+    std::string refPart = isLvalRef ? "&" : isRvalOrUniversalRef ? "&&" : "";
+    std::string constPart = isConst ? "const " : "";
+    return refPart + constPart + name.str() + std::string(ptrDepth, '*');
   }
 
   
