@@ -51,7 +51,7 @@ void TypeChecker::visit(const VarStmt *stmt) {
       var_type = inferred_type;
     }
   } else {
-    var_type = types()->get(stmt->tp.name.str());
+    var_type = types()->get(stmt->tp.prettyName());
     if (!var_type) {
       Neeilang::error(stmt->tp.name.token(), "Unknown type");
       return;

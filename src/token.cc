@@ -46,6 +46,8 @@ static std::vector < std::string > token_names {
   "ELLIPSIS",
   "MOD",
   "MOD_EQUAL",
+  "TILDE",
+  "CARET",
 
   "IDENTIFIER",
   "STRING",
@@ -83,8 +85,15 @@ static std::vector < std::string > token_names {
   "FRIEND",
   "EXTERN",
   "NOEXCEPT",
+  "OPERATOR",
+  "NEW",
+  "DELETE",
   "RESERVED_KEYWORD"
 };
+
+const std::string& getTokenTypeName(TokenType t) {
+    return token_names[t];
+}
 
 std::string Token::str() const {
   return token_names[type] + " via '" + lexeme + "'" +

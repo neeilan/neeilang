@@ -93,7 +93,7 @@ std::string AstPrinter::visit(const PrintStmt *stmt) {
 
 std::string AstPrinter::visit(const VarStmt *stmt) {
   ostringstream out;
-  OUT << "<Var name=" << stmt->name.lexeme << " type=" << stmt->tp.name.str();
+  OUT << "<Var name=" << stmt->name.lexeme << " type=" << stmt->tp.prettyName();
   if (stmt->expression) {
     out << " initializer=" << print(stmt->expression);
   }
@@ -114,7 +114,7 @@ std::string AstPrinter::visit(const ClassStmt *stmt) {
   nest++;
   for (size_t i = 0; i < stmt->fields.size(); i++) {
     OUT << "<Field name=\"" << stmt->fields[i].lexeme
-        << "\" type=\"" << stmt->field_types[i].name.str() << "\"/>\n";
+        << "\" type=\"" << stmt->field_types[i].prettyName() << "\"/>\n";
   }
   nest--;
   OUT << "</Class.Fields>" << std::endl;
@@ -175,13 +175,19 @@ std::string AstPrinter::visit(const WhileStmt *stmt) {
 
 std::string AstPrinter::visit(const FuncStmt *stmt) {
   ostringstream out;
-  OUT << "<Function name=\"" << stmt->name.lexeme << "\" specifiers=\"" << stmt->specifiers.str() << "\"  return_type=\""
-      << stmt->return_type.name.str() << "\" ";
+
+  std::string name = stmt->name.lexeme;
+  if (stmt->operatorOverload) {
+    name += " ";
+    name += getTokenTypeName(*stmt->operatorOverload);
+  }
+  OUT << "<Function name=\"" << name << "\" specifiers=\"" << stmt->specifiers.str() << "\"  return_type=\""
+      << stmt->return_type.prettyName() << "\" ";
   for (size_t i = 0; i < stmt->parameters.size(); i++) {
     bool isVariadic = stmt->parameter_types[i].isVariadic;
     std::string argn = std::string("args[") + std::to_string(i) + "]";
     out << argn << ".name=\"" << stmt->parameters[i].lexeme << "\" "
-        << argn << ".type=\"" << stmt->parameter_types[i].name.str()
+        << argn << ".type=\"" << stmt->parameter_types[i].prettyName()
         << (isVariadic ? "..." : "") << "\" ";
   }
   out << ">\n";

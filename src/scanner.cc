@@ -44,6 +44,9 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"friend", FRIEND},
     {"extern", EXTERN},
     {"noexcept", NOEXCEPT},
+    {"operator", OPERATOR},
+    {"new", NEW},
+    {"delete", DELETE},
 
     {"alignas", RESERVED_KEYWORD},
     {"alignof", RESERVED_KEYWORD},
@@ -62,7 +65,6 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"co_return", RESERVED_KEYWORD},
     {"decltype", RESERVED_KEYWORD},
     {"default", RESERVED_KEYWORD},
-    {"delete", RESERVED_KEYWORD},
     {"do", RESERVED_KEYWORD},
     {"double", RESERVED_KEYWORD},
     {"dynamic_cast", RESERVED_KEYWORD},
@@ -72,9 +74,7 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     // {"int", RESERVED_KEYWORD},
     {"long", RESERVED_KEYWORD},
     {"mutable", RESERVED_KEYWORD},
-    {"new", RESERVED_KEYWORD},
     {"nullptr", RESERVED_KEYWORD},
-    {"operator", RESERVED_KEYWORD},
     {"private", RESERVED_KEYWORD},
     {"protected", RESERVED_KEYWORD},
     {"public", RESERVED_KEYWORD},
@@ -221,6 +221,12 @@ void Scanner::scan_token() {
     break;
   case '+':
     add_token(match('+') ? PLUS_PLUS : (match('=') ? PLUS_EQUAL : PLUS));
+    break;
+  case '~':
+    add_token(TILDE);
+    break;
+  case '^':
+    add_token(CARET);
     break;
   case ';':
     add_token(SEMICOLON);

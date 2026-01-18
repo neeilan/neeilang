@@ -199,7 +199,7 @@ public:
       : name(name), parameters(parameters), parameter_types(parameter_types),
         return_type(return_type), body(body) {}
 
-  bool is_void() const { return return_type.name.str() == "void"; }
+  bool is_void() const { return return_type.prettyName() == "void"; }
 
   const Token name;
   const std::vector<Token> parameters;
@@ -208,9 +208,14 @@ public:
   const std::vector<Stmt *> body;
   bool isStatic = false;
   Specifiers specifiers;
+  std::optional<TokenType> operatorOverload;
 
   void setSpecifiers(Specifiers s) {
     specifiers = s;
+  }
+
+  void setOperatorOverload(std::optional<TokenType> o) {
+    operatorOverload = std::move(o);
   }
 };
 

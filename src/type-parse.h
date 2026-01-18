@@ -1,6 +1,7 @@
 #ifndef _NL_TYPE_PARSE_H_
 #define _NL_TYPE_PARSE_H_
 
+#include <cstdint>
 #include <vector>
 
 #include "token.h"
@@ -15,7 +16,12 @@ struct TypeParse {
   bool inferred = false;
   bool isConst = false;
   bool isVariadic = false;
+  uint8_t ptrDepth = 0;
 
+  // TODO: Make this canonicalName?
+  std::string prettyName() const {
+    return name.str() + std::string(ptrDepth, '*');
+  }
 
   
   bool is_array() const { return dims.size() > 0; }

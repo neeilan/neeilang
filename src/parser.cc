@@ -57,6 +57,10 @@ TypeParse Parser::parse_type(const std::string &msg) {
     consume(RIGHT_BRACKET, "Expect matching ']'");
   }
 
+  while (match({STAR})) {
+    tp.ptrDepth++;
+  }
+
   return tp;
 }
 
@@ -363,8 +367,38 @@ Stmt *Parser::for_statement(Token for_tok) {
 }
 
 Stmt *Parser::func_statement(Specifiers specifiers, std::string kind) {
+  std::optional<Token> name;
+  std::optional<TokenType> operatorOverload;
 
-  Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
+  if (match({OPERATOR})) {
+    name = previous();
+    if (match({LEFT_PAREN})) {
+      if (match({RIGHT_PAREN})) {
+        operatorOverload = LEFT_PAREN; // Stand-in for call
+      }
+    } else if (match({LEFT_BRACKET})) {
+      if (match({RIGHT_BRACKET})) {
+        operatorOverload = LEFT_BRACKET; // Stand-in for subscript
+      }
+    } else if (match({
+      PLUS, MINUS, BANG, TILDE, PLUS_PLUS, MINUS_MINUS, STAR, SLASH, MOD,
+      PLUS_EQUAL, MINUS_EQUAL, STAR_EQUAL, SLASH_EQUAL, MOD_EQUAL,
+      EQUAL_EQUAL, BANG_EQUAL, LESS, LESS_EQUAL, GREATER, GREATER_EQUAL,
+      AND, OR, // TODO: Check tokens are &&, ||
+      AMP, LESS_LESS, GREATER_GREATER, CARET, PIPE, // Bitwise
+      COMMA, ARROW, EQUAL, NEW, DELETE
+    })) {
+      operatorOverload = previous().type;
+    } else {
+      // TODO: Operators new[], delete[]
+    }
+
+    if (!operatorOverload) {
+      throw error(peek(), "Not an overloadable operator");
+    }
+  } else {
+    name = consume(IDENTIFIER, "Expect " + kind + " name.");
+  }
 
   consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
 
@@ -388,7 +422,7 @@ Stmt *Parser::func_statement(Specifiers specifiers, std::string kind) {
 
   TypeParse return_type;
 
-  if (outer_class && name.lexeme == "init") {
+  if (outer_class && name->lexeme == "init") {
     return_type.name = QualifiedName{.tokens = {Token(IDENTIFIER, *outer_class, "", -1, {"<Unknown file>"})}};
     consume(LEFT_BRACE, "Expect '{' before init body. Note: Return type is not "
                         "declared for init methods");
@@ -401,8 +435,9 @@ Stmt *Parser::func_statement(Specifiers specifiers, std::string kind) {
   std::vector<Stmt *> body;
   body.push_back(block_statement());
 
-  auto * func = new FuncStmt(name, parameters, parameter_types, return_type, body);
+  auto * func = new FuncStmt(*name, parameters, parameter_types, return_type, body);
   func->setSpecifiers(specifiers);
+  func->setOperatorOverload(operatorOverload);
   return func;
 }
 

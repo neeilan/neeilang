@@ -44,6 +44,8 @@ enum TokenType {
   ELLIPSIS,
   MOD,
   MOD_EQUAL,
+  TILDE,
+  CARET,
 
   // Literals.
   IDENTIFIER,
@@ -83,8 +85,13 @@ enum TokenType {
   FRIEND,
   EXTERN,
   NOEXCEPT,
+  OPERATOR,
+  NEW,
+  DELETE,
   RESERVED_KEYWORD
 };
+
+const std::string& getTokenTypeName(TokenType);
 
 class Token {
 public:
