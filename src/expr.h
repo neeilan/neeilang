@@ -193,9 +193,9 @@ public:
 
 class SizeOf : public ExprCRTP<SizeOf> {
 public:
-  explicit SizeOf(std::variant<QualifiedName, Expr*> operand)
+  explicit SizeOf(std::variant<TypeParse, Expr*> operand)
     : operand(operand) {}
-  std::variant<QualifiedName, Expr*> operand;
+  std::variant<TypeParse, Expr*> operand;
 };
 
 class AlignOf : public ExprCRTP<AlignOf> {

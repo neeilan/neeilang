@@ -286,8 +286,8 @@ std::string AstPrinter::visit(const This *expr) { return "This"; }
 
 std::string AstPrinter::visit(const SizeOf *expr) {
   std::string operand;
-  if (std::holds_alternative<QualifiedName>(expr->operand)) {
-    operand = "<type> " + std::get<QualifiedName>(expr->operand).str();
+  if (std::holds_alternative<TypeParse>(expr->operand)) {
+    operand = "<type> " + std::get<TypeParse>(expr->operand).prettyName();
   } else {
     auto *opExp = std::get<Expr*>(expr->operand);
     operand = print(opExp);

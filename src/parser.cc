@@ -176,7 +176,7 @@ Stmt *Parser::class_declaration() {
   while (!check(RIGHT_BRACE) && !at_end()) {
     member_decls.push_back(declaration());
     if (!member_decls.back()->allowedCtxs.classMember) {
-    Neeilang::error(previous(), "Invalid class member");
+    error(previous(), "Invalid class member");
     }
   }
 
@@ -252,7 +252,7 @@ Stmt *Parser::using_declaration() {
   }
 
   if (isNamespace || isEnum) {
-    Neeilang::error(previous(), "Cannot use 'namespace' or 'enum' in alias statment");
+    error(previous(), "Cannot use 'namespace' or 'enum' in alias statment");
   }
   
   QualifiedName n2 = consume_qualified_identifier("identifier for type alias");
@@ -557,7 +557,7 @@ Expr *Parser::assignment() {
           *compoundAssignmentTransform(equalLike, expr, value));
       }
     }
-    Neeilang::error(equalLike, "Invalid assignment target.");
+    error(equalLike, "Invalid assignment target.");
   } else if (match({LESS_LESS, GREATER_GREATER})) {
     Token op = previous();
     Expr *right = assignment(); // right-associative, so recurse
@@ -733,29 +733,35 @@ Expr *Parser::unary() {
 }
 
 Expr *Parser::call_like() {
-  if (match({SIZEOF, ALIGNOF})) {
-    TokenType matched = previous().type;
-    consume(LEFT_PAREN, "Expect '(' after sizeof/alignof");
-    Expr* expr;
-    if (matched == ALIGNOF) {
-      expr = new AlignOf(parse_type("alignof requires type-id"));
-    } else {
-      Expr* typeIdOrExpr = expression();
-      if (!typeIdOrExpr->allowedCtxs.typeLike) {
-        expr = new SizeOf(typeIdOrExpr);
-      } else {
-        // This could be a type or an identifier
-        Variable* asVar = (Variable*)typeIdOrExpr;
-        // TODO: - entityTable.resolve(asVar->name).kind
-        if (isType(asVar->name)) {
-          expr = new SizeOf(asVar->name);
-        } else {
-          expr = new SizeOf(typeIdOrExpr);
-        }
-        
-      }
+  if (match({ALIGNOF})) {
+    consume(LEFT_PAREN, "Expect '(' after alignof");
+    Expr* expr = new AlignOf(parse_type("alignof requires type-id"));
+    consume(RIGHT_PAREN, "Expect ')' after alignof type-id");
+    return expr;
+  } else if (match({SIZEOF})) {
+    // NOTE: We intentionally don't handle unparenthesized sizeof.
+    consume(LEFT_PAREN, "Expect '(' after sizeof");
+    // Can be a type (or a 'group' expression)
+    // Need to loop ahead to find out.
+    std::optional<TypeParse> typeId;
+    {
+      SnoopGuard sg(current, snoopMode);
+      try {
+        typeId = parse_type("sizeof - try parse type");
+      } catch (ParseErr&) {}
     }
-    consume(RIGHT_PAREN, "Expect '(' after sizeof/alignof type-id/expr");
+
+    // TODO: - Something like entityTable.resolve(asVar->name).kind ?
+    // Or at least make `isType` namespace and template-aware.
+    Expr* expr;
+    if (typeId && isType(typeId->name)) {
+        parse_type(""); // We already know we can parse this
+        expr = new SizeOf(*typeId);
+    } else {
+      expr = new SizeOf(expression());
+    }
+
+    consume(RIGHT_PAREN, "Expect ')' after sizeof type-id/expr");
     return expr;
   } else {
     return call();
@@ -841,7 +847,7 @@ QualifiedName Parser::consume_qualified_identifier(std::string const& msg) {
   QualifiedName res;
 
   if (!check(IDENTIFIER) && !check(COLON_COLON)) {
-    Neeilang::error(peek(), msg);
+    error(peek(), msg);
   }
 
   if (check(COLON_COLON)) {
@@ -891,6 +897,9 @@ Token &Parser::consume(TokenType type, std::string msg) {
 }
 
 ParseErr Parser::error(Token token, std::string msg) {
+  if (snoopMode) {
+    throw ParseErr(msg);
+  }
   Neeilang::error(token, msg);
   return ParseErr(msg);
 }

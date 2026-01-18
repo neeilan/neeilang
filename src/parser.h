@@ -69,8 +69,23 @@ private:
     }
   };
 
+  bool snoopMode = false;
+  struct SnoopGuard {
+    int& currRef;
+    int startTok;
+    bool& snoopModeRef;
+    bool oldSnoopMode;
+
+    explicit SnoopGuard(int& curr, bool& snoopMode)
+    : currRef(curr), startTok(curr), snoopModeRef(snoopMode), oldSnoopMode(snoopMode) {
+      snoopModeRef = true;
+    }
+    ~SnoopGuard() { currRef = startTok; snoopModeRef = oldSnoopMode; }
+  };
+
   int current = 0; // next token to be used
   std::vector<Token> tokens;
+  
 
   bool match(const std::vector<TokenType> &);
   bool check(const TokenType &type);

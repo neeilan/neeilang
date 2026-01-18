@@ -1,9 +1,14 @@
 class Foo {};
 sizeof(Foo);
 sizeof(sizeof(Foo));
+sizeof(sizeof(Foo*));
+sizeof(sizeof(&Foo));
 static_assert(sizeof(Foo) == 1);
 
-sizeof(variable);
+sizeof(x);
+static_assert(sizeof(x) == 1);
+static_assert(sizeof(&x) == 1);
+
 sizeof(4 + 2);
 
 alignof(Foo);
