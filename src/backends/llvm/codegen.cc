@@ -544,7 +544,7 @@ void CodeGen::visit(const ClassStmt *stmt) {
   encl_class = nl_type;
   enter_scope();
 
-  for (const Stmt *method : stmt->methods) {
+  for (const Stmt *method : stmt->methods()) {
     emit(method);
   }
 

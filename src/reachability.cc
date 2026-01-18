@@ -37,7 +37,7 @@ void Reachability::analyze(const Stmt *stmt) { stmt->accept(this); }
 
 void Reachability::visit(const ClassStmt *cls) {
   in_class = true;
-  analyze(cls->methods);
+  analyze(cls->methods());
   in_class = false; // No nested classes right now.
 }
 

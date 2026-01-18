@@ -167,7 +167,7 @@ void TypeChecker::visit(const ClassStmt *stmt) {
   enclosing_class = types()->get(stmt->name.lexeme);
 
   sm.enter();
-  check(stmt->methods);
+  check(stmt->methods());
   sm.exit();
 
   enclosing_class = prev_enclosing_class;

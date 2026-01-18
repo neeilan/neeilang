@@ -106,7 +106,7 @@ void Resolver::visit(const ClassStmt *stmt) {
    */
   scopes.back()->map.insert(std::pair<std::string, bool>("this", true));
 
-  for (const Stmt *method : stmt->methods) {
+  for (const Stmt *method : stmt->methods()) {
     FunctionType declaration = METHOD;
 
     const FuncStmt *method_fn = static_cast<const FuncStmt *>(method);

@@ -89,6 +89,13 @@ public:
   virtual void accept(StmtVisitor<void> *visitor) const = 0;
   virtual string accept(StmtVisitor<string> *visitor) const = 0;
   virtual ~Stmt() = default;
+
+  struct {
+    uint8_t classMember : 1;
+    uint8_t classVar    : 1;
+    uint8_t fnLike      : 1;
+    uint8_t pad_        : 6;
+  } allowedCtxs = {};
 };
 
 template <typename T> class StmtCRTP : public Stmt {
@@ -124,7 +131,10 @@ class VarStmt : public StmtCRTP<VarStmt> {
 public:
   explicit VarStmt(const Token name, const TypeParse tp,
                    const Expr *initializer)
-      : name(name), tp(tp), expression(initializer) {}
+      : name(name), tp(tp), expression(initializer) {
+        allowedCtxs.classMember = true;
+        allowedCtxs.classVar = true;
+      }
 
   const Token name;
   const TypeParse tp;
@@ -151,7 +161,9 @@ public:
 class TemplateStmt :  public StmtCRTP<TemplateStmt> {
 public:
   explicit TemplateStmt(std::vector<TemplateArg> args, Stmt * fnOrClass)
-    : args(args), fnOrClass(fnOrClass) {}
+    : args(args), fnOrClass(fnOrClass) {
+        allowedCtxs.classMember = true;
+    }
 
   std::vector<TemplateArg> args;
   Stmt * fnOrClass;
@@ -159,14 +171,18 @@ public:
 
 class StaticAssertStmt :  public StmtCRTP<StaticAssertStmt> {
 public:
-  explicit StaticAssertStmt(const Expr * value) : value(value) {};
+  explicit StaticAssertStmt(const Expr * value) : value(value) {
+      allowedCtxs.classMember = true;
+  };
   const Expr * value;
 };
 
 class ScopedEnum :  public StmtCRTP<ScopedEnum> {
 public:
   explicit ScopedEnum(std::string name, std::vector<NamedEnumerator> enumerators, std::optional<TypeParse> underlying)
-    : name(name), enumerators(enumerators), underlying(underlying) {}
+    : name(name), enumerators(enumerators), underlying(underlying) {
+      allowedCtxs.classMember = true;
+    }
 
   std::string name;
   std::vector<NamedEnumerator> enumerators;
@@ -203,7 +219,10 @@ public:
                     std::vector<TypeParse> parameter_types,
                     TypeParse return_type, std::vector<Stmt *> body)
       : name(name), parameters(parameters), parameter_types(parameter_types),
-        return_type(return_type), body(body) {}
+        return_type(return_type), body(body) {
+      allowedCtxs.classMember = true;
+      allowedCtxs.fnLike = true;
+    }
 
   bool is_void() const { return return_type.prettyName() == "void"; }
 
@@ -238,15 +257,27 @@ class ClassStmt : public StmtCRTP<ClassStmt> {
 public:
   explicit ClassStmt(Token name, Token *superclass, std::vector<Token> fields,
                      std::vector<TypeParse> field_types,
-                     std::vector<Stmt *> methods)
+                     std::vector<Stmt *> memberDecls)
       : name(name), superclass(superclass), fields(fields),
-        field_types(field_types), methods(methods) {}
+        field_types(field_types), memberDecls(memberDecls) {
+      allowedCtxs.classMember = true;
+    }
 
   const Token name;
   const Token *superclass = nullptr;
   const std::vector<Token> fields;
   const std::vector<TypeParse> field_types;
-  const std::vector<Stmt *> methods;
+  const std::vector<Stmt *> memberDecls;
+
+  const std::vector<Stmt *> methods() const {
+    std::vector<Stmt *> m;
+    for (auto * s : memberDecls) {
+      if (s->allowedCtxs.fnLike) {
+        m.push_back(s);
+      }
+    }
+    return m;
+  }
 };
 
 #endif // _NL_STMT_H_

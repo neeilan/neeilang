@@ -152,8 +152,9 @@ Stmt *Parser::class_declaration() {
   if (templateCtx.inTemplate) {
     templateNames.insert(name.lexeme);
   }
-  const std::string *prev_outer_class = outer_class;
-  outer_class = &name.lexeme;
+
+
+  ClassCtxGuard ccg{classCtx, &name.lexeme};
 
   Token *superclass = nullptr;
 
@@ -166,23 +167,19 @@ Stmt *Parser::class_declaration() {
 
   std::vector<Token> fields;
   std::vector<TypeParse> field_types;
-  std::vector<Stmt *> methods;
+  std::vector<Stmt *> member_decls;
 
   while (!check(RIGHT_BRACE) && !at_end()) {
-    if (peek_ahead().type == COLON) {
-      VarStmt *stmt = static_cast<VarStmt *>(var_declaration());
-      fields.push_back(stmt->name);
-      field_types.push_back(stmt->tp);
-    } else {
-      // TODO: Parse specifiers
-      methods.push_back(func_statement(Specifiers{}, "method"));
+    member_decls.push_back(declaration());
+    if (!member_decls.back()->allowedCtxs.classMember) {
+    Neeilang::error(previous(), "Invalid class member");
     }
   }
 
   consume(RIGHT_BRACE, "Expect '}' after class body.");
+  consume(SEMICOLON, "Expect ';' after class decl.");
 
-  outer_class = prev_outer_class;
-  return new ClassStmt(name, superclass, fields, field_types, methods);
+  return new ClassStmt(name, superclass, fields, field_types, member_decls);
 }
 
 Stmt *Parser::statement() {
@@ -266,7 +263,7 @@ Stmt *Parser::enum_declaration() {
   }
 
   consume(RIGHT_BRACE, "Expect '}' after enum decl");
-  
+  consume(SEMICOLON, "Expect ';' after enum decl.");
   return new ScopedEnum(name.lexeme, vals, underlying);
 }
 
@@ -452,8 +449,8 @@ Stmt *Parser::func_statement(Specifiers specifiers, std::string kind) {
 
   TypeParse return_type;
 
-  if (outer_class && name->lexeme == "init") {
-    return_type.name = QualifiedName{.tokens = {Token(IDENTIFIER, *outer_class, "", -1, {"<Unknown file>"})}};
+  if (classCtx && name->lexeme == "init") {
+    return_type.name = QualifiedName{.tokens = {Token(IDENTIFIER, *classCtx->name, "", -1, {"<Unknown file>"})}};
     consume(LEFT_BRACE, "Expect '{' before init body. Note: Return type is not "
                         "declared for init methods");
   } else {

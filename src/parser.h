@@ -43,6 +43,32 @@ private:
     }
   };
 
+  struct ClassCtx {
+    std::string const* name;
+    // Unused, but can be used to determine if directly parsing
+    // a member decl by comparing to an overall parse depth.
+    int depth = 0;
+  };
+  std::optional<ClassCtx> classCtx;
+
+  struct ClassCtxGuard {
+    std::optional<ClassCtx> & ctx;
+    std::optional<ClassCtx> old;
+
+    ClassCtxGuard(
+      std::optional<ClassCtx>& ctx,
+      std::string const* name
+    )
+      : ctx(ctx), old(ctx) {
+      ctx.emplace();
+      ctx->name = name;
+    }
+
+    ~ClassCtxGuard() {
+      ctx = old;
+    }
+  };
+
   int current = 0; // next token to be used
   std::vector<Token> tokens;
 

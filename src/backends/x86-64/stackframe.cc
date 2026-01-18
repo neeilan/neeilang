@@ -40,7 +40,7 @@ void StackFrameSizer::visit(const BlockStmt *stmt) {
 }
 
 void StackFrameSizer::visit(const ClassStmt *stmt) {
-  for (const Stmt *method : stmt->methods) {
+  for (const Stmt *method : stmt->methods()) {
     init(method);
   }
 }

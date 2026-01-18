@@ -126,21 +126,13 @@ std::string AstPrinter::visit(const ClassStmt *stmt) {
   }
   out << ">\n";
   nest++;
-  OUT << "<Class.Fields>" << std::endl;
+  OUT << "<Class.MemberDecls>" << std::endl;
   nest++;
-  for (size_t i = 0; i < stmt->fields.size(); i++) {
-    OUT << "<Field name=\"" << stmt->fields[i].lexeme
-        << "\" type=\"" << stmt->field_types[i].prettyName() << "\"/>\n";
+  for (size_t i = 0; i < stmt->memberDecls.size(); i++) {
+    out << print(stmt->memberDecls[i]) << std::endl;
   }
   nest--;
-  OUT << "</Class.Fields>" << std::endl;
-  OUT << "<Class.Methods> " << std::endl;
-  nest++;
-  for (size_t i = 0; i < stmt->methods.size(); i++) {
-    out << print(stmt->methods[i]);
-  }
-  nest--;
-  OUT << "</Class.Methods>\n";
+  OUT << "</Class.MemberDecls>\n";
   nest--;
   OUT << "</Class>\n";
   return out.str();

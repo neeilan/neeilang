@@ -231,7 +231,7 @@ void CodeGen::visit(const ClassStmt *stmt) {
   classes_.push_back(stmt);
   enclosingClass_ = sm_.current().typetab->get(stmt->name.lexeme);;
   enterScope();
-  for (const Stmt *method : stmt->methods) {
+  for (const Stmt *method : stmt->methods()) {
     emit(method);
   }
   exitScope();

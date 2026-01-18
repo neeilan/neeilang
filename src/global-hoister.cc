@@ -93,7 +93,7 @@ void GlobalHoister::visit(const ClassStmt *cls) {
   // Methods
   NLType old_encl_class = encl_class;
   encl_class = cls_type;
-  for (const Stmt *method : cls->methods) {
+  for (const Stmt *method : cls->methods()) {
     hoist(method);
   }
   encl_class = old_encl_class;

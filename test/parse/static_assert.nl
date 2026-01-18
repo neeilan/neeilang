@@ -9,7 +9,6 @@ fn Bar() : void {
     static_assert(1 == 1);
 }
 
-// TODO: Support inside class declaration
-// struct Foo {
-//    static_assert(1 == 1);
-// }
+struct Foo {
+    static_assert(1 == 1);
+};
