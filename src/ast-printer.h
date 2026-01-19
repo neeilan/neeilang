@@ -20,6 +20,8 @@ public:
 
   std::string parenthesize(std::string, const Expr *);
   std::string parenthesize(std::string, const Expr *, const Expr *);
+private:
+  std::string printTypeParse(TypeParse const&);
 };
 
 #endif //_NL_AST_PRINTER_H_

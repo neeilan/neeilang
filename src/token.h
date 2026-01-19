@@ -93,6 +93,7 @@ enum TokenType {
   SIZEOF,
   ALIGNOF,
   TYPEID,
+  DECLTYPE,
   RESERVED_KEYWORD
 };
 

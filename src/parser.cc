@@ -24,7 +24,6 @@ std::vector<Stmt *> Parser::parse() {
 
   return statements;
 }
-
 Stmt *Parser::declaration() {
   Specifiers s = consume_specifiers();
 
@@ -60,8 +59,14 @@ TypeParse Parser::parse_type(const std::string &msg) {
     tp.isConst = true;
   }
 
-
-  tp.name = consume_qualified_identifier(msg);
+  if (match({DECLTYPE})) {
+    // NOTE: decltype is a 'specifier' - not an operator
+    consume(LEFT_PAREN, "Expect '(' after decltype");
+    tp.declTypeExpr = expression();
+    consume(RIGHT_PAREN, "Expect ')' after decltype");
+  } else {
+    tp.name = consume_qualified_identifier(msg);
+  }
 
   if (match({ELLIPSIS})) {
     tp.isVariadic = true;
@@ -127,6 +132,9 @@ Specifiers Parser::consume_specifiers() {
 
 Stmt *Parser::var_declaration() {
   Token name = consume(IDENTIFIER, "Expect variable name.");
+  if (templateCtx.inTemplate) {
+    templateNames.insert(name.lexeme);
+  } 
   TypeParse tp;
   Expr *initializer = nullptr;
 
@@ -310,13 +318,11 @@ Stmt *Parser::template_statement() {
   consume(GREATER, "Expect '>' after template args");
 
   TemplateCtxGuard tcg{templateCtx};
-  if (match({FN})) {
-    return new TemplateStmt(args, func_statement(Specifiers{}, "function"));
+  auto* stmt = declaration();
+  if (!stmt->allowedCtxs.templatable) {
+    error(previous(), "Not a class/function/variable template");
   }
-  if (match({CLASS})) {
-    return new TemplateStmt(args, class_declaration());
-  }
-  throw error(peek(), "Not a class or function template.");
+  return new TemplateStmt(args, stmt);
 }
 
 Stmt *Parser::static_assert_statement() {

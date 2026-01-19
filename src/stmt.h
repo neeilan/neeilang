@@ -94,6 +94,7 @@ public:
     uint8_t classMember : 1;
     uint8_t classVar    : 1;
     uint8_t fnLike      : 1;
+    uint8_t templatable : 1;
     uint8_t pad_        : 5;
   } allowedCtxs = {};
 };
@@ -134,6 +135,7 @@ public:
       : name(name), tp(tp), expression(initializer) {
         allowedCtxs.classMember = true;
         allowedCtxs.classVar = true;
+        allowedCtxs.templatable = true;
       }
 
   const Token name;
@@ -245,6 +247,7 @@ public:
         return_type(return_type), body(body) {
       allowedCtxs.classMember = true;
       allowedCtxs.fnLike = true;
+      allowedCtxs.templatable = true;
     }
 
   bool is_void() const { return return_type.prettyName() == "void"; }
@@ -284,6 +287,7 @@ public:
       : name(name), superclass(superclass), fields(fields),
         field_types(field_types), memberDecls(memberDecls) {
       allowedCtxs.classMember = true;
+      allowedCtxs.templatable = true;
     }
 
   const Token name;

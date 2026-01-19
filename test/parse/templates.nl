@@ -12,12 +12,12 @@ fn foo(arg : x) : T {
 
 template <typename T>
 struct Animal {
-  name : std::string;
-  age : T;
+  var name : std::string;
+  var age : T;
 
-  init() { print "Animal init called"; return this; }
-  sayHi(x : int, y : T) : int { print "hi"; return 3 + y; }
-}
+  fn init() { print "Animal init called"; return this; }
+  fn sayHi(x : int, y : T) : int { print "hi"; return 3 + y; }
+};
 
 template <typename... T, typename C>
 fn variadic(arg : T...) : T {
@@ -36,8 +36,8 @@ namespace n1 {
 template <typename T>
 fn qux() : void {}
 class cho {
-    init() { return this; }
-}
+    fn init() { return this; }
+};
 }
 namespace n2 {
 var qux : int;

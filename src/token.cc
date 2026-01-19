@@ -93,6 +93,7 @@ static std::vector < std::string > token_names {
   "SIZEOF",
   "ALIGNOF",
   "TYPEID",
+  "DECLTYPE",
   "RESERVED_KEYWORD"
 };
 

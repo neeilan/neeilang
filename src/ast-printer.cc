@@ -1,6 +1,4 @@
 #include "ast-printer.h"
-#include "expr.h"
-#include "stmt.h"
 
 #include <sstream>
 
@@ -17,6 +15,19 @@ std::string AstPrinter::print(const std::vector<Stmt *> &program) {
   }
   return out.str();
 }
+
+std::string AstPrinter::printTypeParse(TypeParse const & tc) {
+  TypeParse& t = const_cast<TypeParse&>(tc);
+  if (!t.declTypeExpr) {
+    return t.prettyName();
+  }
+  std::string declTypeDesc = "decltype(";
+  declTypeDesc += print(t.declTypeExpr);
+  declTypeDesc += ')';
+  t.declTypeDesc = declTypeDesc;
+  return t.prettyName();
+}
+
 
 std::string AstPrinter::visit(const NamespaceStmt *stmt) {
   ostringstream out;
@@ -118,7 +129,7 @@ std::string AstPrinter::visit(const PrintStmt *stmt) {
 
 std::string AstPrinter::visit(const VarStmt *stmt) {
   ostringstream out;
-  OUT << "<Var name=\"" << stmt->name.lexeme << "\" type=\"" << stmt->tp.prettyName() << "\">\n";
+  OUT << "<Var name=\"" << stmt->name.lexeme << "\" type=\"" << printTypeParse(stmt->tp) << "\">\n";
   if (stmt->expression) {
     nest++;
     OUT << "<Var.Initializer>\n";
@@ -205,12 +216,12 @@ std::string AstPrinter::visit(const FuncStmt *stmt) {
     name += getTokenTypeName(*stmt->operatorOverload);
   }
   OUT << "<Function name=\"" << name << "\" specifiers=\"" << stmt->specifiers.str() << "\"  return_type=\""
-      << stmt->return_type.prettyName() << "\" ";
+      << printTypeParse(stmt->return_type) << "\" ";
   for (size_t i = 0; i < stmt->parameters.size(); i++) {
     bool isVariadic = stmt->parameter_types[i].isVariadic;
     std::string argn = std::string("args[") + std::to_string(i) + "]";
     out << argn << ".name=\"" << stmt->parameters[i].lexeme << "\" "
-        << argn << ".type=\"" << stmt->parameter_types[i].prettyName()
+        << argn << ".type=\"" << printTypeParse(stmt->parameter_types[i])
         << (isVariadic ? "..." : "") << "\" ";
   }
   out << ">\n";
@@ -260,7 +271,7 @@ std::string AstPrinter::visit(const Call *expr) {
 }
 
 std::string AstPrinter::visit(const Get *expr) {
-  return "(Get '" + expr->name.lexeme + "' via '" + (expr->accessOp == DOT ? "." : "->") +  "')";
+  return "(Get (" + print(&expr->callee) + ")::" + expr->name.lexeme + " via '" + (expr->accessOp == DOT ? "." : "->") +  "')";
 }
 
 std::string AstPrinter::visit(const Set *expr) {
@@ -287,7 +298,7 @@ std::string AstPrinter::visit(const This *expr) { return "This"; }
 std::string AstPrinter::visit(const SizeOf *expr) {
   std::string operand;
   if (std::holds_alternative<TypeParse>(expr->operand)) {
-    operand = "<type> " + std::get<TypeParse>(expr->operand).prettyName();
+    operand = "<type> " + printTypeParse(std::get<TypeParse>(expr->operand));
   } else {
     auto *opExp = std::get<Expr*>(expr->operand);
     operand = print(opExp);
@@ -296,7 +307,7 @@ std::string AstPrinter::visit(const SizeOf *expr) {
 }
 
 std::string AstPrinter::visit(const AlignOf *expr) {
-  return "(AlignOf \"" + expr->typeId.prettyName() + "\")";
+  return "(AlignOf \"" + printTypeParse(expr->typeId) + "\")";
 }
 
 std::string AstPrinter::visit(const Assignment *expr) {
@@ -340,6 +351,7 @@ std::string AstPrinter::visit(const Unary *expr) {
 
 std::string AstPrinter::visit(const Variable *expr) {
   ostringstream out;
+  if (expr
   out << "(Variable name=\"" << expr->name.str() << "\")";
   return out.str();
 }

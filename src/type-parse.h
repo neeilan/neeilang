@@ -20,6 +20,8 @@ struct TypeParse {
   uint8_t ptrDepth = 0;
   bool isLvalRef = false;
   bool isRvalOrUniversalRef = false;
+  Expr* declTypeExpr = nullptr;
+  std::string declTypeDesc = "(decltype)"; // Set by AST printer
 
   TypeParse() = default;
   TypeParse(const TypeParse &) = default;
@@ -28,7 +30,8 @@ struct TypeParse {
   std::string prettyName() const {
     std::string refPart = isLvalRef ? "&" : isRvalOrUniversalRef ? "&&" : "";
     std::string constPart = isConst ? "const " : "";
-    return refPart + constPart + name.str() + std::string(ptrDepth, '*');
+    std::string namePart = declTypeExpr ? declTypeDesc : name.str();
+    return refPart + constPart + namePart + std::string(ptrDepth, '*');
   }
 
   
