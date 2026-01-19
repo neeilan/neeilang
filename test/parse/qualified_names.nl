@@ -1,9 +1,11 @@
-
-fn x( arg1 : foo::bar::T ) : ::qux::Baz {
-    var x : a::b::C;
+// TODO: Because func vs var parsing on types,
+// need to revisit after adding namespace-aware
+// entity tracking
+::qux::Baz x( foo::bar::T arg1 ) {
+    a::b::C x;
     return;
 }
 
-fn y( arg1 : ::foo::bar::T ) : qux::Baz {
+qux::Baz y( ::foo::bar::T arg1 ) {
     return;
 }

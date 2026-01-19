@@ -1,4 +1,4 @@
-var x : bool;
+bool x;
 
 x &= 1;
 x |= 1;

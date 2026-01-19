@@ -95,6 +95,7 @@ enum TokenType {
   TYPEID,
   DECLTYPE,
   STATIC_CAST,
+  AUTO,
   RESERVED_KEYWORD
 };
 

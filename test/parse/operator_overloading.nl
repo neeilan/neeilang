@@ -1,27 +1,27 @@
-fn operator+(x: int) : int {}
-fn operator++(x: int) : int {}
-fn operator+=(x: int) : int {}
+int operator+(int x) {}
+int operator++(int x) {}
+int operator+=(int x) {}
 
-fn operator-(x: int) : int {}
-fn operator--(x: int) : int {}
-fn operator-=(x: int) : int {}
+int operator-(int x) {}
+int operator--(int x) {}
+int operator-=(int x) {}
 
-fn operator!(x: int) : int {}
-fn operator!=(x: int) : int {}
+int operator!(int x) {}
+int operator!=(int x) {}
 
-fn operator*=(x: int) : int {}
+int operator*=(int x) {}
 
-fn operator&&(x: int) : int {}
-fn operator||(x: int) : int {}
+int operator&&(int x) {}
+int operator||(int x) {}
 
-fn operator and (x: int) : int {}
-fn operator or (x: int) : int {}
+int operator and (int x) {}
+int operator or (int x) {}
 
 
-fn operator*(x: int) : int {}
-fn operator=(x: int) : int {}
-fn operator->(x: int) : int {}
+int operator*(int x) {}
+int operator=(int x) {}
+int operator->(int x) {}
 
-fn operator ()(x: int) : int {}
-fn operator new(x : std::size_t) : int {}
-fn operator delete(x : void*) : int {}
+int operator ()(int x) {}
+int operator new(std::size_t x) {}
+int operator delete(void* x) {}

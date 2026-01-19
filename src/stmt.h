@@ -2,8 +2,9 @@
 #define _NL_STMT_H_
 
 #include <string>
-#include <vector>
+#include <map>
 #include <optional>
+#include <vector>
 
 #include "expr.h"
 #include "token.h"
@@ -257,6 +258,7 @@ public:
   const std::vector<TypeParse> parameter_types;
   const TypeParse return_type;
   const std::vector<Stmt *> body;
+  std::map<size_t, Expr *> defaultArgs;
   bool isStatic = false;
   Specifiers specifiers;
   std::optional<TokenType> operatorOverload;

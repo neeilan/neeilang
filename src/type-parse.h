@@ -31,7 +31,7 @@ struct TypeParse {
     std::string refPart = isLvalRef ? "&" : isRvalOrUniversalRef ? "&&" : "";
     std::string constPart = isConst ? "const " : "";
     std::string namePart = declTypeExpr ? declTypeDesc : name.str();
-    return refPart + constPart + namePart + std::string(ptrDepth, '*');
+    return  constPart + namePart + std::string(ptrDepth, '*') + refPart;
   }
 
   

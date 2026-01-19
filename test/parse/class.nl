@@ -3,24 +3,24 @@ class Foo {
 
     // namespace bar {}; // - Invalid class member
 
-    var x : int = 5;
+    int x = 5;
 
-    fn Foo() : Foo {}
+    Foo Foo() {}
 
     enum class Color { RED, GREEN };
 
     class Bar {
-        var x : int;
+        int x;
     };
 
     template <typename T>
-    fn add(a : T, b : T) : T {
+    T add(T a, T b) {
         return a + b;
     }
 
-    template <typename T>
+    template <typename X>
     struct Holder {
-        var item : T;
+        const X& item;
     };
 
     using MyStr = std::string;

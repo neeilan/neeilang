@@ -95,6 +95,7 @@ static std::vector < std::string > token_names {
   "TYPEID",
   "DECLTYPE",
   "STATIC_CAST",
+  "AUTO",
   "RESERVED_KEYWORD"
 };
 

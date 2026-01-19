@@ -24,6 +24,82 @@ std::vector<Stmt *> Parser::parse() {
 
   return statements;
 }
+/*
+
+A declaration can start with:
+- type-specifier
+- auto
+- decltype
+- typedef-name
+- template-id that names a type
+We consider all of these $Type
+
+Note: There is no valid expression that starts with $Type Identifier,
+so we use this to eliminate expressions fairly early.
+
+                                Example
+                                ------
+if identifier [1]               
+  VarDecl                       vector<int> | x = {}
+  FuncDecl                      vector<int> | x(int)
+  Expression                    vector<int> | {5}
+else
+  Expression (unambiguous)      5 * 5
+
+next, if identifier [1] is $Type:    
+  VarDecl                       vector<int> | x(5)
+  FuncDecl                      vector<int> | x(int)
+  Expression                    vector<int> | {5}
+else
+  Expression (unambiguous)      vector<int > x() 
+
+next, if next token is an identifier:
+  VarDecl                       vector<int> x |(5)
+  FuncDecl                      vector<int> x |(int)
+else
+  Expression (unambiguous)      vector<int> { | 5}
+
+* NOTE: Expression has been eliminated now
+
+next, if next token is '('  
+  VarDecl                      vector<int> x ( | 5)
+  FuncDecl                     vector<int> x ( |  )
+else
+  VarDecl (unambiguous)        vector<int> x{};
+
+* NOTE: C++ allows function decls (but not definitions) within a function,
+  so we're still in ambiguous territory. We need to parse inside the ().
+  
+next, if next token is ')'
+  FuncDecl                    (language rule)
+else
+  FuncDecl                    vector<int> x (X x)
+  VarDecl                     vector<int> x (X())
+
+next, try parsing as a FuncDecl. If it succeeds, great.
+else, parse as a VarDecl.
+
+Vice-versa is not true:
+```
+// int() is a function type
+T x(int());
+// type id in parenthesis allowed
+T x((T));
+i.e. The set of valid expressions overlaps with the set of valid parameter-declarations
+but C++ rule is - if you can parse a decl as a function, that wins out.
+
+these should all work:
+T x(int);
+T x(const int&);
+T x(int*);
+T x(T&&);
+T x(auto&&);
+T x(int = 5);
+T x(int (*)(int));
+T x(int());
+```
+
+  */
 Stmt *Parser::declaration() {
   Specifiers s = consume_specifiers();
 
@@ -32,15 +108,28 @@ Stmt *Parser::declaration() {
   if (match({TEMPLATE}))
     return template_statement();
   if (match({CLASS}))
-    return class_declaration();
+    return class_declaration(s);
   if (match({ENUM}))
-    return enum_declaration();
-  if (match({VAR}))
-    return var_declaration();
-  if (match({FN}))
-    return func_statement(s, "function");
+    return enum_declaration(s);
   if (match({USING})) {
     return using_declaration();
+  } else if (parseStartDecl(/*doCommit*/false)) {    // Variable or function decl
+    // This is a func or var decl.
+    // We parse it as a func decl if it has:
+    // [specifiers] Type Identifier ParameterDeclarationClause
+    auto tp = parse_type("var type / func return type");
+    if (peek().type == OPERATOR) { //
+      return func_statement(tp, std::nullopt, s, "operator overload");
+    }
+    auto id = consume_qualified_identifier("var / func name");
+    auto prevCurrent = current;
+    if (match({LEFT_PAREN}) && snoopFnParameterDeclarationClause()){
+      current = prevCurrent;
+      return func_statement(tp, id, s, "function");
+    } else {
+      current = prevCurrent;
+      return var_declaration(tp, id, s);
+    }
   } else {
     return statement();
   }
@@ -48,12 +137,6 @@ Stmt *Parser::declaration() {
 
 TypeParse Parser::parse_type(const std::string &msg) {
   TypeParse tp;
-
-  if (match({AMP})) {
-    tp.isLvalRef = true;
-  } else if (match({AND}) && previous().lexeme == "&&") {
-      tp.isRvalOrUniversalRef = true;
-  }
 
   if (match({CONST})) {
     tp.isConst = true;
@@ -79,6 +162,12 @@ TypeParse Parser::parse_type(const std::string &msg) {
 
   while (match({STAR})) {
     tp.ptrDepth++;
+  }
+
+  if (match({AMP})) {
+    tp.isLvalRef = true;
+  } else if (match({AND}) && previous().lexeme == "&&") {
+      tp.isRvalOrUniversalRef = true;
   }
 
   return tp;
@@ -130,22 +219,27 @@ Specifiers Parser::consume_specifiers() {
   return s;
 }
 
-Stmt *Parser::var_declaration() {
-  Token name = consume(IDENTIFIER, "Expect variable name.");
+void Parser::addTemplateName(Token t) {
+  templateNames.insert(t.lexeme);
+  // possibly-qualified version
+  QualifiedName qn = namespaceCtx.qn;
+  qn.tokens.push_back(t);
+  templateNames.insert(qn.str());
+
+  // fully qualified version
+  qn.isFullyQualified = true;
+  templateNames.insert(qn.str());
+}
+
+
+Stmt *Parser::var_declaration(TypeParse tp, QualifiedName qn, Specifiers s) {
+  Token name = qn.token();
   if (templateCtx.inTemplate) {
-    templateNames.insert(name.lexeme);
+    addTemplateName(name);
   } 
-  TypeParse tp;
   Expr *initializer = nullptr;
 
-  if (match({EQUAL})) {
-    tp = InferredType();
-    initializer = expression();
-  } else {
-    consume(COLON, "Expect ':' after name in variable declaration.");
-    tp = parse_type("Expect variable type.");
-
-    /*
+/*
     TODO: Handle initialization cases
     https://en.cppreference.com/w/cpp/language/initialization.html
     +------------------+-----------------------------+----------------------------------------+----------------+---------+------------------------------+
@@ -174,20 +268,29 @@ Stmt *Parser::var_declaration() {
     |                  | T x = { .a = e1 }           |                                        |                |         | Order restricted             |
     +------------------+-----------------------------+----------------------------------------+----------------+---------+------------------------------+
     */
-
-    if (match({EQUAL})) {
-      initializer = expression();
+  if (match({EQUAL})) { // TODO: Can be one of several initializations - see above
+    initializer = expression();
+  } else if (match({LEFT_BRACE})) {
+    if (!check(RIGHT_BRACE)) {
+      initializer = expression(); // TODO: handle commas / initializer list
     }
+    consume(RIGHT_BRACE, "Expect '}' in direct-list initializer"); // TODO
+  } else if (match({LEFT_PAREN})) {
+    if (!check(RIGHT_PAREN)) {
+      initializer = expression(); // TODO: handle commas
+    }
+    consume(RIGHT_PAREN, "Expect ')' in direct initializer"); // TODO
   }
+    
   consume(SEMICOLON, "Expect ';' after variable declaration.");
-
+  tp.isConst = s.f.isConst;
   return new VarStmt(name, tp, initializer);
 }
 
-Stmt *Parser::class_declaration() {
+Stmt *Parser::class_declaration(Specifiers) {
   Token name = consume(IDENTIFIER, "Expect class name.");
   if (templateCtx.inTemplate) {
-    templateNames.insert(name.lexeme);
+    addTemplateName(name);
   } else {
     typeNames.insert(name.lexeme);
   }
@@ -296,7 +399,7 @@ Stmt *Parser::using_declaration() {
 }
 
 // Specifically, scoped enumerators
-Stmt *Parser::enum_declaration() {
+Stmt *Parser::enum_declaration(Specifiers) {
   std::optional<TypeParse> underlying;
   std::vector<NamedEnumerator> vals;
 
@@ -339,6 +442,7 @@ Stmt *Parser::template_statement() {
     bool isVariadic = false;
     if (match({ELLIPSIS})) { isVariadic = true; }
     Token name = consume(IDENTIFIER, "Expect template arg name");
+    typeNames.insert(name.lexeme);// TODO: Should be scope based - not a type outside this template
     args.push_back(TemplateArg{.name = name, .isVariadic = isVariadic });
   } while (match({COMMA}));
 
@@ -370,6 +474,8 @@ Stmt *Parser::namespace_statement() {
     QualifiedName qn = consume_qualified_identifier("Expect namespace name");
     name = qn.str();
   }
+
+  NamespaceCtxGuard ncg{namespaceCtx, name};
 
   consume(LEFT_BRACE, "Expect '{' at start of namespace.");
   while (!check(RIGHT_BRACE) && !at_end()) {
@@ -410,8 +516,10 @@ Stmt *Parser::for_statement(Token for_tok) {
 
   Stmt *initializer = nullptr;
 
-  if (match({VAR})) {
-    initializer = var_declaration();
+  if (parseStartDecl(/*doCommit*/false)) {
+    auto tp = parse_type("var type in for-loop init");
+    auto id = consume_qualified_identifier("var name  in for-loop init");
+    initializer = var_declaration(tp, id, {});
   } else {
     initializer = expression_statement();
   }
@@ -450,7 +558,7 @@ Stmt *Parser::for_statement(Token for_tok) {
   return body;
 }
 
-Stmt *Parser::func_statement(Specifiers specifiers, std::string kind) {
+Stmt *Parser::func_statement(TypeParse return_type, std::optional<QualifiedName> qn, Specifiers specifiers, std::string kind) {
   std::optional<Token> name;
   std::optional<TokenType> operatorOverload;
 
@@ -481,9 +589,10 @@ Stmt *Parser::func_statement(Specifiers specifiers, std::string kind) {
       throw error(peek(), "Not an overloadable operator");
     }
   } else {
-    name = consume(IDENTIFIER, "Expect " + kind + " name.");
+    assert(qn);
+    name = qn->token();
     if (templateCtx.inTemplate) {
-      templateNames.insert(name->lexeme);
+      addTemplateName(*name);
     }
   }
 
@@ -491,6 +600,8 @@ Stmt *Parser::func_statement(Specifiers specifiers, std::string kind) {
 
   std::vector<Token> parameters;
   std::vector<TypeParse> parameter_types;
+  std::map<size_t, Expr*> default_args;
+  int argIdx = 0;
 
   if (!check(RIGHT_PAREN)) {
     do {
@@ -498,33 +609,37 @@ Stmt *Parser::func_statement(Specifiers specifiers, std::string kind) {
         error(peek(), "Cannot have more than 8 parameters.");
       }
 
-      parameters.push_back(consume(IDENTIFIER, "Expect parameter name."));
-
-      consume(COLON, "Expect ':' after parameter name.");
-      parameter_types.push_back(parse_type("Expect parameter type after ':'"));
+      parameter_types.push_back(parse_type("Expect parameter"));
+      if (!check(COMMA) && !check(RIGHT_PAREN)
+        && !check(EQUAL) // T x(int = 5); is legal
+      ) {
+        parameters.push_back(consume(IDENTIFIER, "Expect parameter name."));
+      } else {
+        parameters.push_back(Token(IDENTIFIER, "$", "", -1, {"<Unknown file>"}));
+      }
+      if (match({EQUAL})) {
+        default_args[argIdx] = expression();
+      }
+      argIdx++;
     } while (match({COMMA}));
   }
 
   consume(RIGHT_PAREN, "Expect ')' after parameters.");
 
-  TypeParse return_type;
-
-  if (classCtx && name->lexeme == "init") {
-    return_type.name = QualifiedName{.tokens = {Token(IDENTIFIER, *classCtx->name, "", -1, {"<Unknown file>"})}};
-    consume(LEFT_BRACE, "Expect '{' before init body. Note: Return type is not "
-                        "declared for init methods");
-  } else {
-    consume(COLON, "Expect ':' after parameter list in function statement.");
-    return_type = parse_type("Expect return type in " + kind + " statement");
-    consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
-  }
 
   std::vector<Stmt *> body;
-  body.push_back(block_statement());
+  if (!check(SEMICOLON)) {
+    consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+    body.push_back(block_statement());
+  } else {
+    // TODO: Mark functsmt as declaration only
+    consume(SEMICOLON, "");
+  }
 
   auto * func = new FuncStmt(*name, parameters, parameter_types, return_type, body);
   func->setSpecifiers(specifiers);
   func->setOperatorOverload(operatorOverload);
+  func->defaultArgs = std::move(default_args);
   return func;
 }
 
@@ -967,9 +1082,101 @@ void Parser::synchronize() {
 }
 
 bool Parser::isTemplateName(const std::string& name) {
-  return templateNames.count(name);
+  auto res = templateNames.count(name);
+  return res;
 }
 
-bool Parser::isType(const QualifiedName& name) {
+bool Parser::isType(const QualifiedName& name) const {
   return typeNames.count(name.str());
+}
+
+bool Parser::parseStartDecl(bool doCommit) {
+  if (at_end()) { return false; }
+  TokenType t = peek().type;
+  // Something like `int(5)` can start an expression, but in C++
+  // if something can be parsed as a decl, it is a decl. Therefore
+  // we  try parsing as a decl first if a token canStartDecl.
+  if (t == CONST  || t ==  EXTERN || t == CLASS || t == ENUM
+    || t == TYPENAME || t == STATIC || t == DECLTYPE || t == AUTO) {
+      return true;
+  }
+  if (t == IDENTIFIER || t == COLON_COLON) {
+    auto sr = snoop_qualified_identifier();
+    if (sr && doCommit) { commit(sr); }
+    return sr && (isType(*sr) || isTemplateName((*sr).token().lexeme)); // TODO: QN lookup
+  }
+  return false;
+}
+
+Parser::SnoopResult<int> Parser::snoopFnDeclarator() {
+  SnoopGuard sg(current, snoopMode);
+  while (match({STAR, AMP})) {}
+  return snoopFnDirectDeclarator();
+}
+
+Parser::SnoopResult<int> Parser::snoopFnDirectDeclarator() {
+  SnoopGuard sg(current, snoopMode);
+  if (match({IDENTIFIER})) {
+    // named identifier, doesn't matter if type or not (can be arg name)
+  } else if (match({LEFT_PAREN})) {
+    if (!snoopFnDeclarator()) {
+      return nullSnoopResult<int>();
+    }
+    consume(RIGHT_PAREN, "direct declarator ')");
+  } else {
+    return nullSnoopResult<int>();
+  }
+  // Postfix is () or []
+  while (true) {
+     if (match({LEFT_PAREN})) {
+      if (auto res = snoopFnParameterDeclarationClause(); !res) {
+        return res;
+      }
+      consume(RIGHT_PAREN, "direct declarator ')");
+     } else if (match({LEFT_BRACKET})) {
+      // TODO: Optionally parse a constexpr here
+      consume(RIGHT_BRACKET, "direct declarator ')");
+     } else {
+      break;
+     }
+  }
+  return snoopResult(1);
+}
+
+Parser::SnoopResult<int> Parser::snoopFnParameterDeclaration() {
+  SnoopGuard sg(current, snoopMode);
+  if (!parseStartDecl(true)) { return nullSnoopResult<int>(); }
+  // parseStartDecl true -> we've parsed past the start of the decl
+  snoopFnDeclarator(); // optional
+  return snoopResult(1);
+}
+
+Parser::SnoopResult<int> Parser::snoopFnParameterDeclarationClause() {
+    SnoopGuard sg(current, snoopMode);
+
+  if (match({RIGHT_PAREN})) { return snoopResult(1); } // Trivial - func decl wins
+  if (!snoopFnParameterDeclaration()) return nullSnoopResult<int>();
+  while (match({COMMA})) {
+    if (!snoopFnParameterDeclaration()) return nullSnoopResult<int>();
+  }
+  return snoopResult(1);
+}
+
+
+// Snoop functions
+// ---------------
+Parser::SnoopResult<QualifiedName> Parser::snoop_qualified_identifier() {
+  SnoopGuard sg(current, snoopMode);
+  try {
+    return snoopResult(consume_qualified_identifier("snoop"));
+  } catch (ParseErr&) {}
+  return nullSnoopResult<QualifiedName>();
+}
+
+Parser::SnoopResult<Specifiers> Parser::snoop_specifiers() {
+  SnoopGuard sg(current, snoopMode);
+  try {
+    snoopResult(consume_specifiers());
+  } catch (ParseErr&) {}
+  return nullSnoopResult<Specifiers>();
 }

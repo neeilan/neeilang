@@ -69,6 +69,25 @@ private:
     }
   };
 
+  struct NamespaceCtx {
+    QualifiedName qn;
+  };
+  NamespaceCtx namespaceCtx;
+
+  struct NamespaceCtxGuard {
+    NamespaceCtx& ctx;
+    NamespaceCtx old;
+
+    explicit NamespaceCtxGuard(NamespaceCtx& ctx, std::string const& name)
+      : ctx(ctx), old(ctx) {
+      ctx.qn.tokens.push_back(Token(IDENTIFIER, name, "", -1, {}));
+    }
+
+    ~NamespaceCtxGuard() {
+      ctx = old;
+    }
+  };
+
   bool snoopMode = false;
   struct SnoopGuard {
     int& currRef;
@@ -82,6 +101,28 @@ private:
     }
     ~SnoopGuard() { currRef = startTok; snoopModeRef = oldSnoopMode; }
   };
+  template <typename T>
+  struct SnoopResult {
+    std::optional<T> value;
+    int curr = 0;
+
+    operator bool() const {
+      return bool(value);
+    }
+    T const& operator*() const {
+      return *value;
+    }
+  };
+
+  template <typename T>
+  SnoopResult<T> nullSnoopResult() {
+    return SnoopResult<T>{std::nullopt}; 
+  }
+
+  template <typename T>
+  SnoopResult<T> snoopResult(T res) {
+    return SnoopResult<T>{res, current}; 
+  }
 
   int current = 0; // next token to be used
   std::vector<Token> tokens;
@@ -122,8 +163,8 @@ private:
   Expr *primary();
 
   Stmt *declaration();
-  Stmt *var_declaration();
-  Stmt *class_declaration();
+  Stmt *var_declaration(TypeParse, QualifiedName, Specifiers);
+  Stmt *class_declaration(Specifiers);
   Stmt *statement();
   Stmt *print_statement(Token keyword);
   Stmt *block_statement();
@@ -131,20 +172,35 @@ private:
   Stmt *template_statement();
   Stmt *static_assert_statement();
   Stmt *using_declaration();
-  Stmt *enum_declaration();
+  Stmt *enum_declaration(Specifiers);
   Stmt *expression_statement();
   Stmt *if_statement(Token keyword);
   Stmt *while_statement(Token keyword);
   Stmt *for_statement(Token keyword);
   Stmt *return_statement();
-  Stmt *func_statement(Specifiers s, std::string kind);
+  Stmt *func_statement(TypeParse, std::optional<QualifiedName>, Specifiers s, std::string kind);
+
+  template <typename T>
+  void commit(SnoopResult<T> const& r) { current = r.curr; }
+  SnoopResult<QualifiedName> snoop_qualified_identifier();
+  SnoopResult<Specifiers> snoop_specifiers();
+  SnoopResult<int> snoopFnDirectDeclarator();
+  SnoopResult<int> snoopFnDeclarator();
+  SnoopResult<int> snoopFnParameterDeclaration();
+  SnoopResult<int> snoopFnParameterDeclarationClause();
 
   ParseErr error(Token token, std::string msg);
   void synchronize();
   std::unordered_set<std::string> templateNames;
+  void addTemplateName(Token);
   bool isTemplateName(const std::string& name);
-  std::unordered_set<std::string> typeNames;
-  bool isType(const QualifiedName& name);
+  // TODO - use centrally-defined builtin values
+  std::unordered_set<std::string> typeNames {"void", "int", "float", "char", "short", "bool"};
+  bool isType(const QualifiedName& name) const;
+  bool parseStartDecl(bool doCommit);
+
+
+
 
 };
 

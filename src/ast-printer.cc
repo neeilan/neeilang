@@ -223,6 +223,10 @@ std::string AstPrinter::visit(const FuncStmt *stmt) {
     out << argn << ".name=\"" << stmt->parameters[i].lexeme << "\" "
         << argn << ".type=\"" << printTypeParse(stmt->parameter_types[i])
         << (isVariadic ? "..." : "") << "\" ";
+    auto defIt = stmt->defaultArgs.find(i);
+    if (defIt != stmt->defaultArgs.end()) {
+      out  << argn << ".default=\"" << print(defIt->second)  << "\" ";
+    }
   }
   out << ">\n";
 

@@ -14,7 +14,7 @@ sizeof(4 + 2);
 alignof(Foo);
 static_assert(alignof(Foo) == 1);
 alignof(Bar*);
-alignof(&Bar*);
+alignof(Bar*&);
 
 template <typename T>
 class Bar {};

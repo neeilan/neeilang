@@ -1,3 +1,3 @@
 
-var x : &int = 1;
-fn foo(in : &const Foo, out : &Foo, tmp : &&Foo) : void {}
+int& x = 1;
+void foo(const Foo& in, Foo & out, Foo&& tmp) {}

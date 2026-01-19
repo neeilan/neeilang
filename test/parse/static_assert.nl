@@ -5,7 +5,7 @@ namespace x {
 static_assert(1 == 1);
 }
 
-fn Bar() : void {
+void Bar() {
     static_assert(1 == 1);
 }
 

@@ -54,6 +54,7 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"typeid", TYPEID},
     {"decltype", DECLTYPE},
     {"static_cast", STATIC_CAST},
+    {"auto", AUTO},
 
     {"private", RESERVED_KEYWORD},
     {"protected", RESERVED_KEYWORD},
@@ -65,7 +66,6 @@ const std::map<std::string, TokenType> Scanner::keywords = {
     {"signed", RESERVED_KEYWORD},
     {"unsigned", RESERVED_KEYWORD},
     {"alignas", RESERVED_KEYWORD},
-    {"auto", RESERVED_KEYWORD},
     // {"bool", RESERVED_KEYWORD},
     {"break", RESERVED_KEYWORD},
     {"continue", RESERVED_KEYWORD},
