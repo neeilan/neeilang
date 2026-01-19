@@ -7,7 +7,7 @@
 /*
  * CactusTable implements a multi-map with scoping semantics.
  * It is a cactus tree (wikipedia.org/wiki/Parent_pointer_tree)
- * that is specializable on K+V to build symbol/type/vtables.
+ * that is specializable on K+V to build symbol/type tables.
  */
 template <typename K, typename V> class CactusTable {
 private:

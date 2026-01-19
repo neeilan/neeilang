@@ -31,14 +31,14 @@ Stmt *Parser::declaration() {
     return namespace_statement();
   if (match({TEMPLATE}))
     return template_statement();
-  if (match({FN}))
-    return func_statement(s, "function");
   if (match({CLASS}))
     return class_declaration();
   if (match({ENUM}))
     return enum_declaration();
   if (match({VAR}))
     return var_declaration();
+  if (match({FN}))
+    return func_statement(s, "function");
   if (match({USING})) {
     return using_declaration();
   } else {
@@ -145,9 +145,36 @@ Stmt *Parser::var_declaration() {
     consume(COLON, "Expect ':' after name in variable declaration.");
     tp = parse_type("Expect variable type.");
 
-    // By default, initialize to nil
-    // TODO : Handle nil initialization.
-    // Expr * initializer = new StrLiteral("nil", true);
+    /*
+    TODO: Handle initialization cases
+    https://en.cppreference.com/w/cpp/language/initialization.html
+    +------------------+-----------------------------+----------------------------------------+----------------+---------+------------------------------+
+    | Syntax kind      | Syntaxes                    | Constructor selection                  | Implicit conv? | Narrows | Notes                        |
+    +==================+=============================+========================================+================+=========+==============================+
+    | Copy             | T x = expr                  | Implicit constructors only             | Yes            | Yes     | Copy-initialization          |
+    +------------------+-----------------------------+----------------------------------------+----------------+---------+------------------------------+
+    | Direct           | T x(expr)                   | Implicit + explicit constructors       | Yes            | Yes     | Direct-initialization        |
+    +------------------+-----------------------------+----------------------------------------+----------------+---------+------------------------------+
+    | *** List-initialization (all forms below) ***                                                                                                     |
+    +------------------+-----------------------------+----------------------------------------+----------------+---------+------------------------------+
+    | Direct-list      | T x{}                       | (1) initializer_list ctor              | No             | No      | Preferred if exists          |
+    |                  |                             | (2) other ctors                        |                |         |                              |
+    |                  |                             | (3) aggregate                          |                |         | If aggregate                 |
+    |                  |                             | (4) value-init                         |                |         | Only for {}                  |
+    +------------------+-----------------------------+----------------------------------------+----------------+---------+------------------------------+
+    | Direct-list      | T x{e1, e2}                 | (1) initializer_list ctor              | No             | No      | Preferred if exists          |
+    |                  |                             | (2) other ctors                        |                |         |                              |
+    |                  |                             | (3) aggregate                          |                |         |                              |
+    +------------------+-----------------------------+----------------------------------------+----------------+---------+------------------------------+
+    | Copy-list        | T x = {e1, e2}              | (1) initializer_list ctor              | No             | No      | Preferred, explicit ctors    |
+    |                  |                             | (2) other ctors (implicit only)        |                |         | forbidden                    |
+    |                  |                             | (3) aggregate                          |                |         |                              |
+    +------------------+-----------------------------+----------------------------------------+----------------+---------+------------------------------+
+    | Designated-list  | T x{ .a = e1, .b = e2 }     | Aggregate (designated)                 | No             | No      | C++20 only                   |
+    |                  | T x = { .a = e1 }           |                                        |                |         | Order restricted             |
+    +------------------+-----------------------------+----------------------------------------+----------------+---------+------------------------------+
+    */
+
     if (match({EQUAL})) {
       initializer = expression();
     }
