@@ -748,13 +748,17 @@ void CodeGen::visit(const SetIndex *expr) {
   expr_values[expr] = builder->CreateStore(val, elem, "array_store");
 }
 
-void CodeGen::visit(const SentinelExpr *expr) {
-  // noop
-}
-
 void CodeGen::visit(const SizeOf *) {
   assert(false && "Unimplemented");
 }
 void CodeGen::visit(const AlignOf *) {
   assert(false && "Unimplemented");
+}
+
+void CodeGen::visit(const StaticCast *) {
+  assert(false && "Unimplemented");
+}
+
+void CodeGen::visit(const SentinelExpr *expr) {
+  // noop
 }

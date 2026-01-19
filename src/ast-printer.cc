@@ -310,6 +310,15 @@ std::string AstPrinter::visit(const AlignOf *expr) {
   return "(AlignOf \"" + printTypeParse(expr->typeId) + "\")";
 }
 
+std::string AstPrinter::visit(const StaticCast *expr) {
+  return "(StaticCast \""
+    + printTypeParse(expr->typeId)
+    + " expr=\""
+    + print(expr->expr)
+    + "\""
+    + "\")";
+}
+
 std::string AstPrinter::visit(const Assignment *expr) {
   return "<Assignment var=" + expr->name.str() +
          " value=" + print(&expr->value) + ">";
@@ -351,7 +360,6 @@ std::string AstPrinter::visit(const Unary *expr) {
 
 std::string AstPrinter::visit(const Variable *expr) {
   ostringstream out;
-  if (expr
   out << "(Variable name=\"" << expr->name.str() << "\")";
   return out.str();
 }

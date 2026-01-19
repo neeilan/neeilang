@@ -739,7 +739,15 @@ Expr *Parser::unary() {
 }
 
 Expr *Parser::call_like() {
-  if (match({ALIGNOF})) {
+  if (match({STATIC_CAST})) {
+    consume(LESS, "Expect '<' after static_cast");
+    auto typeId = parse_type("static_assert type");
+    consume(GREATER, "Expect '>' after static_cast");
+    consume(LEFT_PAREN, "Expect '(' after static_cast");
+    auto* expr = expression();
+    consume(RIGHT_PAREN, "Expect ')' after static_cast");
+    return new StaticCast(typeId, expr);
+  } else if (match({ALIGNOF})) {
     consume(LEFT_PAREN, "Expect '(' after alignof");
     Expr* expr = new AlignOf(parse_type("alignof requires type-id"));
     consume(RIGHT_PAREN, "Expect ')' after alignof type-id");

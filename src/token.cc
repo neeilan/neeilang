@@ -94,6 +94,7 @@ static std::vector < std::string > token_names {
   "ALIGNOF",
   "TYPEID",
   "DECLTYPE",
+  "STATIC_CAST",
   "RESERVED_KEYWORD"
 };
 

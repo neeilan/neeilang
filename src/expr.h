@@ -205,6 +205,14 @@ public:
   TypeParse typeId;
 };
 
+class StaticCast : public ExprCRTP<StaticCast> {
+public:
+  StaticCast(TypeParse typeId, Expr* expr)
+      : typeId(typeId), expr(expr) {}
+  TypeParse typeId;
+  Expr* expr;
+};
+
 class SentinelExpr : public ExprCRTP<SentinelExpr> {
   // TODO: Add an ID field for unique'ing.
 };

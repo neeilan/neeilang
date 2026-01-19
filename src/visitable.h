@@ -19,6 +19,7 @@ class SetIndex;
 class This;
 class SizeOf;
 class AlignOf;
+class StaticCast;
 class SentinelExpr;
 
 class Stmt;

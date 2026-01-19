@@ -588,4 +588,8 @@ void TypeChecker::visit(const AlignOf *) {
   assert(false && "Unimplemented");
 }
 
+void TypeChecker::visit(const StaticCast *) {
+  assert(false && "Unimplemented");
+}
+
 void TypeChecker::visit(const SentinelExpr *expr) {}

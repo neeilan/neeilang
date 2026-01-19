@@ -271,4 +271,5 @@ void Resolver::visit(const NumLiteral *expr) {}
 void Resolver::visit(const StrLiteral *expr) {}
 void Resolver::visit(const SizeOf *expr) {}
 void Resolver::visit(const AlignOf *expr) {}
+void Resolver::visit(const StaticCast *expr) {}
 void Resolver::visit(const SentinelExpr *expr) {}

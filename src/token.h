@@ -94,6 +94,7 @@ enum TokenType {
   ALIGNOF,
   TYPEID,
   DECLTYPE,
+  STATIC_CAST,
   RESERVED_KEYWORD
 };
 

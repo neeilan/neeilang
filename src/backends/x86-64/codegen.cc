@@ -816,6 +816,10 @@ void CodeGen::visit(const AlignOf *) {
   assert(false && "Unimplemented");
 }
 
+void CodeGen::visit(const StaticCast *) {
+  assert(false && "Unimplemented");
+}
+
 void CodeGen::visit(const SentinelExpr *) {}
 
 void CodeGen::dump() const {
