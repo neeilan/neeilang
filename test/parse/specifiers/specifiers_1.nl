@@ -1,11 +1,11 @@
-fn foo(x : int) : int {
+int foo(int x) {
     return 0;
 }
 
-static constexpr fn bar(x : int) : int {
+static constexpr int bar(int x) {
     return 0;
 }
 
-virtual static inline friend noexcept fn bar(x : int) : int {
+virtual static inline friend noexcept int bar(int x) {
     return 0;
 }

@@ -1,3 +1,3 @@
-fn Test2() : int {
+int Test2() {
     return 53;
 }
