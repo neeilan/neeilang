@@ -30,7 +30,7 @@ private:
   SourceCtx& ctx();
   std::vector<Token> tokens;
   std::stack<SourceCtx> ctxs;
-  std::vector<std::string> fnames; // unordered strtab for filenames
+  std::deque<std::string> fnames; // unordered strtab for filenames, deque for pointer stability
 
   static const std::map<std::string, TokenType> keywords;
 

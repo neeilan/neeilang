@@ -115,6 +115,8 @@ void Scanner::add_ctx(const std::filesystem::path& path, std::optional<size_t> i
   }
   fnames.push_back(path.string());
   inclPath.push_back(fnames.back().c_str());
+  // filenames should be long enough that the char* point to the heap
+  // + string should get moved on reallocation, but assert to be safe.
 
   ctxs.push(SourceCtx{
     .source = std::string(std::istreambuf_iterator<char>(file), {}),
