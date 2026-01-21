@@ -8,7 +8,7 @@ static int nest = 0;
 
 #define OUT out << std::string(nest*2, ' ')
 
-std::string AstPrinter::print(const std::vector<Stmt *> &program) {
+std::string AstPrinter::print(const std::vector<const Stmt *> &program) {
   ostringstream out;
   for (const Stmt *stmt : program) {
     out << print(stmt) << std::endl;

@@ -7,7 +7,7 @@
 #include "stmt.h"
 
 
-void Resolver::resolve_program(const std::vector<Stmt *> program) {
+void Resolver::resolve_program(const std::vector<const Stmt *> program) {
   decl_only_pass = true;
   resolve(program);
 
@@ -16,7 +16,7 @@ void Resolver::resolve_program(const std::vector<Stmt *> program) {
   // TODO : free remaining scopes here.
 }
 
-void Resolver::resolve(const std::vector<Stmt *> statements) {
+void Resolver::resolve(const std::vector<const Stmt *> statements) {
   for (const Stmt *stmt : statements) {
     resolve(stmt);
   }

@@ -15,7 +15,7 @@ void GlobalHoister::declare(const std::string &type_name) {
   typetab()->insert(type_name, std::make_shared<Type>(type_name));
 }
 
-void GlobalHoister::hoist_program(const std::vector<Stmt *> statements) {
+void GlobalHoister::hoist_program(const std::vector<const Stmt *> statements) {
   decl_only_pass = true;
   hoist(statements);
 
@@ -23,7 +23,7 @@ void GlobalHoister::hoist_program(const std::vector<Stmt *> statements) {
   hoist(statements);
 }
 
-void GlobalHoister::hoist(const std::vector<Stmt *> statements) {
+void GlobalHoister::hoist(const std::vector<const Stmt *> statements) {
   for (const Stmt *stmt : statements) {
     hoist(stmt);
   }

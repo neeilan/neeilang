@@ -96,7 +96,7 @@ ValueRefTracker::ValueRef CodeGen::emitClassInit(NLType nlType) {
   return "%rax";
 }
 
-void CodeGen::generate(const std::vector<Stmt *> &program) {
+void CodeGen::generate(const std::vector<const Stmt *> &program) {
   sm_.reset();
   stackFrames_.init(program);
   sm_.reset();
@@ -116,7 +116,7 @@ void CodeGen::generate(const std::vector<Stmt *> &program) {
   }
 }
 
-void CodeGen::emit(const std::vector<Stmt *> &stmts) {
+void CodeGen::emit(const std::vector<const Stmt *> &stmts) {
   for (const Stmt *stmt : stmts)
     emit(stmt);
 }

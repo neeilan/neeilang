@@ -39,7 +39,7 @@ struct FrameBase {
 class StackFrameSizer : public StmtVisitor<> {
  public:
   StackFrameSizer(ScopeManager &sm) : sm_(sm) {}
-  void init(const std::vector<Stmt *> &program);
+  void init(const std::vector<const Stmt *> &program);
 
   OVERRIDE_STMT_VISITOR_FNS(void)
 

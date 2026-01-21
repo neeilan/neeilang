@@ -17,7 +17,7 @@
 using BasicBlock = NL::BasicBlock;
 using Reachability = NL::Reachability;
 
-void Reachability::analyze_program(const std::vector<Stmt *> &program) {
+void Reachability::analyze_program(const std::vector<const Stmt *> &program) {
   // Reachability analysis is only performed within functions.
   gather_fns_pass = true;
   analyze(program);
@@ -27,7 +27,7 @@ void Reachability::analyze_program(const std::vector<Stmt *> &program) {
   }
 }
 
-void Reachability::analyze(const std::vector<Stmt *> &stmts) {
+void Reachability::analyze(const std::vector<const Stmt *> &stmts) {
   for (const Stmt *stmt : stmts) {
     analyze(stmt);
   }

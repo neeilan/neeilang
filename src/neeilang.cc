@@ -33,7 +33,7 @@ void Neeilang::run_file(const char *path) {
   // }
 
   Parser parser(tokens);
-  std::vector<Stmt *> program = parser.parse();
+  std::vector<const Stmt *> program = parser.parse();
 
   if (had_error) {
     return;

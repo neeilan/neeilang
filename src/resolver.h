@@ -33,7 +33,7 @@ struct ScopeMap {
 class Resolver : public ExprVisitor<void>, public StmtVisitor<void> {
 public:
   Resolver() { scopes.push_back(&globals); }
-  void resolve_program(const std::vector<Stmt *> program);
+  void resolve_program(const std::vector<const Stmt *> program);
 
   //  private:
   ScopeMap globals;
@@ -52,7 +52,7 @@ public:
   void resolve(const Stmt *);
   void resolve(const Expr *);
   void resolve_local(const Expr *expr, const Token name);
-  void resolve(const std::vector<Stmt *> statements);
+  void resolve(const std::vector<const Stmt *> statements);
   void resolve_fn(FunctionType declaration, const FuncStmt *fn);
   void declare(const Token);
   void define(const Token);

@@ -10,7 +10,7 @@
 
 using Primitives::TypeError;
 
-void TypeChecker::check(const std::vector<Stmt *> statements) {
+void TypeChecker::check(const std::vector<const Stmt *> statements) {
   for (const Stmt *stmt : statements) {
     check(stmt);
   }

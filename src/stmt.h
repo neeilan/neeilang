@@ -89,6 +89,7 @@ class Stmt {
 public:
   virtual void accept(StmtVisitor<void> *visitor) const = 0;
   virtual string accept(StmtVisitor<string> *visitor) const = 0;
+  virtual const Stmt* accept(StmtVisitor<const Stmt*> *visitor) const = 0;
   virtual ~Stmt() = default;
 
   struct {
@@ -107,6 +108,10 @@ public:
   }
 
   virtual string accept(StmtVisitor<string> *visitor) const {
+    return visitor->visit(static_cast<const T *>(this));
+  }
+
+  virtual const Stmt* accept(StmtVisitor<const Stmt*> *visitor) const {
     return visitor->visit(static_cast<const T *>(this));
   }
 };
@@ -146,19 +151,19 @@ public:
 
 class BlockStmt : public StmtCRTP<BlockStmt> {
 public:
-  explicit BlockStmt(std::vector<Stmt *> block_contents)
+  explicit BlockStmt(std::vector<const Stmt *> block_contents)
       : block_contents(block_contents) {}
 
-  std::vector<Stmt *> block_contents;
+  std::vector<const Stmt *> block_contents;
 };
 
 class NamespaceStmt : public StmtCRTP<NamespaceStmt> {
 public:
-  explicit NamespaceStmt(std::string name, std::vector<Stmt *> contents)
+  explicit NamespaceStmt(std::string name, std::vector<const Stmt *> contents)
       : name(std::move(name)), contents(std::move(contents)) {}
 
   std::string name;
-  std::vector<Stmt *> contents;
+  std::vector<const Stmt *> contents;
 };
 
 class TemplateStmt :  public StmtCRTP<TemplateStmt> {
@@ -218,8 +223,8 @@ public:
 
 class IfStmt : public StmtCRTP<IfStmt> {
 public:
-  explicit IfStmt(const Token keyword, Expr *condition, Stmt *then_branch,
-                  Stmt *else_branch)
+  explicit IfStmt(const Token keyword, const Expr *condition, const Stmt *then_branch,
+                  const Stmt *else_branch)
       : keyword(keyword), condition(condition), then_branch(then_branch),
         else_branch(else_branch) {}
 
@@ -231,7 +236,7 @@ public:
 
 class WhileStmt : public StmtCRTP<WhileStmt> {
 public:
-  explicit WhileStmt(Token while_tok, Expr *condition, Stmt *body)
+  explicit WhileStmt(Token while_tok, const Expr *condition, const Stmt *body)
       : while_tok(while_tok), condition(condition), body(body) {}
 
   const Token while_tok;
@@ -243,7 +248,7 @@ class FuncStmt : public StmtCRTP<FuncStmt> {
 public:
   explicit FuncStmt(Token name, std::vector<Token> parameters,
                     std::vector<TypeParse> parameter_types,
-                    TypeParse return_type, std::vector<Stmt *> body)
+                    TypeParse return_type, std::vector<const Stmt *> body)
       : name(name), parameters(parameters), parameter_types(parameter_types),
         return_type(return_type), body(body) {
       allowedCtxs.classMember = true;
@@ -257,7 +262,7 @@ public:
   const std::vector<Token> parameters;
   const std::vector<TypeParse> parameter_types;
   const TypeParse return_type;
-  const std::vector<Stmt *> body;
+  const std::vector<const Stmt *> body;
   std::map<size_t, Expr *> defaultArgs;
   bool isStatic = false;
   Specifiers specifiers;
@@ -274,7 +279,7 @@ public:
 
 class ReturnStmt : public StmtCRTP<ReturnStmt> {
 public:
-  explicit ReturnStmt(Token keyword, Expr *value)
+  explicit ReturnStmt(Token keyword, const Expr *value)
       : keyword(keyword), value(value) {}
 
   const Token keyword;
@@ -298,9 +303,9 @@ public:
   const std::vector<TypeParse> field_types;
   const std::vector<Stmt *> memberDecls;
 
-  const std::vector<Stmt *> methods() const {
-    std::vector<Stmt *> m;
-    for (auto * s : memberDecls) {
+  const std::vector<const Stmt *> methods() const {
+    std::vector<const Stmt *> m;
+    for (auto const * s : memberDecls) {
       if (s->allowedCtxs.fnLike) {
         m.push_back(s);
       }

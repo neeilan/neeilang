@@ -28,7 +28,7 @@ public:
     typetab()->insert("void", Primitives::Void());
   }
 
-  void hoist_program(const std::vector<Stmt *> statements);
+  void hoist_program(const std::vector<const Stmt *> statements);
 
   OVERRIDE_STMT_VISITOR_FNS(void)
 
@@ -37,7 +37,7 @@ private:
   bool decl_only_pass;
   NLType encl_class;
 
-  void hoist(const std::vector<Stmt *> statements);
+  void hoist(const std::vector<const Stmt *> statements);
   void hoist(const Stmt *stmt);
   void hoist_type(const std::string &type);
   void declare(const std::string &type_name);

@@ -5,6 +5,7 @@
 #include <optional>
 #include <stdexcept>
 #include <vector>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "expr.h"
@@ -21,7 +22,7 @@ public:
 class Parser {
 public:
   Parser(const std::vector<Token> &tokens);
-  std::vector<Stmt *> parse();
+  std::vector<const Stmt *> parse();
 
 private:
   struct TemplateCtx {
@@ -198,6 +199,8 @@ private:
   std::unordered_set<std::string> typeNames {"void", "int", "float", "char", "short", "bool"};
   bool isType(const QualifiedName& name) const;
   bool parseStartDecl(bool doCommit);
+
+  std::unordered_map<std::string, const FuncStmt*> fnTemplates;
 
 
 

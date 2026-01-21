@@ -7,12 +7,15 @@
 #include "stmt.h"
 #include "token.h"
 #include "type-parse.h"
+#include "const-eval.h"
+
+FunctionTemplateArgSub fnSub;
 
 Parser::Parser(const std::vector<Token> &tokens)
 : tokens(tokens) {}
 
-std::vector<Stmt *> Parser::parse() {
-  std::vector<Stmt *> statements;
+std::vector<const Stmt *> Parser::parse() {
+  std::vector<const Stmt *> statements;
 
   while (!at_end()) {
     try {
@@ -363,7 +366,7 @@ Stmt *Parser::return_statement() {
 }
 
 Stmt *Parser::block_statement() {
-  std::vector<Stmt *> stmts;
+  std::vector<const Stmt *> stmts;
 
   while (!check(RIGHT_BRACE) && !at_end()) {
     stmts.push_back(declaration());
@@ -465,7 +468,7 @@ Stmt *Parser::static_assert_statement() {
 }
 
 Stmt *Parser::namespace_statement() {
-  std::vector<Stmt *> stmts;
+  std::vector<const Stmt *> stmts;
 
   std::string name;
   if (check(LEFT_BRACE)) {
@@ -627,7 +630,7 @@ Stmt *Parser::func_statement(TypeParse return_type, std::optional<QualifiedName>
   consume(RIGHT_PAREN, "Expect ')' after parameters.");
 
 
-  std::vector<Stmt *> body;
+  std::vector<const Stmt *> body;
   if (!check(SEMICOLON)) {
     consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
     body.push_back(block_statement());
@@ -637,6 +640,11 @@ Stmt *Parser::func_statement(TypeParse return_type, std::optional<QualifiedName>
   }
 
   auto * func = new FuncStmt(*name, parameters, parameter_types, return_type, body);
+
+  if (templateCtx.inTemplate && name) {
+      fnTemplates[name->lexeme] = func;
+  }
+
   func->setSpecifiers(specifiers);
   func->setOperatorOverload(operatorOverload);
   func->defaultArgs = std::move(default_args);
@@ -1038,9 +1046,12 @@ QualifiedName Parser::consume_qualified_identifier(std::string const& msg) {
       res.tmplInstantiation->push_back(new TypeParse(parse_type("Expect template type")));
     } while (match({COMMA}));
     if (!match({GREATER})) {
-      throw error(lessTok, "Unmatched template '<");
+      error(lessTok, "Unmatched template '<");
     }
   }
+
+  // Can we instantiate the template?
+  // fnSub.doSubstitution(fnTemplates.at(res.token().lexeme), *res.tmplInstantiation->back());
   return res;
 }
 

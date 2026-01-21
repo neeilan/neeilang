@@ -20,10 +20,10 @@ private:
   std::vector<const FuncStmt *> funcs;
 
   void analyze(const Stmt *stmt);
-  void analyze(const std::vector<Stmt *> &stmts);
+  void analyze(const std::vector<const Stmt *> &stmts);
 
 public:
-  void analyze_program(const std::vector<Stmt *> &program);
+  void analyze_program(const std::vector<const Stmt *> &program);
   OVERRIDE_STMT_VISITOR_FNS(void)
 };
 

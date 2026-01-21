@@ -2,7 +2,7 @@
 
 namespace x86_64 {
 
-void StackFrameSizer::init(const std::vector<Stmt *> &program) {
+void StackFrameSizer::init(const std::vector<const Stmt *> &program) {
   for (const Stmt *stmt : program) {
     init(stmt);
   }

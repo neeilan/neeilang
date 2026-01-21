@@ -18,6 +18,7 @@ class Expr {
 public:
   virtual void accept(ExprVisitor<void> *visitor) const = 0;
   virtual string accept(ExprVisitor<string> *visitor) const = 0;
+  virtual const Expr* accept(ExprVisitor<const Expr*> *visitor) const = 0;
 
   // TODO: Move into allowedCtxs
   virtual bool lvalue() const { return false; }
@@ -45,11 +46,15 @@ template <typename T> class ExprCRTP : public Expr {
   virtual string accept(ExprVisitor<string> *visitor) const {
     return visitor->visit(static_cast<const T *>(this));
   }
+
+  virtual const Expr* accept(ExprVisitor<const Expr*> *visitor) const {
+    return visitor->visit(static_cast<const T *>(this));
+  }
 };
 
 class Binary : public ExprCRTP<Binary> {
 public:
-  Binary(Expr &left, Token op, Expr &right)
+  Binary(const Expr &left, Token op, const Expr &right)
       : left(left), op(op), right(right) {}
 
   const Expr &left;
@@ -59,7 +64,7 @@ public:
 
 class Grouping : public ExprCRTP<Grouping> {
 public:
-  explicit Grouping(Expr &expression) : expression(expression) {}
+  explicit Grouping(const Expr &expression) : expression(expression) {}
   const Expr &expression;
 };
 
@@ -94,7 +99,7 @@ public:
 
 class Unary : public ExprCRTP<Unary> {
 public:
-  Unary(Token op, Expr &right) : op(op), right(right) {}
+  Unary(Token op, const Expr &right) : op(op), right(right) {}
 
   const Token op;
   const Expr &right;
@@ -119,7 +124,7 @@ public:
 
 class Assignment : public ExprCRTP<Assignment> {
 public:
-  Assignment(QualifiedName name, Expr &value) : name(name), value(value) {}
+  Assignment(QualifiedName name, const Expr &value) : name(name), value(value) {}
 
   const QualifiedName name;
   const Expr &value;
@@ -127,7 +132,7 @@ public:
 
 class Logical : public ExprCRTP<Logical> {
 public:
-  Logical(Expr &left, Token op, Expr &right)
+  Logical(const Expr &left, Token op, const Expr &right)
       : left(left), op(op), right(right) {}
 
   const Expr &left;
@@ -137,7 +142,7 @@ public:
 
 class Call : public ExprCRTP<Call> {
 public:
-  Call(Expr &callee, Token paren, std::vector<Expr *> args)
+  Call(const Expr &callee, Token paren, std::vector<Expr *> args)
       : callee(callee), paren(paren), args(args) {}
 
   const Expr &callee;
@@ -171,22 +176,22 @@ public:
 
 class Get : public ExprCRTP<Get> {
 public:
-  Get(Expr &callee, Token name, TokenType accessOp)
+  Get(const Expr &callee, Token name, TokenType accessOp)
     : callee(callee), name(name), accessOp(accessOp) {}
 
   virtual bool is_object_field() const { return true; }
 
-  Expr &callee;
+  const Expr &callee;
   const Token name;
   TokenType accessOp;
 };
 
 class Set : public ExprCRTP<Set> {
 public:
-  Set(Expr &callee, Token name, Expr &value)
+  Set(const Expr &callee, Token name, const Expr &value)
       : callee(callee), name(name), value(value) {}
 
-  Expr &callee;
+  const Expr &callee;
   const Token name;
   const Expr &value;
 };
@@ -207,10 +212,10 @@ public:
 
 class StaticCast : public ExprCRTP<StaticCast> {
 public:
-  StaticCast(TypeParse typeId, Expr* expr)
+  StaticCast(TypeParse typeId, const Expr* expr)
       : typeId(typeId), expr(expr) {}
   TypeParse typeId;
-  Expr* expr;
+  const Expr* expr;
 };
 
 class SentinelExpr : public ExprCRTP<SentinelExpr> {

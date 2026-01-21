@@ -170,13 +170,13 @@ public:
   CodeGen(const ExprTypes &exprTypes, ScopeManager &sm) : exprTypes_(exprTypes), sm_(sm)
   , stackFrames_(StackFrameSizer(sm))
   {}
-  virtual void generate(const std::vector<Stmt *> &program) override;
+  virtual void generate(const std::vector<const Stmt *> &program) override;
   void dump() const;
 
   OVERRIDE_EXPR_VISITOR_FNS(void)
   OVERRIDE_STMT_VISITOR_FNS(void)
 private:
-  void emit(const std::vector<Stmt *> &stmts);
+  void emit(const std::vector<const Stmt *> &stmts);
   void emit(const Stmt *stmt);
   void emit(const Expr *expr);
 

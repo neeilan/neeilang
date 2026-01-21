@@ -17,7 +17,7 @@ class TypeChecker : public ExprVisitor<void>, public StmtVisitor<void> {
 public:
   TypeChecker(ScopeManager &sm) : sm(sm) {}
 
-  void check(const std::vector<Stmt *> stmts);
+  void check(const std::vector<const Stmt *> stmts);
   void check(const Stmt *stmt);
   NLType check(const Expr *expr);
 
