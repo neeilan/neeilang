@@ -1,0 +1,168 @@
+Notes from comparing our AST (stmts + exprs) to Clang's AST representation of C++ programs.
+
+
+Program : TranslationUnitDecl
+
+No templates
+------------
+
+VarStmt :
+`int x` -> VarDecl(x, int)
+`int* x` -> VarDecl(x, int*)
+`const int* x` -> VarDecl(x, const int*)
+`decltype(Foo{}.a) m` -> VarDecl(m decltype(Foo{}.a):float)
+
+ClassStmt :
+`struct Foo {float f;}`
+    - CXXRecordDecl
+        - DefinitionData : trivially-copyable, aggregate, standard_layout, pod, trivial...
+            - DefaultConstructor exists trivial
+            - CopyConstructor simple trivial has_const_param implicit_has_const_param
+            - MoveConstructor exists simple trivial
+            - CopyAssignment simple trivial has_const_param needs_implicit implicit_has_const_param
+            - MoveAssignment exists simple trivial needs_implicit
+            - Destructor simple irrelevant trivial needs_implicit
+        - FieldDecl (a, float)
+        - CXXConstructorDecl for void ()
+        - CXXConstructorDecl for void (const Foo &)
+            - ParmVarDecl 'const Foo &'      [ discussed more under FuncStmt ]
+        - CXXConstructorDecl for void (const Foo &&)
+
+Instantiate class:
+`Foo f;`
+    - VarDecl(f, Foo, callinit)
+    `-CXXConstructExpr 'Foo' 'void () noexcept'
+
+"callinit" here refers to `clang::VarDecl::InitializationStyle` enum:
+```
+enum  InitializationStyle {
+    CInit ,       // C-style initialization with assignment.
+    CallInit ,    // Call-style initialization (C++98)
+    ListInit ,    // Direct list-initialization (C++11)
+    ParenListInit //P arenthesized list-initialization (C++20)
+}
+```
+
+so e.g. :
+```
+int y = 4;    -> cinit with IntegerLiteral(4)
+int w1 (5);   -> callinit
+int w2 = (5); -> cinit with a ParenExpr
+int z1 {5};   -> lisinit with a InitListExpr
+int z2 = {5}; -> cinit with a InitListExpr
+```
+
+FuncStmt :
+```
+Foo makeFoo(Foo x) {
+    return Foo{x.a + 3.f};
+}
+```
+`-FunctionDecl makeFoo 'Foo (Foo)'
+  |-ParmVarDecl used x 'Foo'
+  `-CompoundStmt
+    `-ReturnStmt
+      `-ExprWithCleanups 'Foo'
+        `-CXXConstructExpr 'Foo' 'void (Foo &&) noexcept' elidable
+          `-MaterializeTemporaryExpr 'Foo' xvalue
+            `-CXXFunctionalCastExpr 'Foo' functional cast to struct Foo <NoOp>
+              `-InitListExpr 'Foo'
+                `-BinaryOperator 'float' '+'
+                  |-ImplicitCastExpr 'float' <LValueToRValue>
+                  | `-MemberExpr 'float' lvalue .a 0x57f7813ce5a0
+                  |   `-DeclRefExpr 'Foo' lvalue ParmVar 0x57f7813ce618 'x' 'Foo'
+                  `-FloatingLiteral 'float' 3.000000e+00
+```
+
+
+With templates
+--------------
+
+VarStmt :
+`template <typename T, int V> const T val = V`
+VarTemplateDecl val
+  |-TemplateTypeParmDecl typename depth 0 index 0 T
+  |-NonTypeTemplateParmDecl 'int' depth 0 index 1 V
+  `-VarDecl val 'const T' cinit
+    `-DeclRefExpr 'int' NonTypeTemplateParm 0x574f91ebb3d0 'V' 'int'
+
+
+```
+template <typename T>
+struct Foo {
+    template <typename X>
+    struct bar {
+        static const int x = 5;
+        using y = float;
+    };
+};
+
+Foo<int>::bar<int>::y v = Foo<int>::bar<int>::x;
+```
+
+-VarDecl v 'Foo<int>::bar<int>::y':'float' cinit
+  `-ImplicitCastExpr 'Foo<int>::bar<int>::y':'float' <IntegralToFloating>
+    `-ImplicitCastExpr 'int' <LValueToRValue>
+      `-DeclRefExpr 'const int' lvalue Var 0x608c7331c2f8 'x' 'const int' non_odr_use_constant
+
+
+AST structure
+-------------
+* Decl - roughly Stmt or Expr in our parser.
+* DeclContext - some decls can act as declaration contexts - scope where things can be declared and looked up (possibly by name). For example, the 'file' is TranslationUnit context, but several other decl types inherit from DeclContext: namespaces, classes, functions, the body of a `requires` expression, capture statements of lambdas, 
+* NamedDecl - *may* have a name - 
+
+
+
+Aside: declarators
+------------------
+A declarator is the part of a declaration that declares a name and describe *what* that names is (pointer, reference, array, function, etc). The basic type is not part of the declarator - it is instead
+usually part of the declaration specifier.
+
+
+* Declaration specifiers may say:
+(int, static, constexpr, typedef, etc.)
+-> the basic type is int, and these are the "things that an int can be", that the thing being declared here is.
+
+* Declarator says what the name is, and what it is in relation to the basic type.
+
+Examples
+
+int *p[10];
+- Declaration specifiers - basic type is int
+- Declarator: *p[10] - name is p, and it's an array of pointers (to the basic type)
+
+
+Eli Bendersky talks about this a bit a post (http://eli.thegreenplace.net/2012/07/05/how-clang-handles-the-type-variable-name-ambiguity-of-cc) about clang circa 2012.
+
+"To follow this process through, we'll start in Parser::ParseDeclarationSpecifiers [1]. In the C/C++ grammar, type names are part of the "specifiers" in a declaration (that also include things like extern or inline)"
+Eli also mentions how all names in C are lexically scoped, but "C++ makes this type lookup problem much more difficult by forcing declarations inside a class to be visible throughout the class, even in code that appears before them".
+
+```
+int aa(int arg) {
+    return arg;
+}
+
+class C {
+    int foo(int bb) {
+        return (aa)(bb);     // this is not a call to aa, rather a cast of bb to int
+    }
+
+    typedef int aa;
+};
+```
+
+* "When parsing an inline member function declaration/definition, it does full parsing and semantic analysis of the declaration, leaving the definition for later" -> perhaps we can encapsulate contexts purely, and add
+the parsing of inline member function definitions to a 'parse job queue'. Actually - just parsing after the class declaration is parsed is enough (rather than doing multiple passes).
+
+* Eli also briefly mentions how the Sema module interacts with the parser, maintaining the type table etc
+and the parser interacts with Sema via APIs like Sema::getTypeName (whether an identifier is a type).
+
+i.e in Clang, the parser incrementally interacts with the Sema library, which builds the AST.
+See https://bcain-llvm.readthedocs.io/projects/clang/en/latest/InternalsManual/#sema
+
+Takeaways
+----------
+At the Parser layer, we can keep representing types (including templated types and 'possibly a type' things like Foo<bar>::x) as TypeParse. The important thing is to keep the qualified name representation around, so that when we do semantic analysis, we perform direct lookup within a declaration context with the qualified name. If the qualified name is `::b::foo<x>` it's potentially different from `b::foo::<x>` r `foo:<x>`.
+
+We may need a more flexible type representation *at the Sema layer* - e.g. PointerType vs ArrayType vs RecordType that can all be a Type, but that need not leak into Parser.
