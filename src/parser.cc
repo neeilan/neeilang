@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <memory>
 #include <iostream>
 #include <vector>
@@ -120,10 +121,12 @@ Stmt *Parser::declaration() {
     // This is a func or var decl.
     // We parse it as a func decl if it has:
     // [specifiers] Type Identifier ParameterDeclarationClause
+    if (check({TYPENAME})) { consume(TYPENAME, "typename"); }
     auto tp = parse_type("var type / func return type");
     if (peek().type == OPERATOR) { //
       return func_statement(tp, std::nullopt, s, "operator overload");
     }
+
     auto id = consume_qualified_identifier("var / func name");
     auto prevCurrent = current;
     if (match({LEFT_PAREN}) && snoopFnParameterDeclarationClause()){
@@ -227,18 +230,22 @@ void Parser::addTemplateName(Token t) {
   // possibly-qualified version
   QualifiedName qn = namespaceCtx.qn;
   qn.tokens.push_back(t);
+  qn.tmplInstantiations.push_back(std::nullopt);
   templateNames.insert(qn.str());
 
   // fully qualified version
   qn.isFullyQualified = true;
   templateNames.insert(qn.str());
+
+  // for instantiation
+  templates[t.lexeme] = templateCtx.tmpl;
 }
 
 
 Stmt *Parser::var_declaration(TypeParse tp, QualifiedName qn, Specifiers s) {
   Token name = qn.token();
   if (templateCtx.inTemplate) {
-    addTemplateName(name);
+    // addTemplateName(name);
   } 
   Expr *initializer = nullptr;
 
@@ -301,18 +308,16 @@ Stmt *Parser::class_declaration(Specifiers) {
 
   ClassCtxGuard ccg{classCtx, &name.lexeme};
 
-  Token *superclass = nullptr;
-
+  std::optional<TypeParse> superclass;
   if (match({LESS})) {
-    consume(IDENTIFIER, "Expect superclass name.");
-    superclass = new Token(previous());
+    superclass = parse_type("Expect superclass name.");
   }
 
   consume(LEFT_BRACE, "Expect '{' before class body.");
 
   std::vector<Token> fields;
   std::vector<TypeParse> field_types;
-  std::vector<Stmt *> member_decls;
+  std::vector<const Stmt *> member_decls;
 
   while (!check(RIGHT_BRACE) && !at_end()) {
     member_decls.push_back(declaration());
@@ -451,12 +456,13 @@ Stmt *Parser::template_statement() {
 
   consume(GREATER, "Expect '>' after template args");
 
-  TemplateCtxGuard tcg{templateCtx};
-  auto* stmt = declaration();
-  if (!stmt->allowedCtxs.templatable) {
+  auto * res = new TemplateStmt(args, /*temp*/nullptr);
+  TemplateCtxGuard tcg{templateCtx, res};
+  res->decl = declaration();
+  if (!res->decl->allowedCtxs.templatable) {
     error(previous(), "Not a class/function/variable template");
   }
-  return new TemplateStmt(args, stmt);
+  return res;
 }
 
 Stmt *Parser::static_assert_statement() {
@@ -639,12 +645,11 @@ Stmt *Parser::func_statement(TypeParse return_type, std::optional<QualifiedName>
     consume(SEMICOLON, "");
   }
 
-  auto * func = new FuncStmt(*name, parameters, parameter_types, return_type, body);
-
   if (templateCtx.inTemplate && name) {
-      fnTemplates[name->lexeme] = func;
+      templates[name->lexeme] = templateCtx.tmpl;
   }
 
+  auto * func = new FuncStmt(*name, parameters, parameter_types, return_type, body);
   func->setSpecifiers(specifiers);
   func->setOperatorOverload(operatorOverload);
   func->defaultArgs = std::move(default_args);
@@ -1021,6 +1026,7 @@ QualifiedName Parser::consume_qualified_identifier(std::string const& msg) {
 
   while (check(IDENTIFIER) || check(COLON_COLON)) {
     res.tokens.push_back(consume(IDENTIFIER, msg));
+    res.tmplInstantiations.push_back(std::nullopt);
     if (match({COLON_COLON})) {
       // OK, move onto next identifier
     } else {
@@ -1032,18 +1038,18 @@ QualifiedName Parser::consume_qualified_identifier(std::string const& msg) {
   // TODO: This should be based on the (to-be-built)
   // namespace-based name tracker as it doesn't correct
   // account for namespacing. Dirty impl for now:
-  if (!isTemplateName(res.token().lexeme)) {
+  if (!isTemplateName(res.token().lexeme)) { // TODO: this should be based on prefix decl context
     return res;
   }
 
   if (match({LESS})) {
     auto lessTok = peek();
-    res.tmplInstantiation.emplace();
+    res.tmplInstantiations.back()  = std::vector<TypeParse*>{};
     if (match({GREATER})) {
       return res;
     }
     do {
-      res.tmplInstantiation->push_back(new TypeParse(parse_type("Expect template type")));
+      res.tmplInstantiations.back()->push_back(new TypeParse(parse_type("Expect template type")));
     } while (match({COMMA}));
     if (!match({GREATER})) {
       error(lessTok, "Unmatched template '<");
@@ -1051,7 +1057,23 @@ QualifiedName Parser::consume_qualified_identifier(std::string const& msg) {
   }
 
   // Can we instantiate the template?
-  // fnSub.doSubstitution(fnTemplates.at(res.token().lexeme), *res.tmplInstantiation->back());
+  // if (auto tmplIt = templates.find(res.token().lexeme); tmplIt != templates.end()) {
+    // fnSub.doSubstitution(tmplIt->second, *res.tmplInstantiations.back());
+  // }
+
+  // Nothing stopping us from keeping goinf
+  // e.g. `Foo<TRT>::TypeT x;`
+  //               ^
+  Parser::SnoopResult<QualifiedName> sr = snoop_qualified_identifier();
+  // !fullyQualifier - might have parsed the next identifier
+  // e.g x in `Foo<int> x;`. Note that ``Foo<int> ::x` is invalid syntax.
+  if (!sr || !(*sr).isFullyQualified) {
+    return res;
+  }
+
+  commit(sr);
+  res += *sr;
+
   return res;
 }
 
@@ -1101,6 +1123,12 @@ bool Parser::isType(const QualifiedName& name) const {
   return typeNames.count(name.str());
 }
 
+bool Parser::isDependent(const QualifiedName& name) const {
+  return std::any_of(name.tmplInstantiations.begin(), name.tmplInstantiations.end(), [](auto& v) {
+    return v.has_value();
+  });
+}
+
 bool Parser::parseStartDecl(bool doCommit) {
   if (at_end()) { return false; }
   TokenType t = peek().type;
@@ -1114,7 +1142,9 @@ bool Parser::parseStartDecl(bool doCommit) {
   if (t == IDENTIFIER || t == COLON_COLON) {
     auto sr = snoop_qualified_identifier();
     if (sr && doCommit) { commit(sr); }
-    return sr && (isType(*sr) || isTemplateName((*sr).token().lexeme)); // TODO: QN lookup
+    return sr && ( isDependent(*sr) || isType(*sr) );
+    // TODO: isType for somethng like TRT::value_type requires declctx lookup
+    // See TODO in template_sub.nl for example.
   }
   return false;
 }

@@ -27,6 +27,7 @@ public:
 private:
   struct TemplateCtx {
     bool inTemplate = false;
+    TemplateStmt* tmpl;
   };
   TemplateCtx templateCtx;
 
@@ -34,9 +35,10 @@ private:
     TemplateCtx& ctx;
     TemplateCtx old;
 
-    explicit TemplateCtxGuard(TemplateCtx& ctx)
+    explicit TemplateCtxGuard(TemplateCtx& ctx, TemplateStmt* tmpl)
       : ctx(ctx), old(ctx) {
       ctx.inTemplate = true;
+      ctx.tmpl = tmpl;
     }
 
     ~TemplateCtxGuard() {
@@ -198,13 +200,22 @@ private:
   // TODO - use centrally-defined builtin values
   std::unordered_set<std::string> typeNames {"void", "int", "float", "char", "short", "bool"};
   bool isType(const QualifiedName& name) const;
+  bool isDependent(const QualifiedName& name) const;
   bool parseStartDecl(bool doCommit);
 
-  std::unordered_map<std::string, const FuncStmt*> fnTemplates;
+  std::unordered_map<std::string, const TemplateStmt*> templates;
 
-
-
-
+  // TODO: Generalized lookup, relative to a context
+  // x (where x is a variable) -> Expr
+  // int -> TypeParse
+  // Foo (class) -> ClassStmt
+  // Foo<int, float> -> ClassStmt
+  // Foo<int, float>::x -> Expr* (if value), TypeParse (if type)
+  struct Ctx{};
+  std::optional<std::variant<const Expr*, const FuncStmt*, const ClassStmt, TypeParse>>
+  lookup(Ctx const&, QualifiedName const&) {
+    return std::nullopt;
+  }
 };
 
 #endif //_NL_PARSER_H_

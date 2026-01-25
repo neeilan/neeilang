@@ -168,13 +168,13 @@ public:
 
 class TemplateStmt :  public StmtCRTP<TemplateStmt> {
 public:
-  explicit TemplateStmt(std::vector<TemplateArg> args, Stmt * fnOrClass)
-    : args(args), fnOrClass(fnOrClass) {
+  explicit TemplateStmt(std::vector<TemplateArg> args, Stmt * decl)
+    : args(args), decl(decl) {
         allowedCtxs.classMember = true;
     }
 
   std::vector<TemplateArg> args;
-  Stmt * fnOrClass;
+  Stmt * decl;
 };
 
 class StaticAssertStmt :  public StmtCRTP<StaticAssertStmt> {
@@ -288,9 +288,9 @@ public:
 
 class ClassStmt : public StmtCRTP<ClassStmt> {
 public:
-  explicit ClassStmt(Token name, Token *superclass, std::vector<Token> fields,
+  explicit ClassStmt(Token name, std::optional<TypeParse> superclass, std::vector<Token> fields,
                      std::vector<TypeParse> field_types,
-                     std::vector<Stmt *> memberDecls)
+                     std::vector<const Stmt *> memberDecls)
       : name(name), superclass(superclass), fields(fields),
         field_types(field_types), memberDecls(memberDecls) {
       allowedCtxs.classMember = true;
@@ -298,10 +298,10 @@ public:
     }
 
   const Token name;
-  const Token *superclass = nullptr;
+  std::optional<TypeParse> superclass;
   const std::vector<Token> fields;
   const std::vector<TypeParse> field_types;
-  const std::vector<Stmt *> memberDecls;
+  const std::vector<const Stmt *> memberDecls;
 
   const std::vector<const Stmt *> methods() const {
     std::vector<const Stmt *> m;

@@ -70,7 +70,7 @@ std::string AstPrinter::visit(const TemplateStmt * stmt) {
   }
   out << "]>\n";
   nest++;
-  out << print(stmt->fnOrClass);
+  out << print(stmt->decl);
   nest--;
   OUT << "</Template>";
   return out.str();
@@ -148,7 +148,7 @@ std::string AstPrinter::visit(const ClassStmt *stmt) {
   ostringstream out;
   OUT << "<Class " << stmt->name.lexeme;
   if (stmt->superclass) {
-    out << "  superclass=" << stmt->superclass->lexeme << std::endl;
+    out << "  superclass=" << stmt->superclass->prettyName() << std::endl;
   }
   out << ">\n";
   nest++;

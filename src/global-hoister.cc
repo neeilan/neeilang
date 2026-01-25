@@ -53,9 +53,9 @@ void GlobalHoister::visit(const ClassStmt *cls) {
 
   // Supertype
   if (cls->superclass) {
-    std::string supercls_name = cls->superclass->lexeme;
+    std::string supercls_name = cls->superclass->prettyName();
     if (!typetab()->contains(supercls_name)) {
-      Neeilang::error(*cls->superclass, "Unknown superclass");
+      Neeilang::error(cls->superclass->name.token(), "Unknown superclass");
       return;
     }
 
@@ -63,7 +63,7 @@ void GlobalHoister::visit(const ClassStmt *cls) {
 
     // Circular inheritance is an error.
     if (supercls->subclass_of(cls_type.get())) {
-      Neeilang::error(*cls->superclass, "Cycle in class hierarchy");
+      Neeilang::error(cls->superclass->name.token(), "Cycle in class hierarchy");
       return;
     }
 
