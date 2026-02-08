@@ -1,9 +1,9 @@
 namespace foo::bar {
-template <typename T>
-T Test(T arg) {
-    return arg * 2;
-}
-}
+    template <typename T>
+    T Test(T arg) {
+        return arg * 2;
+    }
+} // namespace
 
 template <typename T, typename C>
 T foo(int x) {

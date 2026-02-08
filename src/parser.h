@@ -85,6 +85,7 @@ private:
     explicit NamespaceCtxGuard(NamespaceCtx& ctx, std::string const& name)
       : ctx(ctx), old(ctx) {
       ctx.qn.tokens.push_back(Token(IDENTIFIER, name, "", -1, {}));
+      ctx.qn.tmplInstantiations.push_back(std::nullopt);
     }
 
     ~NamespaceCtxGuard() {

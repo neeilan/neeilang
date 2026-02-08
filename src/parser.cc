@@ -1080,7 +1080,7 @@ QualifiedName Parser::consume_qualified_identifier(std::string const& msg) {
   // e.g. `Foo<TRT>::TypeT x;`
   //               ^
   Parser::SnoopResult<QualifiedName> sr = snoop_qualified_identifier();
-  // !fullyQualifier - might have parsed the next identifier
+  // !fullyQualified - might have parsed the next identifier
   // e.g x in `Foo<int> x;`. Note that ``Foo<int> ::x` is invalid syntax.
   if (!sr || !(*sr).isFullyQualified) {
     return res;
