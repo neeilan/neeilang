@@ -13,7 +13,10 @@
 FunctionTemplateArgSub fnSub;
 
 Parser::Parser(const std::vector<Token> &tokens)
-: tokens(tokens) {}
+: tokens(tokens) {
+  globalCtx = std::make_shared<DeclCtx>("<global>");
+  declCtx = globalCtx;
+}
 
 std::vector<const Stmt *> Parser::parse() {
   std::vector<const Stmt *> statements;
@@ -319,6 +322,7 @@ Stmt *Parser::class_declaration(Specifiers) {
   std::vector<TypeParse> field_types;
   std::vector<const Stmt *> member_decls;
 
+  DeclCtxGuard g{declCtx, name.lexeme};
   while (!check(RIGHT_BRACE) && !at_end()) {
     member_decls.push_back(declaration());
     if (!member_decls.back()->allowedCtxs.classMember) {
@@ -329,7 +333,14 @@ Stmt *Parser::class_declaration(Specifiers) {
   consume(RIGHT_BRACE, "Expect '}' after class body.");
   consume(SEMICOLON, "Expect ';' after class decl.");
 
-  return new ClassStmt(name, superclass, fields, field_types, member_decls);
+  return new ClassStmt(
+    name,
+    superclass,
+    fields,
+    field_types,
+    member_decls,
+    declCtx->parent_
+  );
 }
 
 Stmt *Parser::statement() {
@@ -373,13 +384,14 @@ Stmt *Parser::return_statement() {
 Stmt *Parser::block_statement() {
   std::vector<const Stmt *> stmts;
 
+  DeclCtxGuard g{declCtx, "<block>"};
   while (!check(RIGHT_BRACE) && !at_end()) {
     stmts.push_back(declaration());
   }
 
   consume(RIGHT_BRACE, "Expect '}' after block.");
 
-  return new BlockStmt(stmts);
+  return new BlockStmt(stmts, declCtx->parent_);
 }
 
 Stmt *Parser::using_declaration() {
@@ -438,7 +450,7 @@ Stmt *Parser::enum_declaration(Specifiers) {
 
   consume(RIGHT_BRACE, "Expect '}' after enum decl");
   consume(SEMICOLON, "Expect ';' after enum decl.");
-  return new ScopedEnum(name.lexeme, vals, underlying);
+  return new ScopedEnum(name.lexeme, vals, underlying, declCtx);
 }
 
 Stmt *Parser::template_statement() {
@@ -458,6 +470,7 @@ Stmt *Parser::template_statement() {
 
   auto * res = new TemplateStmt(args, /*temp*/nullptr);
   TemplateCtxGuard tcg{templateCtx, res};
+  DeclCtxGuard g{declCtx, "<tmpl>"};
   res->decl = declaration();
   if (!res->decl->allowedCtxs.templatable) {
     error(previous(), "Not a class/function/variable template");
@@ -485,6 +498,7 @@ Stmt *Parser::namespace_statement() {
   }
 
   NamespaceCtxGuard ncg{namespaceCtx, name};
+  DeclCtxGuard g{declCtx, name};
 
   consume(LEFT_BRACE, "Expect '{' at start of namespace.");
   while (!check(RIGHT_BRACE) && !at_end()) {
@@ -492,7 +506,7 @@ Stmt *Parser::namespace_statement() {
   }
   consume(RIGHT_BRACE, "Expect '}' at end of namespace.");
 
-  return new NamespaceStmt(name, stmts);
+  return new NamespaceStmt(name, stmts, declCtx->parent_);
 }
 
 Stmt *Parser::if_statement(Token keyword) {
@@ -525,6 +539,7 @@ Stmt *Parser::for_statement(Token for_tok) {
 
   Stmt *initializer = nullptr;
 
+  DeclCtxGuard g1{declCtx, "<loop-init>"};
   if (parseStartDecl(/*doCommit*/false)) {
     auto tp = parse_type("var type in for-loop init");
     auto id = consume_qualified_identifier("var name  in for-loop init");
@@ -551,7 +566,7 @@ Stmt *Parser::for_statement(Token for_tok) {
 
   // Construct block stmt with initializer + desugared while-loop
   if (increment) {
-    body = new BlockStmt({body, new ExprStmt(increment, rparen)});
+    body = new BlockStmt({body, new ExprStmt(increment, rparen)}, declCtx);
   }
 
   if (!condition) {
@@ -561,7 +576,7 @@ Stmt *Parser::for_statement(Token for_tok) {
   body = new WhileStmt(for_tok, condition, body);
 
   if (initializer) {
-    body = new BlockStmt({initializer, body});
+    body = new BlockStmt({initializer, body}, declCtx);
   }
 
   return body;
@@ -649,7 +664,7 @@ Stmt *Parser::func_statement(TypeParse return_type, std::optional<QualifiedName>
       templates[name->lexeme] = templateCtx.tmpl;
   }
 
-  auto * func = new FuncStmt(*name, parameters, parameter_types, return_type, body);
+  auto * func = new FuncStmt(*name, parameters, parameter_types, return_type, body, declCtx);
   func->setSpecifiers(specifiers);
   func->setOperatorOverload(operatorOverload);
   func->defaultArgs = std::move(default_args);

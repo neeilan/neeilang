@@ -131,7 +131,8 @@ const Stmt* FunctionTemplateArgSub::visit(const FuncStmt *stmt) {
         stmt->parameters,
         parameter_types,
         substitute(stmt->return_type),
-        body
+        body,
+        stmt->ctx
     );
 }
 
@@ -155,7 +156,14 @@ const Stmt* FunctionTemplateArgSub::visit(const ClassStmt *stmt) {
         memberDecls.push_back(substitute(s));
     }
 
-    return new ClassStmt(stmt->name, superclass, stmt->fields, fieldTypes, memberDecls);
+    return new ClassStmt(
+        stmt->name,
+        superclass,
+        stmt->fields,
+        fieldTypes,
+        memberDecls,
+        stmt->ctx
+    );
 }
 
 const Stmt* FunctionTemplateArgSub::visit(const ScopedEnum *stmt) {
@@ -169,7 +177,7 @@ const Stmt* FunctionTemplateArgSub::visit(const ScopedEnum *stmt) {
     if (underlying) {
     underlying = substitute(*underlying);
     }
-    return new ScopedEnum(stmt->name, enumerators, underlying);
+    return new ScopedEnum(stmt->name, enumerators, underlying, stmt->ctx);
 }
 const Stmt* FunctionTemplateArgSub::visit(const TemplateStmt *stmt) {
     assert(false); return nullptr;
@@ -189,7 +197,7 @@ const Stmt* FunctionTemplateArgSub::visit(const BlockStmt * stmt) {
     for (auto* s : stmt->block_contents) {
         new_contents.push_back(substitute(s));
     }
-    return new BlockStmt(new_contents);
+    return new BlockStmt(new_contents, stmt->ctx);
 }
 
 const Stmt* FunctionTemplateArgSub::visit(const ExprStmt *stmt) {

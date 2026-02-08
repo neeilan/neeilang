@@ -1,6 +1,7 @@
 #ifndef _NL_EXPR_H_
 #define _NL_EXPR_H_
 
+#include "decl-ctx.h"
 #include "name.h"
 #include "token.h"
 #include "type.h"
@@ -31,6 +32,8 @@ public:
     uint8_t typeLike    : 1;
     uint8_t pad_        : 7;
   } allowedCtxs = {};
+
+  DeclCtx::ptr_t ctx;
 };
 
 // Use CRTP (https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)

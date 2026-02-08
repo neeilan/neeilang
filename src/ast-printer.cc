@@ -33,7 +33,7 @@ std::string AstPrinter::visit(const NamespaceStmt *stmt) {
   ostringstream out;
   std::string name = "(anonymous)";
   if (!stmt->name.empty()) { name = stmt->name; }
-  OUT << "<Namespace " << name << ">\n";
+  OUT << "<Namespace declctx=\"" << stmt->ctx->name() << "\" name=\"" << name << "\">\n";
   nest++;
   out << print(stmt->contents);
   nest--;
@@ -43,7 +43,9 @@ std::string AstPrinter::visit(const NamespaceStmt *stmt) {
 
 std::string AstPrinter::visit(const ScopedEnum * stmt) {
   ostringstream out;
-  OUT << "<ScopedEnum name=\"" << stmt->name << "\" underlying=\""
+  OUT << "<ScopedEnum name=\"" << stmt->name
+      << "\" declctx=\"" << stmt->ctx->name()
+      << "\" underlying=\""
     << (stmt->underlying ? stmt->underlying->name.str() : "(nullopt)")
     << "\">\n";
 
@@ -103,11 +105,7 @@ std::string AstPrinter::visit(const AliasStmt * stmt) {
 
 std::string AstPrinter::visit(const BlockStmt *stmt) {
   ostringstream out;
-  if (!stmt->block_contents.size()) {
-    OUT << "<Block/>\n";
-    return out.str();
-  }
-  OUT << "<Block>\n";
+  OUT << "<Block declctx=\"" << stmt->ctx->name() << "\">\n";
   nest++;
   out << print(stmt->block_contents);
   nest--;
@@ -146,7 +144,8 @@ std::string AstPrinter::visit(const VarStmt *stmt) {
 
 std::string AstPrinter::visit(const ClassStmt *stmt) {
   ostringstream out;
-  OUT << "<Class " << stmt->name.lexeme;
+  OUT << "<Class " << stmt->name.lexeme
+                   << " declctx=\"" << stmt->ctx->name() << "\"";
   if (stmt->superclass) {
     out << "  superclass=" << stmt->superclass->prettyName() << std::endl;
   }
@@ -215,7 +214,10 @@ std::string AstPrinter::visit(const FuncStmt *stmt) {
     name += " ";
     name += getTokenTypeName(*stmt->operatorOverload);
   }
-  OUT << "<Function name=\"" << name << "\" specifiers=\"" << stmt->specifiers.str() << "\"  return_type=\""
+  OUT << "<Function name=\"" << name
+    << "\" declctx=\"" << stmt->ctx->name()
+    << "\" specifiers=\"" << stmt->specifiers.str()
+    << "\"  return_type=\""
       << printTypeParse(stmt->return_type) << "\" ";
   for (size_t i = 0; i < stmt->parameters.size(); i++) {
     bool isVariadic = stmt->parameter_types[i].isVariadic;

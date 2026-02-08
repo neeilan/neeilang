@@ -12,6 +12,7 @@
 #include "stmt.h"
 #include "token.h"
 #include "type-parse.h"
+#include "decl-ctx.h"
 
 class ParseErr : std::runtime_error {
 public:
@@ -216,6 +217,22 @@ private:
   lookup(Ctx const&, QualifiedName const&) {
     return std::nullopt;
   }
+
+  DeclCtx::ptr_t globalCtx;
+  DeclCtx::ptr_t declCtx;
+
+  struct DeclCtxGuard {
+    DeclCtx::ptr_t& mCtx;
+
+    explicit DeclCtxGuard(DeclCtx::ptr_t& mCtx, std::string const& name)
+      : mCtx(mCtx) {
+      mCtx = std::make_shared<DeclCtx>(mCtx, name);
+    }
+
+    ~DeclCtxGuard() {
+      mCtx = mCtx->parent_;
+    }
+  };
 };
 
 #endif //_NL_PARSER_H_

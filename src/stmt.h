@@ -6,6 +6,7 @@
 #include <optional>
 #include <vector>
 
+#include "decl-ctx.h"
 #include "expr.h"
 #include "token.h"
 #include "type-parse.h"
@@ -99,6 +100,8 @@ public:
     uint8_t templatable : 1;
     uint8_t pad_        : 5;
   } allowedCtxs = {};
+
+  DeclCtx::ptr_t ctx;
 };
 
 template <typename T> class StmtCRTP : public Stmt {
@@ -151,16 +154,25 @@ public:
 
 class BlockStmt : public StmtCRTP<BlockStmt> {
 public:
-  explicit BlockStmt(std::vector<const Stmt *> block_contents)
-      : block_contents(block_contents) {}
+  explicit BlockStmt(
+    std::vector<const Stmt *> block_contents,
+    DeclCtx::ptr_t ctx
+  ) : block_contents(block_contents) {
+    this->ctx = ctx;
+  }
 
   std::vector<const Stmt *> block_contents;
 };
 
 class NamespaceStmt : public StmtCRTP<NamespaceStmt> {
 public:
-  explicit NamespaceStmt(std::string name, std::vector<const Stmt *> contents)
-      : name(std::move(name)), contents(std::move(contents)) {}
+  explicit NamespaceStmt(
+    std::string name,
+    std::vector<const Stmt *> contents,
+    DeclCtx::ptr_t ctx)
+      : name(std::move(name)), contents(std::move(contents)) {
+        this->ctx = ctx;
+      }
 
   std::string name;
   std::vector<const Stmt *> contents;
@@ -210,9 +222,15 @@ public:
 
 class ScopedEnum :  public StmtCRTP<ScopedEnum> {
 public:
-  explicit ScopedEnum(std::string name, std::vector<NamedEnumerator> enumerators, std::optional<TypeParse> underlying)
+  explicit ScopedEnum(
+      std::string name,
+      std::vector<NamedEnumerator> enumerators,
+      std::optional<TypeParse> underlying,
+      DeclCtx::ptr_t ctx
+    )
     : name(name), enumerators(enumerators), underlying(underlying) {
       allowedCtxs.classMember = true;
+      this->ctx = ctx;
     }
 
   std::string name;
@@ -248,12 +266,15 @@ class FuncStmt : public StmtCRTP<FuncStmt> {
 public:
   explicit FuncStmt(Token name, std::vector<Token> parameters,
                     std::vector<TypeParse> parameter_types,
-                    TypeParse return_type, std::vector<const Stmt *> body)
+                    TypeParse return_type,
+                    std::vector<const Stmt *> body,
+                    DeclCtx::ptr_t ctx)
       : name(name), parameters(parameters), parameter_types(parameter_types),
         return_type(return_type), body(body) {
       allowedCtxs.classMember = true;
       allowedCtxs.fnLike = true;
       allowedCtxs.templatable = true;
+      this->ctx = ctx;
     }
 
   bool is_void() const { return return_type.prettyName() == "void"; }
@@ -288,13 +309,17 @@ public:
 
 class ClassStmt : public StmtCRTP<ClassStmt> {
 public:
-  explicit ClassStmt(Token name, std::optional<TypeParse> superclass, std::vector<Token> fields,
+  explicit ClassStmt(Token name,
+                     std::optional<TypeParse> superclass,
+                     std::vector<Token> fields,
                      std::vector<TypeParse> field_types,
-                     std::vector<const Stmt *> memberDecls)
+                     std::vector<const Stmt *> memberDecls,
+                     DeclCtx::ptr_t ctx)
       : name(name), superclass(superclass), fields(fields),
         field_types(field_types), memberDecls(memberDecls) {
       allowedCtxs.classMember = true;
       allowedCtxs.templatable = true;
+      this->ctx = ctx;
     }
 
   const Token name;

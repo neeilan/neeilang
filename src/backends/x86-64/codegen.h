@@ -181,7 +181,7 @@ private:
   void emit(const Expr *expr);
 
   void enterScope() { sm_.enter(); namedVals = std::make_shared<CactusTable<std::string, ValueRefTracker::ValueRef>>(namedVals); };
-  void exitScope() { sm_.exit(); assert(namedVals && "Only scope on stack!"); namedVals = namedVals->parent; };
+  void exitScope() { sm_.exit(); assert(namedVals && "Only scope on stack!"); namedVals = namedVals->parent_; };
   std::shared_ptr<CactusTable<std::string, ValueRefTracker::ValueRef>> namedVals;
 
 
