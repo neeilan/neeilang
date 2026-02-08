@@ -14,7 +14,7 @@ FunctionTemplateArgSub fnSub;
 
 Parser::Parser(const std::vector<Token> &tokens)
 : tokens(tokens) {
-  globalCtx = std::make_shared<DeclCtx>("<global>");
+  globalCtx = std::make_shared<DeclCtx>("__global");
   declCtx = globalCtx;
 }
 
@@ -470,7 +470,7 @@ Stmt *Parser::template_statement() {
 
   auto * res = new TemplateStmt(args, /*temp*/nullptr);
   TemplateCtxGuard tcg{templateCtx, res};
-  DeclCtxGuard g{declCtx, "<tmpl>"};
+  DeclCtxGuard g{declCtx, "__tmpl"};
   res->decl = declaration();
   if (!res->decl->allowedCtxs.templatable) {
     error(previous(), "Not a class/function/variable template");
@@ -539,7 +539,7 @@ Stmt *Parser::for_statement(Token for_tok) {
 
   Stmt *initializer = nullptr;
 
-  DeclCtxGuard g1{declCtx, "<loop-init>"};
+  DeclCtxGuard g1{declCtx, "__loopinit"};
   if (parseStartDecl(/*doCommit*/false)) {
     auto tp = parse_type("var type in for-loop init");
     auto id = consume_qualified_identifier("var name  in for-loop init");

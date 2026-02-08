@@ -20,6 +20,15 @@ set(CMAKE_MODULE_PATH
 ${CMAKE_MODULE_PATH}
 "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
 
+###############################
+# IR backend
+###############################
+file(GLOB IR_BACKEND_FILES ${PROJECT_SOURCE_DIR}/src/backends/ir/*.cc)
+list(APPEND SRC_FILES ${IR_BACKEND_FILES})
+set(IR_BACKEND_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/src/backends/ir)
+include_directories(${IR_BACKEND_INCLUDE_DIRS})
+list(APPEND SRC_FILES ${IR_BACKEND_INCLUDE_DIRS})
+
 if(TARGET_X86)
   ###############################
   # x86-64 Backend impl.
