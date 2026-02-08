@@ -29,6 +29,7 @@ private:
   struct TemplateCtx {
     bool inTemplate = false;
     TemplateStmt* tmpl;
+    int depth = 0;
   };
   TemplateCtx templateCtx;
 
@@ -36,10 +37,11 @@ private:
     TemplateCtx& ctx;
     TemplateCtx old;
 
-    explicit TemplateCtxGuard(TemplateCtx& ctx, TemplateStmt* tmpl)
+    explicit TemplateCtxGuard(TemplateCtx& ctx, TemplateStmt* tmpl, int depth)
       : ctx(ctx), old(ctx) {
       ctx.inTemplate = true;
       ctx.tmpl = tmpl;
+      ctx.depth = depth;
     }
 
     ~TemplateCtxGuard() {
@@ -196,16 +198,10 @@ private:
 
   ParseErr error(Token token, std::string msg);
   void synchronize();
-  std::unordered_set<std::string> templateNames;
-  void addTemplateName(Token);
   bool isTemplateName(const std::string& name);
-  // TODO - use centrally-defined builtin values
-  std::unordered_set<std::string> typeNames {"void", "int", "float", "char", "short", "bool"};
   bool isType(const QualifiedName& name) const;
   bool isDependent(const QualifiedName& name) const;
   bool parseStartDecl(bool doCommit);
-
-  std::unordered_map<std::string, const TemplateStmt*> templates;
 
   // TODO: Generalized lookup, relative to a context
   // x (where x is a variable) -> Expr
@@ -225,9 +221,9 @@ private:
   struct DeclCtxGuard {
     DeclCtx::ptr_t& mCtx;
 
-    explicit DeclCtxGuard(DeclCtx::ptr_t& mCtx, std::string const& name)
+    explicit DeclCtxGuard(DeclCtx::ptr_t& mCtx, DeclCtx::ptr_t newCtx)
       : mCtx(mCtx) {
-      mCtx = std::make_shared<DeclCtx>(mCtx, name);
+      mCtx = newCtx;
     }
 
     ~DeclCtxGuard() {

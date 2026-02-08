@@ -16,6 +16,10 @@ Parser::Parser(const std::vector<Token> &tokens)
 : tokens(tokens) {
   globalCtx = std::make_shared<DeclCtx>("__global");
   declCtx = globalCtx;
+  for (char const* n : {"void", "int", "float", "char", "short", "bool"}) {
+    Decl decl; decl.isType = 1;
+    globalCtx->insert(globalCtx, std::string(n), decl);
+  }
 }
 
 std::vector<const Stmt *> Parser::parse() {
@@ -228,28 +232,8 @@ Specifiers Parser::consume_specifiers() {
   return s;
 }
 
-void Parser::addTemplateName(Token t) {
-  templateNames.insert(t.lexeme);
-  // possibly-qualified version
-  QualifiedName qn = namespaceCtx.qn;
-  qn.tokens.push_back(t);
-  qn.tmplInstantiations.push_back(std::nullopt);
-  templateNames.insert(qn.str());
-
-  // fully qualified version
-  qn.isFullyQualified = true;
-  templateNames.insert(qn.str());
-
-  // for instantiation
-  templates[t.lexeme] = templateCtx.tmpl;
-}
-
-
 Stmt *Parser::var_declaration(TypeParse tp, QualifiedName qn, Specifiers s) {
   Token name = qn.token();
-  if (templateCtx.inTemplate) {
-    // addTemplateName(name);
-  } 
   Expr *initializer = nullptr;
 
 /*
@@ -297,18 +281,16 @@ Stmt *Parser::var_declaration(TypeParse tp, QualifiedName qn, Specifiers s) {
     
   consume(SEMICOLON, "Expect ';' after variable declaration.");
   tp.isConst = s.f.isConst;
-  return new VarStmt(name, tp, initializer);
+  auto* res = new VarStmt(name, tp, initializer);
+  Decl decl(res);
+  decl.isVariable = 1;
+  decl.isTemplate = (templateCtx.inTemplate && templateCtx.depth == declCtx->depth);
+  declCtx->insert(declCtx, name.lexeme, decl);
+  return res;
 }
 
 Stmt *Parser::class_declaration(Specifiers) {
   Token name = consume(IDENTIFIER, "Expect class name.");
-  if (templateCtx.inTemplate) {
-    addTemplateName(name);
-  } else {
-    typeNames.insert(name.lexeme);
-  }
-
-
   ClassCtxGuard ccg{classCtx, &name.lexeme};
 
   std::optional<TypeParse> superclass;
@@ -322,7 +304,17 @@ Stmt *Parser::class_declaration(Specifiers) {
   std::vector<TypeParse> field_types;
   std::vector<const Stmt *> member_decls;
 
-  DeclCtxGuard g{declCtx, name.lexeme};
+  auto& decl = declCtx->insert(
+    declCtx,
+    name.lexeme,
+    Decl{
+      .isTemplate = (templateCtx.inTemplate && templateCtx.depth == declCtx->depth),
+      .isType = 1
+    });
+
+  DeclCtxGuard g{declCtx, decl};
+
+
   while (!check(RIGHT_BRACE) && !at_end()) {
     member_decls.push_back(declaration());
     if (!member_decls.back()->allowedCtxs.classMember) {
@@ -333,7 +325,7 @@ Stmt *Parser::class_declaration(Specifiers) {
   consume(RIGHT_BRACE, "Expect '}' after class body.");
   consume(SEMICOLON, "Expect ';' after class decl.");
 
-  return new ClassStmt(
+  auto* res = new ClassStmt(
     name,
     superclass,
     fields,
@@ -341,6 +333,8 @@ Stmt *Parser::class_declaration(Specifiers) {
     member_decls,
     declCtx->parent_
   );
+  decl->value.stmt = res;
+  return res;
 }
 
 Stmt *Parser::statement() {
@@ -382,16 +376,26 @@ Stmt *Parser::return_statement() {
 }
 
 Stmt *Parser::block_statement() {
+  static int count = 0;
   std::vector<const Stmt *> stmts;
 
-  DeclCtxGuard g{declCtx, "<block>"};
+
+  auto& decl = declCtx->insert(
+    declCtx,
+    "__block" + std::to_string(count++),
+    Decl{ .isBlock = 1 });
+
+  DeclCtxGuard g{declCtx, decl};
+
   while (!check(RIGHT_BRACE) && !at_end()) {
     stmts.push_back(declaration());
   }
 
   consume(RIGHT_BRACE, "Expect '}' after block.");
 
-  return new BlockStmt(stmts, declCtx->parent_);
+  auto* res = new BlockStmt(stmts, declCtx->parent_);
+  decl->value.stmt = res;
+  return res;
 }
 
 Stmt *Parser::using_declaration() {
@@ -425,7 +429,6 @@ Stmt *Parser::enum_declaration(Specifiers) {
 
   consume(CLASS, "Expect 'class' or 'struct' after 'enum'");
   Token name = consume(IDENTIFIER, "Expect name for scoped enum");
-  typeNames.insert(name.lexeme);
 
   if (check({COLON})) {
     consume(COLON, "");
@@ -456,25 +459,35 @@ Stmt *Parser::enum_declaration(Specifiers) {
 Stmt *Parser::template_statement() {
   // Parse the template typename<...> part (or template <>)
   std::vector<TemplateArg> args;
+  
+  static int count = 0;
+  auto& decl = declCtx->insert(
+    declCtx,
+    "__tmpl" + std::to_string(count++),
+    Decl{ .isBlock = 1 });
+
+  DeclCtxGuard g{declCtx, decl};
   consume(LESS, "Expect '<' after 'template'");
+  
   do {
     consume(TYPENAME, "Expect 'typename'");
     bool isVariadic = false;
     if (match({ELLIPSIS})) { isVariadic = true; }
     Token name = consume(IDENTIFIER, "Expect template arg name");
-    typeNames.insert(name.lexeme);// TODO: Should be scope based - not a type outside this template
+    Decl decl; decl.isType = 1;
+    declCtx->insert(declCtx, name.lexeme, decl);
     args.push_back(TemplateArg{.name = name, .isVariadic = isVariadic });
   } while (match({COMMA}));
 
   consume(GREATER, "Expect '>' after template args");
 
   auto * res = new TemplateStmt(args, /*temp*/nullptr);
-  TemplateCtxGuard tcg{templateCtx, res};
-  DeclCtxGuard g{declCtx, "__tmpl"};
+  TemplateCtxGuard tcg{templateCtx, res, declCtx->depth};
   res->decl = declaration();
   if (!res->decl->allowedCtxs.templatable) {
     error(previous(), "Not a class/function/variable template");
   }
+  decl->value.stmt = res;
   return res;
 }
 
@@ -498,7 +511,9 @@ Stmt *Parser::namespace_statement() {
   }
 
   NamespaceCtxGuard ncg{namespaceCtx, name};
-  DeclCtxGuard g{declCtx, name};
+
+  auto& decl = declCtx->insert(declCtx, name, Decl{ .isNamespace = 1 });
+  DeclCtxGuard g{declCtx, decl};
 
   consume(LEFT_BRACE, "Expect '{' at start of namespace.");
   while (!check(RIGHT_BRACE) && !at_end()) {
@@ -506,7 +521,9 @@ Stmt *Parser::namespace_statement() {
   }
   consume(RIGHT_BRACE, "Expect '}' at end of namespace.");
 
-  return new NamespaceStmt(name, stmts, declCtx->parent_);
+  auto* res = new NamespaceStmt(name, stmts, declCtx->parent_);
+  decl->value.stmt = res;
+  return res;
 }
 
 Stmt *Parser::if_statement(Token keyword) {
@@ -539,7 +556,13 @@ Stmt *Parser::for_statement(Token for_tok) {
 
   Stmt *initializer = nullptr;
 
-  DeclCtxGuard g1{declCtx, "__loopinit"};
+  static int count = 0;
+  auto& decl = declCtx->insert(
+    declCtx,
+    "__loopinit" + std::to_string(count++),
+    Decl{ .isBlock = 1 });
+
+  DeclCtxGuard g{declCtx, decl};
   if (parseStartDecl(/*doCommit*/false)) {
     auto tp = parse_type("var type in for-loop init");
     auto id = consume_qualified_identifier("var name  in for-loop init");
@@ -615,10 +638,17 @@ Stmt *Parser::func_statement(TypeParse return_type, std::optional<QualifiedName>
   } else {
     assert(qn);
     name = qn->token();
-    if (templateCtx.inTemplate) {
-      addTemplateName(*name);
-    }
   }
+
+  auto& decl = declCtx->insert(
+    declCtx,
+    name->lexeme,
+    Decl{
+      .isTemplate = (templateCtx.inTemplate && templateCtx.depth == declCtx->depth),
+      .isFunc = 1
+    });
+
+  DeclCtxGuard g{declCtx, decl};
 
   consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
 
@@ -660,14 +690,12 @@ Stmt *Parser::func_statement(TypeParse return_type, std::optional<QualifiedName>
     consume(SEMICOLON, "");
   }
 
-  if (templateCtx.inTemplate && name) {
-      templates[name->lexeme] = templateCtx.tmpl;
-  }
-
   auto * func = new FuncStmt(*name, parameters, parameter_types, return_type, body, declCtx);
   func->setSpecifiers(specifiers);
   func->setOperatorOverload(operatorOverload);
   func->defaultArgs = std::move(default_args);
+
+  decl->value.stmt = func;
   return func;
 }
 
@@ -1130,12 +1158,15 @@ void Parser::synchronize() {
 }
 
 bool Parser::isTemplateName(const std::string& name) {
-  auto res = templateNames.count(name);
-  return res;
+  return declCtx->contains(name);
 }
 
 bool Parser::isType(const QualifiedName& name) const {
-  return typeNames.count(name.str());
+  DeclCtx::ptr_t searchCtx = name.isFullyQualified ? globalCtx : declCtx;
+  if (!searchCtx->contains(name)) {
+    return false;
+  }
+  return searchCtx->get(name).isType;
 }
 
 bool Parser::isDependent(const QualifiedName& name) const {
