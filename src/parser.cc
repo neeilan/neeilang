@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 
+#include "name.h"
 #include "neeilang.h"
 #include "parser.h"
 #include "stmt.h"
@@ -17,7 +18,7 @@ Parser::Parser(const std::vector<Token> &tokens)
   globalCtx = std::make_shared<DeclCtx>("__global");
   declCtx = globalCtx;
   for (char const* n : {"void", "int", "float", "char", "short", "bool"}) {
-    Decl decl; decl.isType = 1;
+    Decl decl{}; decl.isFunc = 0; decl.isType = 1;
     globalCtx->insert(globalCtx, std::string(n), decl);
   }
 }
@@ -151,6 +152,10 @@ Stmt *Parser::declaration() {
 TypeParse Parser::parse_type(const std::string &msg) {
   TypeParse tp;
 
+  if (match({AUTO})) {
+    tp.inferred = true;
+  }
+
   if (match({CONST})) {
     tp.isConst = true;
   }
@@ -160,7 +165,7 @@ TypeParse Parser::parse_type(const std::string &msg) {
     consume(LEFT_PAREN, "Expect '(' after decltype");
     tp.declTypeExpr = expression();
     consume(RIGHT_PAREN, "Expect ')' after decltype");
-  } else {
+  } else if (!tp.inferred) { // can't have both auto and name
     tp.name = consume_qualified_identifier(msg);
   }
 
@@ -334,6 +339,12 @@ Stmt *Parser::class_declaration(Specifiers) {
     declCtx->parent_
   );
   decl->value.stmt = res;
+
+  if (decl->value.isTemplate) {
+    // Also accessible in the outer decl as the class / var / func name being the template name
+     std::cout << "Also inserting class tmpl " << name.lexeme << " in " << declCtx->parent_->parent_->name() << std::endl;
+    declCtx->parent_->parent_->insert(declCtx->parent_->parent_, name.lexeme, decl->value);
+  }
   return res;
 }
 
@@ -464,7 +475,7 @@ Stmt *Parser::template_statement() {
   auto& decl = declCtx->insert(
     declCtx,
     "__tmpl" + std::to_string(count++),
-    Decl{ .isBlock = 1 });
+    Decl{ .isTemplate = 1, .isBlock = 1 });
 
   DeclCtxGuard g{declCtx, decl};
   consume(LESS, "Expect '<' after 'template'");
@@ -474,7 +485,7 @@ Stmt *Parser::template_statement() {
     bool isVariadic = false;
     if (match({ELLIPSIS})) { isVariadic = true; }
     Token name = consume(IDENTIFIER, "Expect template arg name");
-    Decl decl; decl.isType = 1;
+    Decl decl{}; decl.isType = 1;
     declCtx->insert(declCtx, name.lexeme, decl);
     args.push_back(TemplateArg{.name = name, .isVariadic = isVariadic });
   } while (match({COMMA}));
@@ -503,17 +514,25 @@ Stmt *Parser::namespace_statement() {
   std::vector<const Stmt *> stmts;
 
   std::string name;
+  QualifiedName qn;
+  auto newDeclCtx = declCtx;
   if (check(LEFT_BRACE)) {
     // anonymous namespace
+    Decl d{}; d.isNamespace = 1;
+    newDeclCtx = declCtx->insert(declCtx, name, d);
   } else {
     QualifiedName qn = consume_qualified_identifier("Expect namespace name");
+    for (auto const& nsName : qn.tokens) {
+      std::cout << "Making ns "<< nsName.lexeme << "\n";
+      Decl d{}; d.isNamespace = 1;
+      newDeclCtx = newDeclCtx->insert(newDeclCtx, nsName.lexeme, d);
+    }
     name = qn.str();
   }
 
   NamespaceCtxGuard ncg{namespaceCtx, name};
 
-  auto& decl = declCtx->insert(declCtx, name, Decl{ .isNamespace = 1 });
-  DeclCtxGuard g{declCtx, decl};
+  DeclCtxGuard g{declCtx, newDeclCtx};
 
   consume(LEFT_BRACE, "Expect '{' at start of namespace.");
   while (!check(RIGHT_BRACE) && !at_end()) {
@@ -521,8 +540,8 @@ Stmt *Parser::namespace_statement() {
   }
   consume(RIGHT_BRACE, "Expect '}' at end of namespace.");
 
-  auto* res = new NamespaceStmt(name, stmts, declCtx->parent_);
-  decl->value.stmt = res;
+  auto* res = new NamespaceStmt(name, stmts, newDeclCtx->parent_);
+  newDeclCtx->value.stmt = res;
   return res;
 }
 
@@ -696,6 +715,13 @@ Stmt *Parser::func_statement(TypeParse return_type, std::optional<QualifiedName>
   func->defaultArgs = std::move(default_args);
 
   decl->value.stmt = func;
+
+  if (decl->value.isTemplate) {
+    // Also accessible in the outer decl as the class / var / func name being the template name
+     std::cout << "Also inserting func tmpl " << name->lexeme << " in " << declCtx->parent_->parent_->name() << std::endl;
+    declCtx->parent_->parent_->insert(declCtx->parent_->parent_, name->lexeme, decl->value);
+  }
+
   return func;
 }
 
@@ -1078,10 +1104,7 @@ QualifiedName Parser::consume_qualified_identifier(std::string const& msg) {
   }
 
   // Is the thing we've parsed so far a template?
-  // TODO: This should be based on the (to-be-built)
-  // namespace-based name tracker as it doesn't correct
-  // account for namespacing. Dirty impl for now:
-  if (!isTemplateName(res.token().lexeme)) { // TODO: this should be based on prefix decl context
+  if (!isTemplateName(res)) {
     return res;
   }
 
@@ -1104,7 +1127,7 @@ QualifiedName Parser::consume_qualified_identifier(std::string const& msg) {
     // fnSub.doSubstitution(tmplIt->second, *res.tmplInstantiations.back());
   // }
 
-  // Nothing stopping us from keeping goinf
+  // Nothing stopping us from keeping going
   // e.g. `Foo<TRT>::TypeT x;`
   //               ^
   Parser::SnoopResult<QualifiedName> sr = snoop_qualified_identifier();
@@ -1157,16 +1180,19 @@ void Parser::synchronize() {
   }
 }
 
-bool Parser::isTemplateName(const std::string& name) {
-  return declCtx->contains(name);
+bool Parser::isTemplateName(const QualifiedName& name) {
+  return declCtx->contains(name) && declCtx->get(name).isTemplate;
 }
 
 bool Parser::isType(const QualifiedName& name) const {
   DeclCtx::ptr_t searchCtx = name.isFullyQualified ? globalCtx : declCtx;
   if (!searchCtx->contains(name)) {
+    std::cout << "INFO: " << name.str() << " resolved as non-type (early)" << std::endl;
     return false;
   }
-  return searchCtx->get(name).isType;
+  bool res =  searchCtx->get(name).isType;
+  std::cout << "INFO: " << name.str() << " resolved as " << (res?"type":"non-type") << std::endl;
+  return res;
 }
 
 bool Parser::isDependent(const QualifiedName& name) const {
@@ -1188,7 +1214,12 @@ bool Parser::parseStartDecl(bool doCommit) {
   if (t == IDENTIFIER || t == COLON_COLON) {
     auto sr = snoop_qualified_identifier();
     if (sr && doCommit) { commit(sr); }
-    return sr && ( isDependent(*sr) || isType(*sr) );
+    // if (sr) {
+    //   std::cout << " ========== parseStartDecl checking if type :  " << std::endl;
+    // bool t = isType(*sr);
+    // std::cout << " ========== parseStartDecl found " << (*sr).str() << " which is a type? " << t << "\n";
+    // }
+    return sr && ( /*isDependent(*sr) ||*/ isType(*sr) );
     // TODO: isType for somethng like TRT::value_type requires declctx lookup
     // See TODO in template_sub.nl for example.
   }

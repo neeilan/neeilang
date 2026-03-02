@@ -9,6 +9,7 @@
 #include <unordered_set>
 
 #include "expr.h"
+#include "name.h"
 #include "stmt.h"
 #include "token.h"
 #include "type-parse.h"
@@ -198,7 +199,7 @@ private:
 
   ParseErr error(Token token, std::string msg);
   void synchronize();
-  bool isTemplateName(const std::string& name);
+  bool isTemplateName(const QualifiedName& name);
   bool isType(const QualifiedName& name) const;
   bool isDependent(const QualifiedName& name) const;
   bool parseStartDecl(bool doCommit);
@@ -220,14 +221,15 @@ private:
 
   struct DeclCtxGuard {
     DeclCtx::ptr_t& mCtx;
+    DeclCtx::ptr_t old;
 
     explicit DeclCtxGuard(DeclCtx::ptr_t& mCtx, DeclCtx::ptr_t newCtx)
-      : mCtx(mCtx) {
+      : mCtx(mCtx), old(mCtx) {
       mCtx = newCtx;
     }
 
     ~DeclCtxGuard() {
-      mCtx = mCtx->parent_;
+      mCtx = old;
     }
   };
 };
