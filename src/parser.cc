@@ -1187,11 +1187,11 @@ bool Parser::isTemplateName(const QualifiedName& name) {
 bool Parser::isType(const QualifiedName& name) const {
   DeclCtx::ptr_t searchCtx = name.isFullyQualified ? globalCtx : declCtx;
   if (!searchCtx->contains(name)) {
-    std::cout << "INFO: " << name.str() << " resolved as non-type (early)" << std::endl;
+    // std::cout << "INFO: " << name.str() << " resolved as non-type (early)" << std::endl;
     return false;
   }
   bool res =  searchCtx->get(name).isType;
-  std::cout << "INFO: " << name.str() << " resolved as " << (res?"type":"non-type") << std::endl;
+  // std::cout << "INFO: " << name.str() << " resolved as " << (res?"type":"non-type") << std::endl;
   return res;
 }
 

@@ -45,8 +45,8 @@ void Neeilang::run_file(const char *path) {
   std::cerr << printer.print(program);
 
   IRGen irgen;
-  // irgen.generate(program);
-  // irgen.dump();
+  irgen.generate(program);
+  irgen.dump();
 
 //   Resolver resolver;
 //   resolver.resolve_program(program);

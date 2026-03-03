@@ -39,11 +39,11 @@ public:
   }
 
   bool contains(K const& k) const {
-    std::cout << "    ------- declctx [" << name_ << "] contents:\n";
-    for (auto const& e : mappings) {
-      std::cout << e.first  << e.second->value.str() <<  " ";
-    }
-    std::cout << "\n -------\n";
+    // std::cout << "    ------- declctx [" << name_ << "] contents:\n";
+    // for (auto const& e : mappings) {
+      // std::cout << e.first  << e.second->value.str() <<  " ";
+    // }
+    // std::cout << "\n -------\n";
 
     if (!parent_) {
       // std::cout << "   no parent, checking if contains " << k << "\n";
@@ -66,11 +66,11 @@ public:
     if (qn.tokens.size() == 1) {
       return contains(qn.tokens.front().lexeme);
     } else if (auto rt = qn.tokens.front().lexeme; contains(rt)) {
-      std::cout << "Looking for first part of qn " <<rt << " in " << name_ << "\n";
+      // std::cout << "Looking for first part of qn " <<rt << " in " << name_ << "\n";
       QualifiedName qn2 = qn;
       qn2.tokens.erase(qn2.tokens.begin());
       qn2.tmplInstantiations.erase(qn2.tmplInstantiations.begin());
-      std::cout << " remaining qn is " << qn2.str() << std::endl;
+      // std::cout << " remaining qn is " << qn2.str() << std::endl;
       if (mappings.count(rt) > 0) {
         return mappings.at(rt)->contains(qn2, true);
       } else if (!forceDown) {
