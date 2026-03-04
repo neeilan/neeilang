@@ -14,6 +14,7 @@
 #include "token.h"
 #include "type-parse.h"
 #include "decl-ctx.h"
+#include "cxxtypereg.h"
 
 class ParseErr : std::runtime_error {
 public:
@@ -232,6 +233,8 @@ private:
       mCtx = old;
     }
   };
+
+  TypeRegistry tr_;
 };
 
 #endif //_NL_PARSER_H_
