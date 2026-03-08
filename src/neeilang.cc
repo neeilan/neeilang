@@ -15,6 +15,7 @@
 #include "scope-manager.h"
 #include "token.h"
 #include "type-checker.h"
+#include "cxxsema.h"
 
 #include "backends/ir/irgen.h"
 
@@ -44,9 +45,12 @@ void Neeilang::run_file(const char *path) {
   AstPrinter printer;
   std::cerr << printer.print(program);
 
-  IRGen irgen;
-  irgen.generate(program);
-  irgen.dump();
+  CXXSema sema;
+  sema.analyze(program);
+
+  // IRGen irgen;
+  // irgen.generate(program);
+  // irgen.dump();
 
 //   Resolver resolver;
 //   resolver.resolve_program(program);

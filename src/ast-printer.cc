@@ -144,8 +144,8 @@ std::string AstPrinter::visit(const VarStmt *stmt) {
 
 std::string AstPrinter::visit(const ClassStmt *stmt) {
   ostringstream out;
-  OUT << "<Class " << stmt->name.lexeme
-                   << " declctx=\"" << stmt->ctx->name() << "\"";
+  OUT << "<Class name=\"" << stmt->name.lexeme
+                   << "\" declctx=\"" << stmt->ctx->name() << "\"";
   if (stmt->superclass) {
     out << "  superclass=" << stmt->superclass->prettyName() << std::endl;
   }
