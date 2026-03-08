@@ -5,12 +5,25 @@
 #include <string>
 #include <vector>
 
+
+/* Type specifier
+   --------------
+   Represents how a variable or function's type is represented *syntactically*
+   in it's declaration. This could simply be via the type name (`int x;`),
+   or via `auto` or `decltype`.
+*/
+enum class TypeSpecifierKind {
+    DIRECT, AUTO, DECLTYPE
+};
+
+
 enum class TypeKind {
     Primitive,
     Pointer,
     Array,
     Function,
-    Struct
+    Struct,
+    TemplateParam
 };
 
 
@@ -128,4 +141,15 @@ struct RecordDecl {
 struct StructType final : public CXXType {
     explicit StructType(const RecordDecl* d) : CXXType(TypeKind::Struct /*or Record*/), decl(d) {}
     const RecordDecl* decl;
+};
+
+// Represents a `class` or `typename` template parameter.
+// Exists in engaged (with a real CXXType bound to it) or
+// unengaged state.
+struct TemplateParamType final : public CXXType {
+    explicit TemplateParamType() : CXXType(TypeKind::TemplateParam) {}
+
+    bool isEngaged() const { return bool(resolvedType); }
+
+    TypePtr resolvedType;
 };
