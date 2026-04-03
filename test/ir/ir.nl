@@ -1,10 +1,7 @@
-int foo() {
-    return 1 + 2 + 3;
-}
-
 template <typename T>
 class optional {
-    using unique_vals = T::enum_values::size;
+    // using unique_vals = T::enum_values::size;
+    // static constexpr int WIDTH = sizeof(T);
     T value;
     bool engaged = true;
 
@@ -14,16 +11,12 @@ class optional {
     }
 };
 
+
 template class optional<int>;
 
 int main() {
     optional<int> myOpt;
+    optional< optional<float> > myOpt2;
     myOpt = 42;
 }
 
-/*
-namespace n1 {
-    int foo() {
-        return 3 + 4;
-    }
-}*/

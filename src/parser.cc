@@ -11,8 +11,6 @@
 #include "type-parse.h"
 #include "const-eval.h"
 
-FunctionTemplateArgSub fnSub;
-
 Parser::Parser(const std::vector<Token> &tokens)
 : tokens(tokens) {
   globalCtx = std::make_shared<DeclCtx>("__global");
@@ -33,6 +31,23 @@ std::vector<const Stmt *> Parser::parse() {
       synchronize();
     }
   }
+
+  if (Neeilang::had_error) {
+    return statements;
+  }
+
+  FunctionTemplateArgSub sub;
+
+  for (auto& p : statements) {
+    try {
+    p = sub.maybeSubstitute(p);
+    } catch (ParseErr& e) {
+      std::cerr << e.text << std::endl;
+      continue;
+    }
+  }
+
+  sub.summarizeSubstitutions();
 
   return statements;
 }
@@ -287,6 +302,7 @@ Stmt *Parser::var_declaration(TypeParse tp, QualifiedName qn, Specifiers s) {
   consume(SEMICOLON, "Expect ';' after variable declaration.");
   tp.isConst = s.f.isConst;
   auto* res = new VarStmt(name, tp, initializer);
+  res->ctx = declCtx;
   Decl decl(res);
   decl.isVariable = 1;
   decl.isTemplate = (templateCtx.inTemplate && templateCtx.depth == declCtx->depth);
@@ -342,7 +358,8 @@ Stmt *Parser::class_declaration(Specifiers) {
 
   if (decl->value.isTemplate) {
     // Also accessible in the outer decl as the class / var / func name being the template name
-     std::cout << "Also inserting class tmpl " << name.lexeme << " in " << declCtx->parent_->parent_->name() << std::endl;
+    std::cout << "Also inserting class tmpl " << name.lexeme << " in " << declCtx->parent_->parent_->name() << std::endl;
+    res->tmplParams = templateCtx.tmpl->args;
     declCtx->parent_->parent_->insert(declCtx->parent_->parent_, name.lexeme, decl->value);
   }
   return res;
@@ -471,6 +488,7 @@ Stmt *Parser::template_statement() {
   // Is this an explicit template initialization (rather than a template decl)?
   if (match({CLASS})) {
     auto* res = new ExplicitClassTemplateInitialization(
+      declCtx,
       consume_qualified_identifier("template to initialize"));
     consume({SEMICOLON}, "Expect ';' after explicit template initialization stmt");
     return res;
@@ -1125,8 +1143,12 @@ QualifiedName Parser::consume_qualified_identifier(std::string const& msg) {
     do {
       res.tmplInstantiations.back()->push_back(new TypeParse(parse_type("Expect template type")));
     } while (match({COMMA}));
-    if (!match({GREATER})) {
-      error(lessTok, "Unmatched template '<");
+    if (peek().type == GREATER_GREATER ) {
+      std::cerr << lessTok.lineDiagnostic() << "WARN: if '>>' are template brackets, please add a space to disambiguate, like '> >'\n";
+      // Try to peel one off
+      peek().type = GREATER;
+    } else if (!match({GREATER})) {
+      error(lessTok, "Unmatched template '<'");
     }
   }
 

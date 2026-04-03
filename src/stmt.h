@@ -322,11 +322,14 @@ public:
       this->ctx = ctx;
     }
 
+  explicit ClassStmt(const ClassStmt&) = default;
+
   const Token name;
   std::optional<TypeParse> superclass;
   const std::vector<Token> fields;
   const std::vector<TypeParse> field_types;
   const std::vector<const Stmt *> memberDecls;
+  std::optional<std::vector<TemplateArg>> tmplParams;
 
   const std::vector<const Stmt *> methods() const {
     std::vector<const Stmt *> m;
@@ -337,11 +340,29 @@ public:
     }
     return m;
   }
+
+  std::string canonicalClassTemplateName() const {
+    assert(tmplParams);
+    auto res =  name.lexeme + "<";
+    for (auto const& tpl : *tmplParams) {
+      res += tpl.name.lexeme;
+      res += ",";
+    }
+    if (!tmplParams->empty()) {
+      res.pop_back();
+    }
+    res += ">";
+    return res;
+  }
 };
 
 class ExplicitClassTemplateInitialization : public StmtCRTP<ExplicitClassTemplateInitialization> {
 public:
-  explicit ExplicitClassTemplateInitialization(QualifiedName name) : name(name) {}
+  explicit ExplicitClassTemplateInitialization(DeclCtx::ptr_t ctx, QualifiedName name)
+  : name(name) {
+    this->ctx = ctx;
+  }
+
 
   QualifiedName name;
 };

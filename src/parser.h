@@ -18,8 +18,10 @@
 
 class ParseErr : std::runtime_error {
 public:
-  ParseErr(const std::string &msg) : std::runtime_error(msg) {}
-  ParseErr(const char *msg) : std::runtime_error(msg) {}
+  ParseErr(const std::string &msg) : std::runtime_error(msg), text(msg) {}
+  ParseErr(const char *msg) : std::runtime_error(msg), text(msg) {}
+
+  std::string text;
 };
 
 class Parser {

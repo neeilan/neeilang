@@ -1,6 +1,7 @@
 #ifndef _NL_TOKEN_H_
 #define _NL_TOKEN_H_
 
+#include <cassert>
 #include <string>
 #include <vector>
 
@@ -130,6 +131,11 @@ public:
     Token other = *this;
     other.type = t;
     return other;
+  }
+
+  std::string lineDiagnostic() const {
+    assert(!inclPath.empty());
+    return inclPath.back() + std::string(":") + std::to_string(line) + " ";
   }
 
   std::string str() const;

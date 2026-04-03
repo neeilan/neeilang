@@ -13,8 +13,9 @@ public:
 
   static void error(Token token, const std::string &message);
 
-private:
   static bool had_error;
+
+private:
 
   static void report(std::vector<const char*> inclPath, int line, std::string const& occurrence,
                     std::string const& message);
