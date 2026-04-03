@@ -468,6 +468,14 @@ Stmt *Parser::enum_declaration(Specifiers) {
 }
 
 Stmt *Parser::template_statement() {
+  // Is this an explicit template initialization (rather than a template decl)?
+  if (match({CLASS})) {
+    auto* res = new ExplicitClassTemplateInitialization(
+      consume_qualified_identifier("template to initialize"));
+    consume({SEMICOLON}, "Expect ';' after explicit template initialization stmt");
+    return res;
+  }
+
   // Parse the template typename<...> part (or template <>)
   std::vector<TemplateArg> args;
   

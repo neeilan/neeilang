@@ -38,5 +38,6 @@ class IfStmt;
 class WhileStmt;
 class FuncStmt;
 class ReturnStmt;
+class ExplicitClassTemplateInitialization;
 
 #endif // _NL_VISITABLE_TYPES_H_

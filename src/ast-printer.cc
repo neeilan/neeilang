@@ -163,6 +163,12 @@ std::string AstPrinter::visit(const ClassStmt *stmt) {
   return out.str();
 }
 
+std::string AstPrinter::visit(const ExplicitClassTemplateInitialization *stmt) {
+  ostringstream out;
+  OUT << "<ExplicitClassTemplateInitialization class=\"" << stmt->name.str() << "\"/>";
+  return out.str();
+}
+
 std::string AstPrinter::visit(const IfStmt *stmt) {
   ostringstream out;
   OUT << "<IfStmt condition=";

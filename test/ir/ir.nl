@@ -7,9 +7,19 @@ class optional {
     using unique_vals = T::enum_values::size;
     T value;
     bool engaged = true;
+
+    optional<T>& operator=(T value) {
+        this->value = value;
+        return *this;
+    }
 };
 
-optional<int> myOpt;
+template class optional<int>;
+
+int main() {
+    optional<int> myOpt;
+    myOpt = 42;
+}
 
 /*
 namespace n1 {

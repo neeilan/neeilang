@@ -139,6 +139,10 @@ void IRGen::visit(const ClassStmt *stmt) {
   assert(false && "Unimplemented");
 }
 
+void IRGen::visit(const ExplicitClassTemplateInitialization *stmt) {
+  assert(false && "Unimplemented");
+}
+
 void IRGen::visit(const WhileStmt *stmt) {
   assert(false && "Unimplemented");
 }

@@ -236,6 +236,10 @@ const Stmt* FunctionTemplateArgSub::visit(const ReturnStmt *stmt) {
     return new ReturnStmt(stmt->keyword, substitute(stmt->value));
 }
 
+const Stmt* FunctionTemplateArgSub::visit(const ExplicitClassTemplateInitialization *expr) {
+    assert(false); return nullptr;
+}
+
 const Expr* FunctionTemplateArgSub::visit(const Binary *expr) {
     return new Binary(*substitute(&expr->left), expr->op, *substitute(&expr->right));
 }

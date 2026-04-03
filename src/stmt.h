@@ -339,4 +339,11 @@ public:
   }
 };
 
+class ExplicitClassTemplateInitialization : public StmtCRTP<ExplicitClassTemplateInitialization> {
+public:
+  explicit ExplicitClassTemplateInitialization(QualifiedName name) : name(name) {}
+
+  QualifiedName name;
+};
+
 #endif // _NL_STMT_H_

@@ -176,3 +176,8 @@ void CXXSema::visit(const SentinelExpr *expr)
 {
     assert(false && "Unimplemented");
 }
+
+void CXXSema::visit(const ExplicitClassTemplateInitialization *expr)
+{
+    assert(false && "Unimplemented");
+}

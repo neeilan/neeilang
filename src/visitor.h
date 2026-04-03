@@ -23,6 +23,7 @@ public:
   virtual T visit(const WhileStmt *) = 0;
   virtual T visit(const FuncStmt *) = 0;
   virtual T visit(const ReturnStmt *) = 0;
+  virtual T visit(const ExplicitClassTemplateInitialization *) = 0;
 };
 
 template <typename T = void> class ExprVisitor {
@@ -61,6 +62,7 @@ public:
   virtual T visit(const PrintStmt *) override; \
   virtual T visit(const VarStmt *) override;   \
   virtual T visit(const ClassStmt *) override; \
+  virtual T visit(const ExplicitClassTemplateInitialization *) override; \
   virtual T visit(const IfStmt *) override;    \
   virtual T visit(const WhileStmt *) override; \
   virtual T visit(const FuncStmt *) override;  \
