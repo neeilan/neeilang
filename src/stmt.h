@@ -150,6 +150,8 @@ public:
   const Token name;
   const TypeParse tp;
   const Expr *expression = nullptr;
+  
+  Specifiers specifiers;
 };
 
 class BlockStmt : public StmtCRTP<BlockStmt> {

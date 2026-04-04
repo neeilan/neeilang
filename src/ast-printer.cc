@@ -257,7 +257,19 @@ std::string AstPrinter::visit(const ReturnStmt *stmt) {
   return out.str();
 }
 
+std::string describe(CompileTimeValue const& v) {
+    if (std::holds_alternative<CompileTimeBuiltin>(v)) {
+      return std::visit([](auto &&val) -> std::string {
+        return std::to_string(val);
+      }, std::get<CompileTimeBuiltin>(v));
+    }
+    return "(Non-Builtin Constexpr Value)";
+}
+
 std::string AstPrinter::visit(const Binary *expr) {
+  if (expr->compileTimeVal) {
+    return "(constexpr " + describe(*expr->compileTimeVal) + ")";
+  }
   return parenthesize((expr->op).str(), &(expr->left), &(expr->right));
 }
 

@@ -7,6 +7,7 @@
 #include "type.h"
 #include "type-parse.h"
 #include "visitor.h"
+#include "constval.h"
 
 #include <memory>
 #include <string>
@@ -34,6 +35,7 @@ public:
   } allowedCtxs = {};
 
   DeclCtx::ptr_t ctx;
+  std::optional<CompileTimeValue> compileTimeVal;
 };
 
 // Use CRTP (https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern)
@@ -58,7 +60,27 @@ template <typename T> class ExprCRTP : public Expr {
 class Binary : public ExprCRTP<Binary> {
 public:
   Binary(const Expr &left, Token op, const Expr &right)
-      : left(left), op(op), right(right) {}
+      : left(left), op(op), right(right) {
+
+        if (left.compileTimeVal && right.compileTimeVal) {
+          // may be compatible, do + as an example
+          if (op.type == PLUS) {
+            if (std::holds_alternative<CompileTimeBuiltin>(*left.compileTimeVal)
+              && left.compileTimeVal->index() == right.compileTimeVal->index()) {
+                auto innerL = std::get<CompileTimeBuiltin>(*left.compileTimeVal);
+                auto innerR = std::get<CompileTimeBuiltin>(*right.compileTimeVal);
+                if (innerL.index() == innerR.index()) {
+                  if (std::holds_alternative<int>(innerL)) {
+                    compileTimeVal = CompileTimeValue{std::get<int>(innerL) + std::get<int>(innerR)};
+                  } else {
+                    compileTimeVal = CompileTimeValue{std::get<double>(innerL) + std::get<double>(innerR)};
+                  }
+              }
+            }
+          }
+        }
+
+      }
 
   const Expr &left;
   const Token op;
@@ -83,7 +105,14 @@ public:
 class NumLiteral : public ExprCRTP<NumLiteral> {
 public:
   explicit NumLiteral(std::string value, bool nil = false)
-      : value(value), nil(nil) {}
+      : value(value), nil(nil) {
+
+        if (value.find('.') != std::string::npos) {
+          compileTimeVal = CompileTimeValue{std::stod(value)};
+        } else {
+          compileTimeVal = CompileTimeValue{std::stoi(value)};
+        }
+      }
 
   std::string value;
   bool nil;
