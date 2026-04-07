@@ -14,7 +14,7 @@
 
 class Scanner {
 public:
-  Scanner(const std::string &path);
+  explicit Scanner(const std::string &path);
 
   std::vector<Token> scan_tokens();
 

@@ -63,6 +63,14 @@ add_library(neeilang_lib ${SRC_FILES})
 add_executable(neeilang ${PROJECT_SOURCE_DIR}/src/cli.cc)
 target_link_libraries(neeilang neeilang_lib)
 
+###############################
+# Unit tests
+###############################
+file(GLOB CATCHTEST_SRC ${PROJECT_SOURCE_DIR}/test/unit/*.cc)
+include_directories(${PROJECT_SOURCE_DIR}/test/_deps)
+add_executable(catchtests ${CATCHTEST_SRC})
+target_link_libraries(catchtests neeilang_lib)
+
 if (TEST_DEPS)
 find_package(Splat REQUIRED)
 endif()
