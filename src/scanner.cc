@@ -155,13 +155,22 @@ void Scanner::preprocessor() {
     return;
   }
 
-  std::string directive;
-  while (is_alphanumeric(peek())) {
-    directive += peek();
-    advance();
-  }
-  if (directive == "include") {
+  auto eatWhitespace = [this]() {
     while (peek() == ' ' || peek() == '\t') { advance(); }
+  };
+
+  auto parseAlphanumChunk = [this]() {
+    std::string res;
+    while (is_alphanumeric(peek())) {
+      res += peek();
+      advance();
+    }
+    return res;
+  };
+
+  std::string directive = parseAlphanumChunk();
+  if (directive == "include") {
+    eatWhitespace();
     char const opener = advance();
     if (opener != '"' && opener != '<') {
       Neeilang::error(ctx().inclPath, ctx().line, "Malformed #include directive");
@@ -174,6 +183,40 @@ void Scanner::preprocessor() {
     auto const inclLine = ctx().line;
     advance();
     add_ctx( fs::path{ctx().path}.parent_path() / fname, inclLine );
+  } else if (directive == "define" || directive == "undef") {
+    eatWhitespace();
+    std::string def = parseAlphanumChunk();
+    eatWhitespace();
+    if (directive == "undef") {
+      ppDefs.erase(directive);
+      return;
+    }
+
+    ppDefs[def] = PPValue { .kind = PPValueKind::IMMEDIATE };
+  } else if (directive == "ifdef" || directive == "ifndef") {
+    eatWhitespace();
+    std::string def = parseAlphanumChunk(); // if this is defined
+    bool const defined = ppDefs.find(def) != ppDefs.end();
+    std::cout << directive << ": [" << def << "] is " << (defined ? "defined" : "not defined") << "\n";
+
+    ppIfDepth++;
+    if ((directive == "ifdef" && !defined) || (directive == "ifndef" && defined)) {
+      // ignore everything until endif, not supporting #else or nesting atm
+      while (true) {
+        while (peek() != '#') {
+          advance();
+        }
+        advance();
+       std:: string nextDirective = parseAlphanumChunk();
+        if (nextDirective == "endif") {
+          ppIfDepth--;
+          return;
+        }
+      }
+    }
+  } else if (directive == "endif") {
+    if (ppIfDepth > 0) { ppIfDepth--; return; }
+    Neeilang::error(ctx().inclPath, ctx().line, "Unexpected #endif directive");
   } else {
     Neeilang::error(ctx().inclPath, ctx().line, "Unrecognized preprocessor directive " + directive);
   }

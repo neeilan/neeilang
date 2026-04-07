@@ -7,7 +7,9 @@
 #include <string>
 #include <vector>
 #include <stack>
+#include <unordered_map>
 
+#include "preprocessor.h"
 #include "token.h"
 
 class Scanner {
@@ -31,6 +33,8 @@ private:
   std::vector<Token> tokens;
   std::stack<SourceCtx> ctxs;
   std::deque<std::string> fnames; // unordered strtab for filenames, deque for pointer stability
+  std::unordered_map<std::string, PPValue> ppDefs;
+  int ppIfDepth = 0;
 
   static const std::map<std::string, TokenType> keywords;
 
