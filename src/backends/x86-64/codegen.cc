@@ -26,7 +26,7 @@ std::string get_virtual_method(NLType type, const std::string &method, const std
   NLType curr = type; // Curr is self or parent
   for (NLType curr = type; curr != nullptr; curr = curr->supertype) {
     auto methodName = curr->name + "_" + method;
-    if (funcLabels.find(methodName) == funcLabels.end()) {
+    if (funcLabels.find(methodName) != funcLabels.end()) {
       return methodName;
     }
   }
@@ -41,6 +41,7 @@ ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
   assert(dims.size() == 1);
   // TODO: check that each dim is > 0.
   emit(dims[0]);
+  text_.instr({"mov", valueRefs_.get(dims[0]), "%r14"});
   text_.instr({"push", "%rdi"});
   text_.instr({"push", "%rsi"});
   // rdi holds # of elems
@@ -52,13 +53,17 @@ ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
   // Align the stack if necessary
   // TODO: Can we wrap this in an AlignedCall RAII?
   auto const stackLocals = stackFrames_.bases[enclosingFunc_];
-  // == 0 because we push rsi - can we track this with RAII or similar?
-  if (stackLocals.totalSize % 16 == 0) {
+  // Two saved argument registers leave the alignment unchanged.
+  if (stackLocals.totalSize % 16 != 0) {
     text_.instr({"push", "%rbx"});
   }
   // %rdi holds array size
+  text_.instr({"push", "%r10"});
+  text_.instr({"push", "%r11"});
   text_.instr({"call", "malloc"});
-  if (stackLocals.totalSize % 16 == 0) {
+  text_.instr({"pop", "%r11"});
+  text_.instr({"pop", "%r10"});
+  if (stackLocals.totalSize % 16 != 0) {
     text_.instr({"pop", "%rbx"});
   }
 
@@ -68,8 +73,7 @@ ValueRefTracker::ValueRef CodeGen::emitArrayInit(NLType nlType,
   // %rax is a pointer to the malloc'd memory
   // Array header { u32: size of each element, u32: number of elements }
   text_.instr({"movl", "$8", "(%rax)"});
-  auto dimRef = valueRefs_.get(dims[0]);
-  text_.instr({"movl", dimRef[0] == '%' ? (dimRef+"d") : dimRef , "4(%rax)"});
+  text_.instr({"movl", "%r14d", "4(%rax)"});
   return "%rax";
 }
 
@@ -84,7 +88,14 @@ ValueRefTracker::ValueRef CodeGen::emitClassInit(NLType nlType) {
   text_.instr({"push", "%rdi"});
   text_.instr({"push", "%rsi"});
   text_.instr({"mov", std::string("$")+std::to_string(sizeOfMembers(nlType)+8), "%rdi" });
+  const bool pad = stackFrames_.bases[enclosingFunc_].totalSize % 16 != 0;
+  if (pad) { text_.instr({"push", "%rbx"}); }
+  text_.instr({"push", "%r10"});
+  text_.instr({"push", "%r11"});
   text_.instr({"call", "malloc"});
+  text_.instr({"pop", "%r11"});
+  text_.instr({"pop", "%r10"});
+  if (pad) { text_.instr({"pop", "%rbx"}); }
   text_.instr({"pop", "%rsi"});
   text_.instr({"pop", "%rdi"});
 
@@ -155,17 +166,26 @@ void CodeGen::visit(const PrintStmt *stmt) {
   auto const exprType = exprTypes_.find(e);
   if (exprType->second == Primitives::String()) {
     text_.instr({"push", "%rdi"});
-    if (stackLocals.totalSize % 16) { text_.instr({"push", "%rbx"}); }
+    text_.instr({"push", "%rbx"});
     text_.instr({"mov", exprRef, "%rdi"});
+    text_.instr({"push", "%r10"});
+    text_.instr({"push", "%r11"});
     text_.instr({"call", "puts"});
+    text_.instr({"pop", "%r11"});
+    text_.instr({"pop", "%r10"});
     // This sucks - the library should hide this stack-aligning stuff
-    if (stackLocals.totalSize % 16) { text_.instr({"pop", "%rbx"}); }
+    text_.instr({"pop", "%rbx"});
     text_.instr({"pop", "%rdi"});
   } else if (exprType->second == Primitives::Float()) {
     text_.instr({"lea", "format_printf_float(%rip)", "%rdi"});
     // TODO: Assumes the float is a literal, which isn't always true
     text_.instr({"movsd", exprRef + "(%rip)", "%xmm0"});
+    text_.instr({"mov", "$1", "%eax"});
+    text_.instr({"push", "%r10"});
+    text_.instr({"push", "%r11"});
     text_.instr({"call", "printf"});
+    text_.instr({"pop", "%r11"});
+    text_.instr({"pop", "%r10"});
   } else {
     // %rdi and %rsi hold first two integer/pointer function params
     // per x86-64 System V calling convention
@@ -177,7 +197,12 @@ void CodeGen::visit(const PrintStmt *stmt) {
     text_.instr({"push", "%rsi"});
     text_.instr({"lea", "format_printf_int(%rip)", "%rdi"});
     text_.instr({"mov", exprRef, "%rsi"});
+    text_.instr({"mov", "$0", "%eax"});
+    text_.instr({"push", "%r10"});
+    text_.instr({"push", "%r11"});
     text_.instr({"call", "printf"});
+    text_.instr({"pop", "%r11"});
+    text_.instr({"pop", "%r10"});
     text_.instr({"pop", "%rsi"});
     text_.instr({"pop", "%rdi"});
   }
@@ -314,14 +339,17 @@ void CodeGen::visit(const FuncStmt *stmt) {
   text_.label({label});
   text_.instr({"pushq", "%rbp"});
 
-  // In x86 and x86-64 assembly, the stack pointer %rsp points to the next empty
-  // slot on the stack, not to a valid value. It always points to the memory
-  // location that will be used for the next push operation.
-  // Also, values 'grow' towards lower addresses.
+  // %rsp points at the saved base pointer; pushes grow towards lower addresses.
   auto const stackLocalsBase = stackFrames_.bases[stmt];
   text_.instr({"movq", "%rsp", "%rbp"});
   text_.instr({"subq", "$" + std::to_string(stackLocalsBase.totalSize),
                "%rsp"});  // locals sit between bp and sp
+
+  // Preserve the callee-saved registers used by this backend. Four slots
+  // keep the existing call-site alignment unchanged.
+  for (auto reg : {"%r12", "%r13", "%r14", "%r15"}) {
+    text_.instr({"push", reg});
+  }
 
   emit(stmt->body);
   
@@ -342,6 +370,12 @@ void CodeGen::visit(const ReturnStmt *stmt) {
     text_.instr({"mov", valueRefs_.get(stmt->value), "%rax"});
   }
 
+  // A return can occur on any control-flow path.
+  const auto localSize = stackFrames_.bases[enclosingFunc_].totalSize;
+  text_.instr({"lea", "-" + std::to_string(localSize + 32) + "(%rbp)", "%rsp"});
+  for (auto reg : {"%r15", "%r14", "%r13", "%r12"}) {
+    text_.instr({"pop", reg});
+  }
   text_.instr({"mov", "%rbp", "%rsp"});
   text_.instr({"popq", "%rbp"});
   text_.instr({"ret"});
@@ -363,7 +397,9 @@ void CodeGen::visit(const Unary *expr) {
   if (expr->op.type == TokenType::MINUS) {
     text_.instr({"neg", dest});
   } else { // BANG
-    text_.instr({"not", dest});
+    text_.instr({"test", dest, dest});
+    text_.instr({"sete", dest + "b"});
+    text_.instr({"movzbq", dest + "b", dest});
   }
   valueRefs_.assign(expr, dest);
 }
@@ -397,6 +433,7 @@ void CodeGen::visit(const Binary *expr) {
     auto destByte = dest[0] == '%' ? (dest+"b") : dest;
     text_.instr({"cmp", right, dest });
     text_.instr({setByteOp, destByte});
+    text_.instr({"movzbq", destByte, dest});
     valueRefs_.regOverwrite(expr, dest);
     valueRefs_.regFree(right);
   };
@@ -417,12 +454,15 @@ void CodeGen::visit(const Binary *expr) {
     break;
   }
   case SLASH: {
-    auto destl = (dest[0] == '%' ? dest+"d" : dest);
-    text_.instr({"xor", "%rax", "%rax" });
-    text_.instr({"movl", destl, "%eax" });
-    text_.instr({"movl", right, "%ecx" });
-    text_.instr({"cltd" }); // sign-extends eax into edx:eax
-    text_.instr({"idivq", "%rcx" });
+    // idivq consumes the signed 128-bit dividend in rdx:rax.
+    text_.instr({"push", "%rdx"});
+    text_.instr({"push", "%rcx"});
+    text_.instr({"movq", right, "%rcx"});
+    text_.instr({"movq", dest, "%rax"});
+    text_.instr({"cqto"});
+    text_.instr({"idivq", "%rcx"});
+    text_.instr({"pop", "%rcx"});
+    text_.instr({"pop", "%rdx"});
     text_.instr({"movq", "%rax", dest });
     valueRefs_.regOverwrite(expr, dest);
     valueRefs_.regFree(right);
@@ -433,7 +473,7 @@ void CodeGen::visit(const Binary *expr) {
     break;
   }
   case LESS: {
-    cmpOpEmit("setc");
+    cmpOpEmit("setl");
     break;
   }
   case GREATER_EQUAL: {
@@ -468,7 +508,9 @@ void CodeGen::visit(const StrLiteral *expr) {
   static std::unordered_map<std::string, std::string> literalToLabel;
   auto it = literalToLabel.find(expr->value);
   if (it != literalToLabel.end()) {
-    valueRefs_.assign(expr, it->second);
+    auto const dest = valueRefs_.makeAssignable(expr);
+    text_.instr({"lea", it->second + "(%rip)", dest});
+    valueRefs_.assign(expr, dest);
     return;
   }
   auto const label =
@@ -611,7 +653,7 @@ void CodeGen::visit(const Call *expr) {
   // Align the stack if necessary
   auto const stackLocals = stackFrames_.bases[enclosingFunc_];
   // We push/pop %rdi for method-like calls
-  if (stackLocals.totalSize % (16 - 8*isMethodCall)) {
+  if ((stackLocals.totalSize + 8*isMethodCall) % 16) {
     text_.instr({"push", "%rbx"});
   }
 
@@ -657,11 +699,11 @@ void CodeGen::visit(const Call *expr) {
   if (numPushed % 2 == 1) {
     text_.instr({"pop", "%rbx"});
   }
-  for (size_t i = isMethodCall; i < numArgs; ++i) {
-    text_.instr({"pop", argRegs[i]});
+  for (size_t i = numArgs; i > isMethodCall; --i) {
+    text_.instr({"pop", argRegs[i - 1]});
   }
 
-  if (stackLocals.totalSize % (16 - 8*isMethodCall)) {
+  if ((stackLocals.totalSize + 8*isMethodCall) % 16) {
     text_.instr({"pop", "%rbx"});
   }
 

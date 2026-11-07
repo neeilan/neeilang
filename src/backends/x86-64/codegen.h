@@ -65,6 +65,7 @@ public:
   }
 
   void regOverwrite(const Expr *expr, const Register &reg) {
+      unusedGpRegs_.erase(reg);
       exprToRef_[expr] = reg;
       exprToRegister_[expr] = reg;
       registerToExpr_[reg] = expr;

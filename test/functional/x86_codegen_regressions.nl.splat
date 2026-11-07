@@ -1,0 +1,33 @@
+fn main() : Int {
+  print "repeated";
+  print "repeated";
+  print 1000 < 1;
+  print 0 - 7 < 0;
+  print !(1 == 1);
+  print (0 - 21) / 3;
+  print 4294967296 / 2;
+  print preserveArgs(11, 22);
+  return 0;
+}
+
+fn preserveArgs(a : Int, b : Int) : Int {
+  ignoreArgs(a, b);
+  return a * 100 + b;
+}
+
+fn ignoreArgs(a : Int, b : Int) : Int {
+  return a + b;
+}
+
+/*
+%output
+repeated
+repeated
+0
+1
+0
+-7
+2147483648
+1122
+%output
+*/
