@@ -879,6 +879,8 @@ void CodeGen::dump() const {
   dumpSection(".section .rodata", rodata_);
   dumpSection(".data", data_);
   dumpSection(".text", text_);
+  // Tell ELF linkers that this object does not require an executable stack.
+  ss << ".section .note.GNU-stack,\"\",@progbits\n";
   std::cout << ss.str();
 }
 
