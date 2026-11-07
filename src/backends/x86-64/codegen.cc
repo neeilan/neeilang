@@ -120,9 +120,12 @@ void CodeGen::generate(const std::vector<Stmt *> &program) {
   for (auto *c : classes_) {
     auto className = c->name.lexeme;
     auto const classType = sm_.globals().typetab->get(className);
-    rodata_.directive({ std::string("vtable_") + className + ":"});
+    // Function pointers need load-time relocations in PIE executables.
+    // Keep them writable during relocation, then read-only under RELRO.
+    relro_.directive({".p2align 3"});
+    relro_.directive({ std::string("vtable_") + className + ":"});
     for (auto m : classType->get_methods()) {
-      rodata_.directive({ std::string(".quad ") + get_virtual_method(classType, m->name, funcLabels_)});
+      relro_.directive({ std::string(".quad ") + get_virtual_method(classType, m->name, funcLabels_)});
     }
   }
 }
@@ -877,6 +880,7 @@ void CodeGen::dump() const {
     }
   };
   dumpSection(".section .rodata", rodata_);
+  dumpSection(".section .data.rel.ro,\"aw\",@progbits", relro_);
   dumpSection(".data", data_);
   dumpSection(".text", text_);
   // Tell ELF linkers that this object does not require an executable stack.

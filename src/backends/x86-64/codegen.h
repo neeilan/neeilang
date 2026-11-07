@@ -204,6 +204,7 @@ private:
 
 
   Section rodata_;
+  Section relro_;
   Section data_;
   Section text_;
 
