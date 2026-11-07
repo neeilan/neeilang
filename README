@@ -64,13 +64,19 @@ Building - x86-64 backend
   At the moment, some tests may pass based on what has been implemented on x86.
   ```
   $ ./nl_x86.sh test/functional/expr_precedence.nl.splat
+  4
+  11
+  18
   17
+  21
+  42
   ```
 
 Running functional tests
 ------------------------
 * Run `cmake -DTEST_DEPS=ON .` to set up the project with splat, which we use
   to run tests under test/functional. You can run individual tests by running
-  `./bin/splat ./run/nl_llvm.sh <path_to_test>`, or you can perform all the
-  tests by running `./run_functional_tests.sh`
+  * `./bin/splat ./run/nl_llvm.sh <path_to_test>` - LLVM backend
+  * `./bin/splat ./run/nl_x86.sh <path_to_test>`  - x86 backend
+* You can run all the tests with `./run_functional_tests.sh`
 * You can learn more about splat at https://github.com/neeilan/splat
